@@ -1,0 +1,10 @@
+{
+  "_comment": "How each fixed image is made from the originals in Pictures/. crop_top = where the 4:3 window starts, as a fraction of the photo's height. blur = number-plate boxes [left, top, right, bottom] as fractions of the original photo. Run: python3 tools/prepare_images.py",
+  "home-hero":   {"source": "instasave.website_844757904_18338107240278276_2921967689079084285_n.jpg", "note": "#12 Defender front",       "crop_top": 0.20, "blur": [[0.27, 0.545, 0.465, 0.605]]},
+  "inspections": {"source": "instasave.website_838659201_18337124377278276_5288263924672187682_n.jpg", "note": "#3 engine bay",           "crop_top": 0.20, "blur": []},
+  "history":     {"source": "instasave.website_851829191_18338501107278276_6555474746745004492_n.jpg", "note": "#22 instrument cluster",  "crop_top": 0.25, "blur": []},
+  "sell":        {"source": "instasave.website_838328404_18337249006278276_4135446916166489293_n.jpg", "note": "#1 Mercedes CLS front",   "crop_top": 0.20, "blur": [[0.49, 0.535, 0.72, 0.605]]},
+  "import":      {"source": "instasave.website_850547363_18338500969278276_8662414024272280318_n.jpg", "note": "#20 Audi Q8 rear, yard",  "crop_top": 0.22, "blur": []},
+  "finance":     {"source": "instasave.website_838949054_18337124167278276_4357047087420875449_n.jpg", "note": "#5 interior",             "crop_top": 0.15, "blur": []},
+  "about":       {"source": "instasave.website_840881790_18337249069278276_6892181659955402345_n.jpg", "note": "#9 Mercedes CLS rear",    "crop_top": 0.20, "blur": [[0.19, 0.48, 0.40, 0.545]]}
+}

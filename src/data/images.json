@@ -1,0 +1,13 @@
+{
+  "_comment": "Fixed design images by slot. A value names src/assets/img/<value>-640.webp and -1280.webp, made by tools/prepare_images.py from Pictures/. Empty = the slot is left out. Car listing photos never go here.",
+  "home-hero": "home-hero",
+  "inspections": "inspections",
+  "history": "history",
+  "cars": "",
+  "sell": "sell",
+  "garages": "",
+  "import": "import",
+  "finance": "finance",
+  "partners": "",
+  "about": "about"
+}
