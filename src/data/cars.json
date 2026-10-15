@@ -1,4 +1,0 @@
-{
-  "_comment": "Real listings only. A car is added here, or later served from the database, only after it passes a Saaz inspection. Empty until then, so the live site shows the empty state.",
-  "cars": []
-}
