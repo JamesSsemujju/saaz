@@ -4,6 +4,9 @@
 <style>
 :root{--navy:#0B2545;--navy2:#13315C;--orange:#F26B1D;--orange2:#D9570F;--bg:#F3F5F8;--line:#DDE3EA;--txt:#1B2430;--mut:#6B7785;--green:#1F9D55;--red:#D7263D}
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100%}
+img,svg{max-width:100%}
+input,select,button{min-width:0}
 body{font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--txt);background:var(--bg);font-size:14px;line-height:1.45}
 a{color:inherit;text-decoration:none}
 button,select,input{font:inherit}
@@ -147,9 +150,88 @@ footer li:hover{color:#fff}
 footer .bot{border-top:1px solid #234;margin-top:22px;padding-top:12px;display:flex;justify-content:space-between;font-size:12px;flex-wrap:wrap;gap:8px}
 .wa{position:fixed;right:18px;bottom:18px;background:#25D366;color:#fff;border-radius:30px;padding:10px 16px;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.2);display:flex;gap:8px;align-items:center;z-index:9}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;display:none;z-index:10}
-@media(max-width:1000px){.main{grid-template-columns:1fr}aside{order:2}.sgrid{grid-template-columns:repeat(3,1fr)}.sgrid .go{grid-column:1/-1}.cards{grid-template-columns:repeat(2,1fr)}.tiles{grid-template-columns:repeat(3,1fr)}.trust,.steps{grid-template-columns:repeat(2,1fr)}footer .cols{grid-template-columns:1fr 1fr}.hsearch{display:none}nav li.check{margin-left:0}}
-@media(max-width:760px){.topbar .sel{display:none}.topbar .wrap{height:auto;padding:6px 16px}header .wrap{height:auto;padding:10px 16px;gap:12px;flex-wrap:wrap}.logo{font-size:18px}.logo .mark{width:34px;height:34px;font-size:16px}.hright{margin-left:auto;gap:12px}.hright .acct{display:none}nav ul{overflow:auto}nav li{padding:12px 12px}.hero{padding:18px}.hero h1{font-size:22px}}
-@media(max-width:600px){.cards{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}.check form{margin-left:0;width:100%}.check input{flex:1;width:auto}}
+/* MOBILE-PASS */
+@media(max-width:1000px){
+  .main{grid-template-columns:1fr;gap:14px}
+  aside{order:2}
+  aside ul{max-height:none}
+  aside .box.col ul{display:none}
+  aside h3{cursor:pointer;display:flex;justify-content:space-between}
+  aside h3:after{content:"\25BE";opacity:.8}
+  aside .box.col h3:after{content:"\25B8"}
+  .sgrid{grid-template-columns:repeat(3,1fr)}
+  .sgrid .go{grid-column:1/-1}
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .tiles{grid-template-columns:repeat(3,1fr)}
+  .trust,.steps{grid-template-columns:repeat(2,1fr)}
+  footer .cols{grid-template-columns:1fr 1fr}
+  .hsearch{display:none}
+  nav li.check{margin-left:0}
+}
+@media(max-width:760px){
+  .wrap{padding:0 12px}
+  .topbar .sel{display:none}
+  .topbar .wrap{height:30px;font-size:11px;white-space:nowrap;overflow:hidden}
+  .topbar .wrap>div:first-child{overflow:hidden;text-overflow:ellipsis}
+  header .wrap{height:56px;gap:10px}
+  .logo{font-size:17px;line-height:1.05}
+  .logo .mark{width:32px;height:32px;font-size:15px;border-radius:8px}
+  .logo small{font-size:8px;letter-spacing:1.2px}
+  .hright{gap:10px}
+  .hright .acct{display:none}
+  .hright .favtxt{display:none}
+  .hright .btn{padding:8px 11px;font-size:12px}
+  nav ul{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav ul::-webkit-scrollbar{display:none}
+  nav li{padding:11px 11px;font-size:13px}
+  .notice .wrap{height:auto;padding:6px 12px;white-space:normal;flex-direction:column;gap:2px;align-items:flex-start;font-size:11px}
+  .main{padding:12px 0}
+  .hero{padding:14px;border-radius:10px}
+  .hero h1{font-size:20px}
+  .hero p{font-size:13px;margin-bottom:10px}
+  .ask{padding:10px}
+  .ask .row{flex-direction:column}
+  .ask input{font-size:16px;padding:12px}
+  .ask button{padding:12px}
+  .ask .ex{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .ask .ex::-webkit-scrollbar{display:none}
+  .ask .ex a{white-space:nowrap}
+  .ask .ai{font-size:10px}
+  .understood{font-size:12px}
+  .quick{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .quick::-webkit-scrollbar{display:none}
+  .quick a{white-space:nowrap}
+  .sgrid{grid-template-columns:1fr 1fr;padding:10px;gap:8px}
+  .sgrid select,.sgrid input{font-size:16px;padding:9px}
+  .check{padding:12px;gap:8px}
+  .check h4{font-size:14px}
+  .check p{font-size:12px}
+  .check form{margin-left:0;width:100%}
+  .check input{flex:1;width:auto;font-size:16px}
+  .sec{margin-top:16px}
+  .sec h2{font-size:16px}
+  .tiles{gap:8px}
+  .tile{padding:10px 4px;font-size:12px}
+  .tile .ico{font-size:22px}
+  .cards{gap:10px}
+  .card .ttl{font-size:13px}
+  .card .specs{font-size:11px}
+  .trust,.steps{grid-template-columns:1fr;gap:10px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+  .stats b{font-size:20px}
+  footer{padding:22px 0 12px}
+  footer .cols{grid-template-columns:1fr 1fr;gap:16px}
+  footer .cols>div:first-child{grid-column:1/-1}
+  .wa{right:12px;bottom:12px;padding:9px 13px;font-size:13px}
+  .wa span{display:none}
+}
+@media(max-width:600px){
+  .cards{grid-template-columns:1fr}
+}
+@media(max-width:380px){
+  .logo span:last-child{display:none}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+}
 </style></head><body>
 
 <div class="topbar"><div class="wrap">
@@ -166,7 +248,7 @@ footer .bot{border-top:1px solid #234;margin-top:22px;padding-top:12px;display:f
   <form class="hsearch" onsubmit="return doSearch(event)"><select id="hmode"><option>By Keyword</option><option>By Ref No.</option></select><input id="hq" placeholder="e.g. Toyota Harrier 2015, or SZ123456"><button>Search</button></form>
   <div class="hright">
     <div class="acct"><span>Hello, Guest</span><a href="#" onclick="toast('Login coming soon')"><b>Login</b> / Register</a></div>
-    <a href="#" onclick="toast('Favourites saved on this device')">♡ Favorites</a>
+    <a href="#" onclick="toast('Favourites saved on this device')">♡ <span class="favtxt">Favorites</span></a>
     <a class="btn" href="#check">Saaz Check</a>
   </div>
 </div></header>
@@ -181,12 +263,12 @@ footer .bot{border-top:1px solid #234;margin-top:22px;padding-top:12px;display:f
 <div class="wrap main">
 <aside>
   <div class="banner"><b>Happy October Sale</b>Up to 25% off selected Japan stock. Ends 31 Oct.</div>
-  <div class="box"><h3>Shop By Make</h3><ul id="makeList"></ul></div>
-  <div class="box"><h3>Shop By Price</h3><ul id="priceList"></ul></div>
-  <div class="box"><h3>Shop By Type</h3><ul id="typeList"></ul></div>
-  <div class="box"><h3>Other Categories</h3><ul>
+  <div class="box col"><h3 onclick="colToggle(this)">Shop By Make</h3><ul id="makeList"></ul></div>
+  <div class="box col"><h3 onclick="colToggle(this)">Shop By Price</h3><ul id="priceList"></ul></div>
+  <div class="box col"><h3 onclick="colToggle(this)">Shop By Type</h3><ul id="typeList"></ul></div>
+  <div class="box col"><h3 onclick="colToggle(this)">Other Categories</h3><ul>
     <li onclick="filterMisc('LHD')">Left Hand Drive<span>1,568</span></li><li onclick="filterMisc('Hybrid')">Hybrid<span>1,778</span></li><li onclick="filterMisc('Diesel')">Diesel<span>2,261</span></li><li onclick="filterMisc('MT')">Manual<span>1,411</span></li><li onclick="filterMisc('4WD')">4WD<span>2,109</span></li></ul></div>
-  <div class="box"><h3>Vehicles In Stock</h3><ul><li>Japan<span>32,399</span></li><li>Korea<span>15,157</span></li><li>UAE<span>4,002</span></li><li>United Kingdom<span>6,502</span></li><li>Thailand<span>818</span></li></ul></div>
+  <div class="box col"><h3 onclick="colToggle(this)">Vehicles In Stock</h3><ul><li>Japan<span>32,399</span></li><li>Korea<span>15,157</span></li><li>UAE<span>4,002</span></li><li>United Kingdom<span>6,502</span></li><li>Thailand<span>818</span></li></ul></div>
 </aside>
 
 <section>
@@ -260,7 +342,7 @@ footer .bot{border-top:1px solid #234;margin-top:22px;padding-top:12px;display:f
   <div class="bot"><span>© 2026 Saaz Technologies Ltd. Kampala, Uganda.</span><span>Terms · Privacy · Anti-fraud notice</span></div>
 </div></footer>
 
-<a class="wa" href="#" onclick="toast('WhatsApp line to be added')">💬 WhatsApp us</a>
+<a class="wa" href="#" onclick="toast('WhatsApp line to be added')">💬 <span>WhatsApp us</span></a>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -291,6 +373,7 @@ function doSearch(e){e.preventDefault();if(e.target.classList.contains('hsearch'
 function quick(k,v){F=EMPTY();F[k]=v;hideUnderstood();render();$('cards').scrollIntoView({behavior:'smooth'})}
 function filterMisc(v){quick('misc',v)}
 function resetAll(){F=EMPTY();['fMake','fModel','fYear','fPrice','fBody','fKw','hq','askq'].forEach(i=>$(i).value='');hideUnderstood();render();return false}
+function colToggle(h){if(window.innerWidth>1000)return;h.parentNode.classList.toggle('col')}
 function toggleRefine(){const b=$('refineBox');b.style.display=b.style.display==='none'?'block':'none'}
 function hideUnderstood(){$('understood').style.display='none'}
 function tab(b,t){document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');toast(t==='cars'?'Showing cars':'Section coming soon')}
