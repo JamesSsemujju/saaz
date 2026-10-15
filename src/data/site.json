@@ -1,0 +1,15 @@
+{
+  "_comment": "Every site-wide setting lives here. Change a value, run build.py, commit docs/.",
+  "name": "Saaz",
+  "legalName": "Saaz",
+  "_legalName": "ASSUMPTION: company registration not verified. Use the registered name once confirmed.",
+  "basePath": "/saaz/",
+  "_basePath": "GitHub Pages project URL is jamesssemujju.github.io/saaz/. Use \"/\" if the site moves to its own domain.",
+  "city": "Kampala",
+  "launch": "early 2027",
+  "_launch": "ESTIMATE from the spec plan: first paid inspection 15 Jan 2027.",
+  "whatsapp": "",
+  "_whatsapp": "PLACEHOLDER. Digits only with country code, e.g. 2567XXXXXXXX. Empty = every WhatsApp link stays hidden.",
+  "year": "2026",
+  "payments": "MTN MoMo or Airtel Money"
+}

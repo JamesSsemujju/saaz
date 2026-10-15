@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Only cars that passed a Saaz inspection, each shown with its report.">
+<meta name="theme-color" content="#0B2545">
+<title>Inspected cars | Saaz</title>
+<link rel="stylesheet" href="/saaz/assets/saaz.css">
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true" xmlns:c2pa="http://c2pa.org/manifest">
+<!-- One icon set for the whole site: 24px grid, 2px stroke, round ends. Use with <svg class="icon"><use href="#i-name"/></svg>. To be replaced by a licensed set (see spec, brand rule 6). -->
+<defs>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"/><path d="M8 13l2.5 2.5L16 10"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16v-3l2-5h14l2 5v3z"/><path d="M5 13h14"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/></symbol>
+<symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></symbol>
+<symbol id="i-ship" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l2 3h14l2-3z"/><path d="M5 17V9h14v8"/><path d="M9 9V5h6v4"/></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M9 15v2c0 1.7 2.7 3 6 3s6-1.3 6-3v-5c0-1.6-2.4-2.9-5.5-3"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"/><path d="M8 12h8M8 16h5"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-free" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+<symbol id="i-engine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h3l2-3h6l2 3h3v7h-3l-2 2H9l-2-2H4z"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M12 4v16M18 4v8M6 12h12"/></symbol>
+<symbol id="i-brake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></symbol>
+<symbol id="i-body" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l2-6h14l2 6v3H3z"/><path d="M7 9l2-4h6l2 4"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+<symbol id="i-tyre" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></symbol>
+<symbol id="i-vin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 12h1M10 12h1M13 12h1M16 12h1"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></symbol>
+</defs>
+</svg>
+
+<div class="strip"><div class="wrap"><b>Preview.</b> Saaz is not trading yet. Nothing here can be bought, booked or paid for.</div></div>
+<header class="site-header"><div class="wrap">
+  <a class="logo" href="/saaz/"><i aria-hidden="true">S</i>SAAZ</a>
+  <nav class="mainnav" aria-label="Main"><a href="/saaz/inspections/">Inspections</a><a href="/saaz/cars/" aria-current="page">Inspected cars</a><a href="/saaz/sell/">Sell</a><a href="/saaz/import/">Import</a><a href="/saaz/finance/">Finance</a><a href="/saaz/garages/">Garages</a><a href="/saaz/help/">Help</a></nav>
+  
+  <details class="menu">
+    <summary>Menu</summary>
+    <nav class="menu-panel" aria-label="All of Saaz">
+      <div class="group"><div class="label">Services</div><a href="/saaz/inspections/">Saaz Check<small>Early 2027</small></a><a href="/saaz/history/">Vehicle history<small>Early 2027</small></a><a href="/saaz/cars/">Inspected cars<small>Early 2027</small></a><a href="/saaz/sell/">Sell your car<small>Early 2027</small></a><a href="/saaz/garages/">Partner garages<small>Early 2027</small></a><a href="/saaz/import/">Import desk<small>Early 2027</small></a><a href="/saaz/finance/">Finance<small>Mid 2027</small></a><a href="/saaz/partners/">Become a partner garage<small>Sign-up before launch</small></a></div>
+      <div class="group"><div class="label">Help</div>
+        <a href="/saaz/how-it-works/">How it works</a>
+        <a href="/saaz/safety/">Buying safely</a>
+        <a href="/saaz/help/">Questions</a>
+        <a href="/saaz/about/">About Saaz</a>
+      </div>
+    </nav>
+  </details>
+</div></header>
+
+<main id="top">
+<section class="phero"><div class="wrap ">
+  <div>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/saaz/">Home</a><span>/</span><span>Inspected cars</span></nav>
+    <div class="top" style="margin-top:16px"><span class="ico"><svg class="icon"><use href="#i-car"/></svg></span><span class="status planned">Planned · Early 2027</span></div>
+    <h1 style="margin-top:16px">Inspected cars</h1>
+    <p class="sub" style="margin-top:12px">A car is listed only after it passes a Saaz inspection. Every listing shows its report, so you can see the condition before you call.</p>
+    <div class="meta" style="margin-top:18px"><span>For <b>Buyers</b></span><span>Planned: <b>Early 2027</b></span></div>
+  </div>
+  
+</div></section>
+
+<section class="band"><div class="wrap">
+  <div class="kicker">How it will work</div>
+  <h2>Inspected cars in 3 steps.</h2>
+  <ol class="steps"><li><span class="n">1</span><div><b>Browse by make, price, body type or year</b><span>Prices in UGX.</span></div></li><li><span class="n">2</span><div><b>Read the report on the listing</b><span>Findings, photos and the inspection date.</span></div></li><li><span class="n">3</span><div><b>Contact the seller</b><span>By WhatsApp. Saaz never asks you to pay into a personal number.</span></div></li></ol>
+</div></section>
+
+<section class="band soft"><div class="wrap">
+  <div class="kicker">Browse</div>
+  <h2>Find cars the way you think about them.</h2>
+  <p class="lead">At launch you will be able to browse by these. Prices are shown in UGX.</p>
+  <div class="facets"><span>Make and model</span><span>Price in UGX</span><span>Body type</span><span>Year</span><span>Fuel</span><span>Gearbox</span><span>Inspection result</span><span>Inspected in the last 30 days</span></div>
+  <div class="empty">
+    <b>No cars listed yet</b>
+    <span>A car appears here only after it passes a Saaz inspection. Until the first inspections happen, this list stays empty.</span>
+  </div>
+</div></section>
+
+
+<section class="band closing"><div class="wrap split">
+  <div>
+    <div class="kicker">Before it opens</div>
+    <h2>What has to be in place first.</h2>
+    <ul class="depends"><li>Sellers with cars that passed an inspection</li><li>Standard photos taken at the garage</li></ul>
+    <p class="note">This service is not live. Nothing here can be booked or paid for yet.</p>
+  </div>
+  <div>
+    <div class="kicker">Related</div>
+    <ul class="services single"><li><a href="/saaz/inspections/"><span class="ico"><svg class="icon"><use href="#i-check"/></svg></span><span><span class="svc-name">Saaz Check</span><span class="svc-line" style="display:block">A vetted garage inspects the car before you pay. The report is saved to the car&#x27;s history.</span><span class="svc-meta"><span class="status planned">Planned · Early 2027</span><span>Buyers and sellers</span></span></span><span class="svc-go"><svg class="icon"><use href="#i-arrow"/></svg></span></a></li><li><a href="/saaz/sell/"><span class="ico"><svg class="icon"><use href="#i-tag"/></svg></span><span><span class="svc-name">Sell your car</span><span class="svc-line" style="display:block">Inspect first, then list your car with its report attached.</span><span class="svc-meta"><span class="status planned">Planned · Early 2027</span><span>Private sellers</span></span></span><span class="svc-go"><svg class="icon"><use href="#i-arrow"/></svg></span></a></li><li><a href="/saaz/finance/"><span class="ico"><svg class="icon"><use href="#i-coins"/></svg></span><span><span class="svc-name">Finance</span><span class="svc-line" style="display:block">An introduction to a lending partner, only with your consent.</span><span class="svc-meta"><span class="status planned">Planned · Mid 2027</span><span>Buyers</span></span></span><span class="svc-go"><svg class="icon"><use href="#i-arrow"/></svg></span></a></li></ul>
+  </div>
+</div></section>
+
+</main>
+<footer class="site-footer"><div class="wrap">
+  <div class="foot-grid">
+    <div><h4>Buyers</h4><ul><li><a href="/saaz/inspections/">Saaz Check</a></li><li><a href="/saaz/history/">Vehicle history</a></li><li><a href="/saaz/cars/">Inspected cars</a></li><li><a href="/saaz/import/">Import desk</a></li><li><a href="/saaz/finance/">Finance</a></li></ul></div>
+    <div><h4>Sellers and garages</h4><ul><li><a href="/saaz/sell/">Sell your car</a></li><li><a href="/saaz/garages/">Partner garages</a></li><li><a href="/saaz/partners/">Become a partner garage</a></li></ul></div>
+    <div><h4>Help</h4><ul>
+      <li><a href="/saaz/how-it-works/">How it works</a></li>
+      <li><a href="/saaz/safety/">Buying safely</a></li>
+      <li><a href="/saaz/help/">Questions</a></li>
+    </ul></div>
+    <div><h4>Saaz</h4><ul>
+      <li><a href="/saaz/about/">About</a></li>
+      <li><a href="/saaz/privacy/">Privacy</a></li>
+      
+    </ul></div>
+  </div>
+  <div class="foot-base">
+    <p>&copy; 2026 Saaz. Kampala, Uganda.</p>
+    <p>This site collects no personal data and uses no cookies or tracking. Saaz will never ask you to pay into a personal mobile money number.</p>
+  </div>
+</div></footer>
+
+</body>
+</html>

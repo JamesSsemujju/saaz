@@ -1,0 +1,14 @@
+/* tokens.css: every colour, size and font in one place.
+   Colours are the current palette (navy + orange), kept until a brand direction is chosen.
+   Orange is used for decoration and on dark backgrounds only; on light backgrounds text uses --accent-ink (5.18:1 on white). */
+:root{
+  --navy:#0B2545; --navy-2:#123563; --navy-deep:#06172C;
+  --ink:#111827; --mut:#5B6675; --mut-on-dark:#C9D6E6;
+  --soft:#F4F6F9; --line:#E3E8EF; --white:#FFFFFF;
+  --accent:#F26B1D; --accent-ink:#C2410C; --ice:#CFE0F5;
+  --focus:#8FB1FF;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --s-1:4px; --s-2:8px; --s-3:16px; --s-4:24px; --s-5:32px; --s-6:48px; --s-7:64px; --s-8:96px;
+  --radius:16px; --wrap:1120px;
+}
