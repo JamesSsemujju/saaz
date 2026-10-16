@@ -1,15 +1,15 @@
 <!-- {"title": "Saaz: know the car before you pay", "description": "Saaz is building pre-purchase car inspections at vetted partner garages in Kampala, with a history for every car. Not trading yet.", "nav": "home"} -->
 <div class="hero"><div class="wrap">
   <div>
-    <div class="eyebrow">Planned for {{city}}, {{launch}}</div>
+    <div class="eyebrow">{{city}}, Uganda</div>
     <h1>Know the car before you pay.</h1>
     <p class="sub">Inspections at vetted partner garages, with a report saved to the car's own history. The next buyer sees it too.</p>
-    <form class="check" onsubmit="return false" aria-describedby="checknote">
-      <label for="car-id">Chassis number or number plate</label>
-      <input id="car-id" placeholder="Chassis no. or plate" disabled>
-      <button type="submit" disabled>Check this car</button>
+    <form class="check" action="{{base}}history/#decode" method="get">
+      <label for="car-id">17-character VIN</label>
+      <input id="car-id" name="vin" placeholder="Enter a 17-character VIN" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" required>
+      <button type="submit">Decode</button>
     </form>
-    <p class="checknote" id="checknote">Opens {{launch}}. Nothing is checked yet.</p>
+    <p class="checknote">Free VIN decoding. Make, model, year and engine.</p>
     <nav class="paths" aria-label="Choose your path"><a href="{{base}}inspections/">I'm buying a car</a><a href="{{base}}sell/">I'm selling a car</a><a href="{{base}}partners/">I run a garage</a></nav>
   </div>
   {{hero_visual}}
@@ -23,12 +23,12 @@
 <section class="band"><div class="wrap">
   <div class="kicker">Services</div>
   <h2>Everything Saaz will do, in one place.</h2>
-  <p class="lead">Each service has its own page explaining how it will work. None is live yet: each one shows when it is planned to open.</p>
+  <p class="lead">Each service has its own page explaining how it works.</p>
   <ul class="services">{{services_list}}</ul>
 </div></section>
 
 <section class="band soft"><div class="wrap">
-  <div class="kicker">How it will work</div>
+  <div class="kicker">How it works</div>
   <h2>Three steps from "I like this car" to knowing what you are buying.</h2>
   <ol class="steps">
     <li><span class="n">1</span><div><b>Get a free code for the car</b><span>Register with your phone number. One code per car, tied to its chassis number.</span></div></li>
@@ -63,7 +63,6 @@
   <div>
     <div class="kicker">Questions</div>
     <div class="faq" style="margin-top:0">
-      <details><summary>When does Saaz open?</summary><p>The plan is {{launch}}, in {{city}} first. Until then nothing can be booked or paid for.</p></details>
       <details><summary>Who does the inspection?</summary><p>Mechanics at partner garages that Saaz has checked. Saaz does not employ mechanics.</p></details>
       <details><summary>What if the garage misses a fault?</summary><p>You raise a dispute and the car gets a second inspection. Upheld disputes lower the garage's rating.</p></details>
     </div>

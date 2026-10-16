@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Saaz staff sign-in.">
+<meta name="theme-color" content="#0B2545">
+<meta name="robots" content="noindex,nofollow">
+<title>Saaz admin</title>
+<link rel="stylesheet" href="/saaz/assets/saaz.css">
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true" xmlns:c2pa="http://c2pa.org/manifest">
+<!-- One icon set for the whole site: 24px grid, 2px stroke, round ends. Use with <svg class="icon"><use href="#i-name"/></svg>. To be replaced by a licensed set (see spec, brand rule 6). -->
+<defs>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"/><path d="M8 13l2.5 2.5L16 10"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16v-3l2-5h14l2 5v3z"/><path d="M5 13h14"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/></symbol>
+<symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></symbol>
+<symbol id="i-ship" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l2 3h14l2-3z"/><path d="M5 17V9h14v8"/><path d="M9 9V5h6v4"/></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M9 15v2c0 1.7 2.7 3 6 3s6-1.3 6-3v-5c0-1.6-2.4-2.9-5.5-3"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"/><path d="M8 12h8M8 16h5"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-free" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+<symbol id="i-engine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h3l2-3h6l2 3h3v7h-3l-2 2H9l-2-2H4z"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M12 4v16M18 4v8M6 12h12"/></symbol>
+<symbol id="i-brake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></symbol>
+<symbol id="i-body" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l2-6h14l2 6v3H3z"/><path d="M7 9l2-4h6l2 4"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+<symbol id="i-tyre" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></symbol>
+<symbol id="i-vin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 12h1M10 12h1M13 12h1M16 12h1"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></symbol>
+<symbol id="i-carside" viewBox="0 0 600 240" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"><path d="M60 196 L60 152 Q62 132 92 126 L172 118 Q204 80 244 72 L398 70 Q430 72 456 100 L502 120 Q546 128 548 152 L548 196 L496 196 A46 46 0 0 0 404 196 L196 196 A46 46 0 0 0 104 196 Z"/><path d="M188 122 Q212 90 248 83 L300 81 L300 122 Z M312 81 L394 81 Q420 83 440 106 L447 122 L312 122 Z" stroke-width="4"/><circle cx="150" cy="200" r="34"/><circle cx="450" cy="200" r="34"/></symbol>
+</defs>
+</svg>
+
+<div class="strip"><div class="wrap"><b>Preview.</b> Saaz is not trading yet. Nothing here can be bought, booked or paid for.</div></div>
+<header class="site-header"><div class="wrap">
+  <a class="logo" href="/saaz/"><i aria-hidden="true">S</i>SAAZ</a>
+  <nav class="mainnav" aria-label="Main"><a href="/saaz/inspections/">Inspections</a><a href="/saaz/cars/">Inspected cars</a><a href="/saaz/sell/">Sell</a><a href="/saaz/import/">Import</a><a href="/saaz/finance/">Finance</a><a href="/saaz/garages/">Garages</a><a href="/saaz/help/">Help</a></nav>
+  
+  <a class="hsign" href="/saaz/admin/">Sign in</a>
+  <details class="menu">
+    <summary>Menu</summary>
+    <nav class="menu-panel" aria-label="All of Saaz">
+      <div class="group"><div class="label">Services</div><a href="/saaz/inspections/">Saaz Check</a><a href="/saaz/history/">Vehicle history</a><a href="/saaz/cars/">Inspected cars</a><a href="/saaz/sell/">Sell your car</a><a href="/saaz/garages/">Partner garages</a><a href="/saaz/import/">Import desk</a><a href="/saaz/finance/">Finance</a><a href="/saaz/partners/">Become a partner garage</a></div>
+      <div class="group"><div class="label">Help</div>
+        <a href="/saaz/how-it-works/">How it works</a>
+        <a href="/saaz/safety/">Buying safely</a>
+        <a href="/saaz/help/">Questions</a>
+        <a href="/saaz/about/">About Saaz</a>
+      </div>
+    </nav>
+  </details>
+</div></header>
+
+<main id="top">
+<section class="admin"><div class="wrap">
+  <div id="a-config" class="admin-card" hidden>
+    <h1>Admin is not connected yet</h1>
+    <p>The admin needs a Supabase project. Until it is set up, nobody can sign in and no car can be added here.</p>
+    <ol class="admin-steps">
+      <li>Create a free project at supabase.com. Pick the region closest to Uganda.</li>
+      <li>In the SQL Editor, run <code>supabase/schema.sql</code> from the repo.</li>
+      <li>Under Authentication, turn off public sign-ups, then add each admin's email and password.</li>
+      <li>Add each admin to the <code>admins</code> table (the last lines of schema.sql show how).</li>
+      <li>Copy the Project URL and the anon public key into <code>src/data/site.json</code>, then rebuild.</li>
+    </ol>
+  </div>
+
+  <form id="a-login" class="admin-card narrow" hidden>
+    <h1>Admin sign in</h1>
+    <label>Email<input type="email" id="a-email" autocomplete="username" required></label>
+    <label>Password<input type="password" id="a-pass" autocomplete="current-password" required></label>
+    <button class="btn" type="submit">Sign in</button>
+    <p class="a-err" id="a-login-err" role="alert"></p>
+  </form>
+
+  <div id="a-denied" class="admin-card narrow" hidden>
+    <h1>This account is not an admin</h1>
+    <p>Ask an existing admin to add you to the admins table.</p>
+    <button class="btn ghost-dark" type="button" data-signout>Sign out</button>
+  </div>
+
+  <div id="a-app" hidden>
+    <div class="a-top">
+      <h1>Cars</h1>
+      <div class="a-top-r"><span id="a-who"></span><button class="btn" type="button" id="a-new">Add a car</button><button class="btn ghost-dark" type="button" data-signout>Sign out</button></div>
+    </div>
+    <p class="a-msg" id="a-msg" role="status"></p>
+    <div class="a-tablewrap"><table class="a-table">
+      <thead><tr><th>Ref</th><th>Car</th><th>Price (UGX)</th><th>Source</th><th>Review</th><th>Status</th><th></th></tr></thead>
+      <tbody id="a-rows"><tr><td colspan="7">Loading…</td></tr></tbody>
+    </table></div>
+
+    <form id="a-form" class="admin-card" hidden>
+      <h2 id="a-form-title">Add a car</h2>
+      <fieldset><legend>The car</legend>
+        <div class="a-grid">
+          <label>Saaz ref<input name="ref" required pattern="SZ-[0-9]{4,}" placeholder="SZ-0001"></label>
+          <label>Source<select name="source" required><option value="local">Local car</option><option value="import">Saaz import</option></select></label>
+          <label>Make<input name="make" required></label>
+          <label>Model<input name="model" required></label>
+          <label>Year<input name="year" type="number" min="1980" max="2100" required></label>
+          <label>Body<select name="body" required><option>SUV</option><option>Sedan</option><option>Hatchback</option><option>Minivan</option><option>Wagon</option><option>Pick up</option><option>Van</option><option>Truck</option><option>Bus</option><option>Coupe</option></select></label>
+          <label>Fuel<select name="fuel" required><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select></label>
+          <label>Gearbox<select name="gearbox" required><option>Automatic</option><option>Manual</option></select></label>
+          <label>Drive<select name="drive" required><option>2WD</option><option>4WD</option></select></label>
+          <label>Mileage (km)<input name="km" type="number" min="0" required></label>
+          <label>Engine (cc)<input name="cc" type="number" min="1"></label>
+          <label>Colour<input name="colour"></label>
+          <label>Price (UGX)<input name="price_ugx" type="number" min="1" required placeholder="40000000"></label>
+          <label>Area<input name="area" required placeholder="Kampala, Ntinda"></label>
+          <label>Seller<select name="seller" required><option>Saaz</option><option>Private seller</option><option>Dealer</option></select></label>
+          <label>Chassis or frame number<input name="chassis" required autocapitalize="characters" placeholder="ZSU60-0012210"><small>Only a masked form is saved, e.g. ZSU60-•••2210</small></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Review</legend>
+        <div class="a-grid">
+          <label>Result<select name="review_result"><option value="">Not reviewed yet</option><option>Passed</option><option>Failed</option></select></label>
+          <label>Review date<input name="review_date" type="date"></label>
+          <label>Certified shop<input name="review_garage" placeholder="Shop name"></label>
+        </div>
+        <label>Findings, one per line: area | attention or note | what was found<textarea name="findings" rows="4" placeholder="Tyres | attention | Front tyres at about 30% tread"></textarea></label>
+      </fieldset>
+      <fieldset><legend>Photos</legend>
+        <input type="file" id="a-files" accept="image/*" multiple>
+        <p class="a-hint">Photos are resized to 1600 px and saved as WebP before upload. Blur or crop number plates before uploading.</p>
+        <div class="a-thumbs" id="a-thumbs"></div>
+        <label class="a-check"><input type="checkbox" name="plates_hidden"> I checked every photo: no number plate or face can be read</label>
+      </fieldset>
+      <div class="a-actions">
+        <button class="btn" type="submit" data-status="draft">Save as draft</button>
+        <button class="btn" type="submit" data-status="published">Publish</button>
+        <button class="btn ghost-dark" type="button" id="a-cancel">Cancel</button>
+      </div>
+      <p class="a-hint">A car can only be published after it passed a review, with a date, a certified shop, and plates confirmed hidden. The database refuses anything else.</p>
+      <p class="a-err" id="a-form-err" role="alert"></p>
+    </form>
+  </div>
+  <noscript><p>The admin needs JavaScript.</p></noscript>
+</div></section>
+<script>window.SAAZ={"base": "/saaz/", "supabaseUrl": "https://dkxyvlkhpnajbpethwqb.supabase.co", "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRreHl2bGtocG5hamJwZXRod3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwODc3ODYsImV4cCI6MjEwNzY2Mzc4Nn0.EiMjr4rSL00V5pv8mHEYDN5_jnqwB2wXDIX25lEJ4YA", "whatsapp": ""}</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="/saaz/assets/admin.js" defer></script>
+
+</main>
+<footer class="site-footer"><div class="wrap">
+  <div class="foot-grid">
+    <div><h4>Buyers</h4><ul><li><a href="/saaz/inspections/">Saaz Check</a></li><li><a href="/saaz/history/">Vehicle history</a></li><li><a href="/saaz/cars/">Inspected cars</a></li><li><a href="/saaz/import/">Import desk</a></li><li><a href="/saaz/finance/">Finance</a></li></ul></div>
+    <div><h4>Sellers and garages</h4><ul><li><a href="/saaz/sell/">Sell your car</a></li><li><a href="/saaz/garages/">Partner garages</a></li><li><a href="/saaz/partners/">Become a partner garage</a></li></ul></div>
+    <div><h4>Help</h4><ul>
+      <li><a href="/saaz/how-it-works/">How it works</a></li>
+      <li><a href="/saaz/safety/">Buying safely</a></li>
+      <li><a href="/saaz/help/">Questions</a></li>
+    </ul></div>
+    <div><h4>Saaz</h4><ul>
+      <li><a href="/saaz/about/">About</a></li>
+      <li><a href="/saaz/privacy/">Privacy</a></li>
+      
+    </ul></div>
+  </div>
+  <div class="foot-base">
+    <p>&copy; 2026 Saaz. Kampala, Uganda.</p>
+    <p>This site collects no personal data and uses no cookies or tracking. Saaz will never ask you to pay into a personal mobile money number.</p>
+  </div>
+</div></footer>
+
+</body>
+</html>

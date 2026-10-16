@@ -8,6 +8,12 @@ The public Saaz website: a homepage, one page for each service, and help pages. 
 3. Commit `src/` and `docs/`.
 4. In GitHub, go to Settings, then Pages, and set the source to `main` and the `/docs` folder (one time only).
 
+## Shipping from the terminal (added 17 Oct 2026)
+- One time: `xcode-select --install`, then `git clone https://github.com/JamesSsemujju/saaz.git ~/Desktop/Saaz/saaz`. The first push asks for your GitHub username and a personal access token, and macOS Keychain saves them.
+- Working folder: `/Users/james/Desktop/Saaz`. The repo is `saaz/` inside it.
+- Each update: save the new `Saaz_Platform_*.zip` into `/Users/james/Desktop/Saaz`, then run `bash ~/Desktop/Saaz/saaz/tools/ship.sh`. It takes the newest zip there (or in Downloads), builds, shows how many files changed, and pushes only if you type `y`.
+- Tested against a local copy of the repo, not against GitHub.
+
 ## Structure
 ```
 build.py                 builds src/ into docs/, then checks every internal link
@@ -34,6 +40,34 @@ docs/                    built output. Never edit by hand
 - 8 service pages: Saaz Check, Vehicle history, Inspected cars, Sell your car, Partner garages, Import desk, Finance, Become a partner garage
 - How it works, Buying safely, Questions, About, Privacy
 
+## Admin and the car database (added 17 Oct 2026)
+- `/admin/` is the staff sign-in. It is not linked anywhere, and it carries noindex. Admins add, edit, publish, unpublish, mark sold and delete cars, and upload photos. Photos are resized to 1600 px WebP in the browser.
+- Data lives in Supabase. `supabase/schema.sql` creates the `cars` and `admins` tables, a public `car-photos` bucket, and the access rules:
+  - The public can read published cars only.
+  - Only people in `admins` can write.
+  - The database refuses to publish a car without a Passed review, a review date, a certified shop and plates confirmed hidden.
+- Set-up, done once:
+  1. Create a Supabase project.
+  2. Run `schema.sql` in the SQL Editor.
+  3. Turn off public sign-ups.
+  4. Add admin users and their rows in `admins`.
+  5. Put the Project URL and anon key in `src/data/site.json`, then rebuild.
+- Published cars appear on `/cars/` and `/car/?ref=SZ-0001` straight from the database, with no rebuild (`src/scripts/live-cars.js`).
+- Only a masked chassis number is saved (for example ZSU60-•••2210).
+- Removing a photo from a car doesn't yet delete the file from storage.
+- Tested against a simulated Supabase: wrong password, non-admin, saving a draft, publishing refused without a review, publishing with a review, and a duplicate ref.
+- Live project (17 Oct 2026): ref `dkxyvlkhpnajbpethwqb`, region eu-west-1. Schema applied as 6 migrations (saaz_admins, saaz_cars, saaz_is_admin, saaz_touch_trigger, saaz_policies, saaz_photo_bucket). Checked on the live database: the public can't add cars (refused by row-level security), and publishing without a review is refused by `publish_needs_review`. Admin sign-in from a browser is not tested yet.
+- The Supabase security advisor warns that anyone can call `is_admin()`. Kept on purpose: the access rules need it, and it only says whether the caller is an admin.
+
+## VIN decoder (added 17 Oct 2026)
+- The first live feature. Use the homepage field or the Vehicle history page (`/history/#decode`).
+- `src/scripts/vin.js` sends the VIN from the visitor's browser to the free NHTSA vPIC API (`DecodeVinValues`, no key). Saaz stores nothing.
+- It shows make, model, year, body, fuel, engine, drive, gearbox and the country it was built in, and warns when the check digit doesn't add up.
+- Japanese frame numbers (such as ZSU60-0012345), number plates, and anything with I, O or Q get a clear message instead of a wrong answer.
+- Times out after 12 seconds, with a retry message.
+- To move to a paid decoder later, replace `decode()` in vin.js and keep the field list.
+- Tested with a simulated NHTSA response, because this workspace can't reach NHTSA. The real API was checked separately: it returned a 2017 Toyota RAV4 for a test VIN. Not yet tested on the live site from a phone.
+
 ## Images (added 16 Oct 2026)
 - Originals stay in `Pictures/` at the top of the repo and are never changed.
 - `src/data/image-crops.json` says which photo goes where, where to crop it (4:3), and which number plates to blur.
@@ -52,7 +86,7 @@ docs/                    built output. Never edit by hand
 | Part | Status |
 | --- | --- |
 | All 14 pages, nav, footer, mobile menu | Built and tested |
-| Check field on the homepage | Placeholder. Switched off and labelled "Opens early 2027" |
+| Check field on the homepage | Live: free VIN decoder |
 | Car lists, garage lists, history records | Empty states. Filled from the database once inspections run |
 | WhatsApp links | Hidden until `whatsapp` is set in site.json |
 | Images | 7 fixed photos from Pictures/ (watermarked SaaZ Automotive): home, Saaz Check, Vehicle history, Sell, Import, Finance, About. Number plates blurred. Garages and partner pages have none: no garage photos yet |

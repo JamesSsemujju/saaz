@@ -4,28 +4,20 @@
     <div class="top" style="margin-top:16px"><span class="ico"><svg class="icon"><use href="#i-{{m_icon}}"/></svg></span>{{m_status}}</div>
     <h1 style="margin-top:16px">{{m_name}}</h1>
     <p class="sub" style="margin-top:12px">{{m_intro}}</p>
-    <div class="meta" style="margin-top:18px"><span>For <b>{{m_audience}}</b></span><span>Planned: <b>{{m_when}}</b></span></div>
+    <div class="meta" style="margin-top:18px"><span>For <b>{{m_audience}}</b></span></div>
   </div>
   {{m_figure}}
 </div></section>
 
 <section class="band"><div class="wrap">
-  <div class="kicker">How it will work</div>
+  <div class="kicker">How it works</div>
   <h2>{{m_steps_title}}</h2>
   <ol class="steps">{{m_steps}}</ol>
 </div></section>
 
 {{module_extra}}
 
-<section class="band closing"><div class="wrap split">
-  <div>
-    <div class="kicker">Before it opens</div>
-    <h2>What has to be in place first.</h2>
-    <ul class="depends">{{m_depends}}</ul>
-    <p class="note">This service is not live. Nothing here can be booked or paid for yet.</p>
-  </div>
-  <div>
-    <div class="kicker">Related</div>
-    <ul class="services single">{{m_related}}</ul>
-  </div>
+<section class="band closing"><div class="wrap">
+  <div class="kicker">Related</div>
+  <ul class="services single" style="max-width:640px">{{m_related}}</ul>
 </div></section>

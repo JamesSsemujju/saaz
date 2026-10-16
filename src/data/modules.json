@@ -88,7 +88,7 @@
       "line": "Vetted garages in Kampala, each with a public rating.",
       "intro": "Saaz does not employ mechanics. Inspections happen at partner garages that Saaz has checked. Every garage and inspector has a public rating.",
       "steps": [
-        ["Find a garage near you", "In Kampala at launch."],
+        ["Find a garage near you", "In Kampala."],
         ["See its rating", "From buyers whose car it inspected, and from upheld disputes."],
         ["Book with your Saaz code", "The garage gives you the Saaz price."]
       ],

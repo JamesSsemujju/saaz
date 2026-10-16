@@ -10,6 +10,9 @@
 .mainnav a:hover{color:var(--white)}
 .mainnav a[aria-current="page"]{color:var(--white);border-bottom-color:var(--accent)}
 .hwa{color:var(--white);font-size:14px;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 12px}
+.hsign{margin-left:auto;color:var(--white);font-size:14px;font-weight:700;text-decoration:none;padding:6px 4px;white-space:nowrap}
+.hsign:hover{text-decoration:underline}
+.hsign + .menu{margin-left:0}
 /* mobile menu: <details>, no JavaScript */
 .menu{margin-left:auto}
 .menu summary{list-style:none;cursor:pointer;color:var(--white);font-weight:700;font-size:15px;padding:8px 12px;border:1px solid rgba(255,255,255,.3);border-radius:999px}
@@ -20,7 +23,7 @@
 .menu-panel .label{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:var(--s-2)}
 .menu-panel a{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s-3);color:var(--white);text-decoration:none;font-size:20px;font-weight:700;padding:8px 0}
 .menu-panel a small{color:var(--mut-on-dark);font-size:13px;font-weight:500}
-@media(min-width:1040px){.mainnav{display:flex}.menu{display:none}.site-header .wrap{gap:var(--s-5)}}
+@media(min-width:1040px){.hsign{margin-left:0}.mainnav{display:flex}.menu{display:none}.site-header .wrap{gap:var(--s-5)}}
 /* breadcrumb */
 .crumbs{font-size:13px;color:var(--mut-on-dark);display:flex;gap:8px;flex-wrap:wrap}
 .crumbs a{color:var(--mut-on-dark)}

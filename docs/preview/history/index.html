@@ -45,10 +45,11 @@
   <a class="logo" href="/saaz/preview/"><i aria-hidden="true">S</i>SAAZ</a>
   <nav class="mainnav" aria-label="Main"><a href="/saaz/preview/inspections/">Inspections</a><a href="/saaz/preview/cars/">Inspected cars</a><a href="/saaz/preview/sell/">Sell</a><a href="/saaz/preview/import/">Import</a><a href="/saaz/preview/finance/">Finance</a><a href="/saaz/preview/garages/">Garages</a><a href="/saaz/preview/help/">Help</a></nav>
   
+  <a class="hsign" href="/saaz/preview/admin/">Sign in</a>
   <details class="menu">
     <summary>Menu</summary>
     <nav class="menu-panel" aria-label="All of Saaz">
-      <div class="group"><div class="label">Services</div><a href="/saaz/preview/inspections/">Saaz Check<small>Early 2027</small></a><a href="/saaz/preview/history/">Vehicle history<small>Early 2027</small></a><a href="/saaz/preview/cars/">Inspected cars<small>Early 2027</small></a><a href="/saaz/preview/sell/">Sell your car<small>Early 2027</small></a><a href="/saaz/preview/garages/">Partner garages<small>Early 2027</small></a><a href="/saaz/preview/import/">Import desk<small>Early 2027</small></a><a href="/saaz/preview/finance/">Finance<small>Mid 2027</small></a><a href="/saaz/preview/partners/">Become a partner garage<small>Sign-up before launch</small></a></div>
+      <div class="group"><div class="label">Services</div><a href="/saaz/preview/inspections/">Saaz Check</a><a href="/saaz/preview/history/">Vehicle history</a><a href="/saaz/preview/cars/">Inspected cars</a><a href="/saaz/preview/sell/">Sell your car</a><a href="/saaz/preview/garages/">Partner garages</a><a href="/saaz/preview/import/">Import desk</a><a href="/saaz/preview/finance/">Finance</a><a href="/saaz/preview/partners/">Become a partner garage</a></div>
       <div class="group"><div class="label">Help</div>
         <a href="/saaz/preview/how-it-works/">How it works</a>
         <a href="/saaz/preview/safety/">Buying safely</a>
@@ -63,20 +64,34 @@
 <section class="phero"><div class="wrap has-figure">
   <div>
     <nav class="crumbs" aria-label="Breadcrumb"><a href="/saaz/preview/">Home</a><span>/</span><span>Vehicle history</span></nav>
-    <div class="top" style="margin-top:16px"><span class="ico"><svg class="icon"><use href="#i-history"/></svg></span><span class="status planned">Planned · Early 2027</span></div>
+    <div class="top" style="margin-top:16px"><span class="ico"><svg class="icon"><use href="#i-history"/></svg></span></div>
     <h1 style="margin-top:16px">Vehicle history</h1>
     <p class="sub" style="margin-top:12px">Every Saaz inspection is saved against the car&#x27;s chassis number. Before you buy, look the car up and see what earlier inspections found.</p>
-    <div class="meta" style="margin-top:18px"><span>For <b>Buyers</b></span><span>Planned: <b>Early 2027</b></span></div>
+    <div class="meta" style="margin-top:18px"><span>For <b>Buyers</b></span></div>
   </div>
   <figure class="figure"><img src="/saaz/preview/assets/img/history-640.webp" srcset="/saaz/preview/assets/img/history-640.webp 640w, /saaz/preview/assets/img/history-1280.webp 1280w" sizes="(min-width: 900px) 50vw, 100vw" width="1280" height="960" alt="" loading="lazy" decoding="async"></figure>
 </div></section>
 
 <section class="band"><div class="wrap">
-  <div class="kicker">How it will work</div>
+  <div class="kicker">How it works</div>
   <h2>Vehicle history in 3 steps.</h2>
   <ol class="steps"><li><span class="n">1</span><div><b>Enter the chassis number or plate</b><span>From the car or its logbook.</span></div></li><li><span class="n">2</span><div><b>See the record</b><span>Every Saaz inspection of that car, newest first, with dates and findings.</span></div></li><li><span class="n">3</span><div><b>Book a new check</b><span>If the record is old or empty, get a code and book an inspection.</span></div></li></ol>
 </div></section>
 
+<section class="band" id="decode"><div class="wrap">
+  <div class="kicker">Live now</div>
+  <h2>Decode a VIN for free.</h2>
+  <p class="lead">See the factory make, model, year and engine for any 17-character VIN. This uses the public NHTSA decoder. It is not the car's history or condition.</p>
+  <form id="vinform" class="check light" action="#decode">
+    <label for="vin">17-character VIN</label>
+    <input id="vin" name="vin" placeholder="17-character VIN" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24">
+    <button type="submit">Decode</button>
+  </form>
+  <div id="vinresult" class="vinresult" aria-live="polite"></div>
+  <p class="note">The VIN you type is sent from your browser to the US NHTSA's public decoder. Saaz does not store it. Japanese frame numbers and number plates are not supported yet.</p>
+  <noscript><p class="note">The decoder needs JavaScript.</p></noscript>
+</div></section>
+<script src="/saaz/preview/assets/vin.js" defer></script>
 <section class="band soft"><div class="wrap split">
   <div>
     <div class="kicker">The record</div>
@@ -97,17 +112,9 @@
 </div></section>
 
 
-<section class="band closing"><div class="wrap split">
-  <div>
-    <div class="kicker">Before it opens</div>
-    <h2>What has to be in place first.</h2>
-    <ul class="depends"><li>Inspections running, so records exist</li><li>Chassis number and plate matching rules</li></ul>
-    <p class="note">This service is not live. Nothing here can be booked or paid for yet.</p>
-  </div>
-  <div>
-    <div class="kicker">Related</div>
-    <ul class="services single"><li><a href="/saaz/preview/inspections/"><span class="ico"><svg class="icon"><use href="#i-check"/></svg></span><span><span class="svc-name">Saaz Check</span><span class="svc-line" style="display:block">A vetted garage inspects the car before you pay. The report is saved to the car&#x27;s history.</span><span class="svc-meta"><span class="status planned">Planned · Early 2027</span><span>Buyers and sellers</span></span></span><span class="svc-go"><svg class="icon"><use href="#i-arrow"/></svg></span></a></li><li><a href="/saaz/preview/cars/"><span class="ico"><svg class="icon"><use href="#i-car"/></svg></span><span><span class="svc-name">Inspected cars</span><span class="svc-line" style="display:block">Only cars that passed a Saaz inspection, each shown with its report.</span><span class="svc-meta"><span class="status planned">Planned · Early 2027</span><span>Buyers</span></span></span><span class="svc-go"><svg class="icon"><use href="#i-arrow"/></svg></span></a></li></ul>
-  </div>
+<section class="band closing"><div class="wrap">
+  <div class="kicker">Related</div>
+  <ul class="services single" style="max-width:640px"><li><a href="/saaz/preview/inspections/"><span class="ico"><svg class="icon"><use href="#i-check"/></svg></span><span><span class="svc-name">Saaz Check</span><span class="svc-line" style="display:block">A vetted garage inspects the car before you pay. The report is saved to the car&#x27;s history.</span><span class="svc-meta"><span>Buyers and sellers</span></span></span><span class="svc-go"><svg class="icon"><use href="#i-arrow"/></svg></span></a></li><li><a href="/saaz/preview/cars/"><span class="ico"><svg class="icon"><use href="#i-car"/></svg></span><span><span class="svc-name">Inspected cars</span><span class="svc-line" style="display:block">Only cars that passed a Saaz inspection, each shown with its report.</span><span class="svc-meta"><span>Buyers</span></span></span><span class="svc-go"><svg class="icon"><use href="#i-arrow"/></svg></span></a></li></ul>
 </div></section>
 
 </main>

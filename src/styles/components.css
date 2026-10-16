@@ -145,3 +145,17 @@
 @media(min-width:760px){.services{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.services.single{grid-template-columns:minmax(0,1fr)}.services a{grid-template-columns:52px minmax(0,1fr) 24px}}
 @media(min-width:900px){.split{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
 .status{white-space:normal;max-width:100%}
+/* VIN decoder */
+.check button{cursor:pointer}
+.check button:not(:disabled){background:var(--accent);color:var(--navy)}
+.check.light{box-shadow:none;border:1px solid var(--line);margin-top:var(--s-4)}
+.vinresult{margin-top:var(--s-4);max-width:720px}
+.vin-msg{border-radius:12px;padding:14px 16px;display:grid;gap:4px;background:var(--soft)}
+.vin-msg b{color:var(--navy)}
+.vin-msg span{color:var(--mut)}
+.vin-msg.warn{background:#FBEEDD}
+.vin-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.vin-head b{font-size:22px;color:var(--navy)}
+.vin-code{font-family:var(--mono);background:var(--soft);padding:3px 8px;border-radius:6px;font-size:14px}
+.vinresult .specs{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+#decode,[id]{scroll-margin-top:72px}

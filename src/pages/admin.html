@@ -1,0 +1,89 @@
+<!-- {"title": "Saaz admin", "description": "Saaz staff sign-in.", "nav": "", "noindex": true} -->
+<section class="admin"><div class="wrap">
+  <div id="a-config" class="admin-card" hidden>
+    <h1>Admin is not connected yet</h1>
+    <p>The admin needs a Supabase project. Until it is set up, nobody can sign in and no car can be added here.</p>
+    <ol class="admin-steps">
+      <li>Create a free project at supabase.com. Pick the region closest to Uganda.</li>
+      <li>In the SQL Editor, run <code>supabase/schema.sql</code> from the repo.</li>
+      <li>Under Authentication, turn off public sign-ups, then add each admin's email and password.</li>
+      <li>Add each admin to the <code>admins</code> table (the last lines of schema.sql show how).</li>
+      <li>Copy the Project URL and the anon public key into <code>src/data/site.json</code>, then rebuild.</li>
+    </ol>
+  </div>
+
+  <form id="a-login" class="admin-card narrow" hidden>
+    <h1>Admin sign in</h1>
+    <label>Email<input type="email" id="a-email" autocomplete="username" required></label>
+    <label>Password<input type="password" id="a-pass" autocomplete="current-password" required></label>
+    <button class="btn" type="submit">Sign in</button>
+    <p class="a-err" id="a-login-err" role="alert"></p>
+  </form>
+
+  <div id="a-denied" class="admin-card narrow" hidden>
+    <h1>This account is not an admin</h1>
+    <p>Ask an existing admin to add you to the admins table.</p>
+    <button class="btn ghost-dark" type="button" data-signout>Sign out</button>
+  </div>
+
+  <div id="a-app" hidden>
+    <div class="a-top">
+      <h1>Cars</h1>
+      <div class="a-top-r"><span id="a-who"></span><button class="btn" type="button" id="a-new">Add a car</button><button class="btn ghost-dark" type="button" data-signout>Sign out</button></div>
+    </div>
+    <p class="a-msg" id="a-msg" role="status"></p>
+    <div class="a-tablewrap"><table class="a-table">
+      <thead><tr><th>Ref</th><th>Car</th><th>Price (UGX)</th><th>Source</th><th>Review</th><th>Status</th><th></th></tr></thead>
+      <tbody id="a-rows"><tr><td colspan="7">Loading…</td></tr></tbody>
+    </table></div>
+
+    <form id="a-form" class="admin-card" hidden>
+      <h2 id="a-form-title">Add a car</h2>
+      <fieldset><legend>The car</legend>
+        <div class="a-grid">
+          <label>Saaz ref<input name="ref" required pattern="SZ-[0-9]{4,}" placeholder="SZ-0001"></label>
+          <label>Source<select name="source" required><option value="local">Local car</option><option value="import">Saaz import</option></select></label>
+          <label>Make<input name="make" required></label>
+          <label>Model<input name="model" required></label>
+          <label>Year<input name="year" type="number" min="1980" max="2100" required></label>
+          <label>Body<select name="body" required><option>SUV</option><option>Sedan</option><option>Hatchback</option><option>Minivan</option><option>Wagon</option><option>Pick up</option><option>Van</option><option>Truck</option><option>Bus</option><option>Coupe</option></select></label>
+          <label>Fuel<select name="fuel" required><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select></label>
+          <label>Gearbox<select name="gearbox" required><option>Automatic</option><option>Manual</option></select></label>
+          <label>Drive<select name="drive" required><option>2WD</option><option>4WD</option></select></label>
+          <label>Mileage (km)<input name="km" type="number" min="0" required></label>
+          <label>Engine (cc)<input name="cc" type="number" min="1"></label>
+          <label>Colour<input name="colour"></label>
+          <label>Price (UGX)<input name="price_ugx" type="number" min="1" required placeholder="40000000"></label>
+          <label>Area<input name="area" required placeholder="Kampala, Ntinda"></label>
+          <label>Seller<select name="seller" required><option>Saaz</option><option>Private seller</option><option>Dealer</option></select></label>
+          <label>Chassis or frame number<input name="chassis" required autocapitalize="characters" placeholder="ZSU60-0012210"><small>Only a masked form is saved, e.g. ZSU60-•••2210</small></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Review</legend>
+        <div class="a-grid">
+          <label>Result<select name="review_result"><option value="">Not reviewed yet</option><option>Passed</option><option>Failed</option></select></label>
+          <label>Review date<input name="review_date" type="date"></label>
+          <label>Certified shop<input name="review_garage" placeholder="Shop name"></label>
+        </div>
+        <label>Findings, one per line: area | attention or note | what was found<textarea name="findings" rows="4" placeholder="Tyres | attention | Front tyres at about 30% tread"></textarea></label>
+      </fieldset>
+      <fieldset><legend>Photos</legend>
+        <input type="file" id="a-files" accept="image/*" multiple>
+        <p class="a-hint">Photos are resized to 1600 px and saved as WebP before upload. Blur or crop number plates before uploading.</p>
+        <div class="a-thumbs" id="a-thumbs"></div>
+        <label class="a-check"><input type="checkbox" name="plates_hidden"> I checked every photo: no number plate or face can be read</label>
+      </fieldset>
+      <div class="a-actions">
+        <button class="btn" type="submit" data-status="draft">Save as draft</button>
+        <button class="btn" type="submit" data-status="published">Publish</button>
+        <button class="btn ghost-dark" type="button" id="a-cancel">Cancel</button>
+      </div>
+      <p class="a-hint">A car can only be published after it passed a review, with a date, a certified shop, and plates confirmed hidden. The database refuses anything else.</p>
+      <p class="a-err" id="a-form-err" role="alert"></p>
+    </form>
+  </div>
+  <noscript><p>The admin needs JavaScript.</p></noscript>
+</div></section>
+{{saaz_config}}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="{{base}}assets/admin.js" defer></script>

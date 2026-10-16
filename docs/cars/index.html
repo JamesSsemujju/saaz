@@ -44,10 +44,11 @@
   <a class="logo" href="/saaz/"><i aria-hidden="true">S</i>SAAZ</a>
   <nav class="mainnav" aria-label="Main"><a href="/saaz/inspections/">Inspections</a><a href="/saaz/cars/" aria-current="page">Inspected cars</a><a href="/saaz/sell/">Sell</a><a href="/saaz/import/">Import</a><a href="/saaz/finance/">Finance</a><a href="/saaz/garages/">Garages</a><a href="/saaz/help/">Help</a></nav>
   
+  <a class="hsign" href="/saaz/admin/">Sign in</a>
   <details class="menu">
     <summary>Menu</summary>
     <nav class="menu-panel" aria-label="All of Saaz">
-      <div class="group"><div class="label">Services</div><a href="/saaz/inspections/">Saaz Check<small>Early 2027</small></a><a href="/saaz/history/">Vehicle history<small>Early 2027</small></a><a href="/saaz/cars/">Inspected cars<small>Early 2027</small></a><a href="/saaz/sell/">Sell your car<small>Early 2027</small></a><a href="/saaz/garages/">Partner garages<small>Early 2027</small></a><a href="/saaz/import/">Import desk<small>Early 2027</small></a><a href="/saaz/finance/">Finance<small>Mid 2027</small></a><a href="/saaz/partners/">Become a partner garage<small>Sign-up before launch</small></a></div>
+      <div class="group"><div class="label">Services</div><a href="/saaz/inspections/">Saaz Check</a><a href="/saaz/history/">Vehicle history</a><a href="/saaz/cars/">Inspected cars</a><a href="/saaz/sell/">Sell your car</a><a href="/saaz/garages/">Partner garages</a><a href="/saaz/import/">Import desk</a><a href="/saaz/finance/">Finance</a><a href="/saaz/partners/">Become a partner garage</a></div>
       <div class="group"><div class="label">Help</div>
         <a href="/saaz/how-it-works/">How it works</a>
         <a href="/saaz/safety/">Buying safely</a>
@@ -62,7 +63,7 @@
 <section class="phero slim"><div class="wrap">
   <div>
     <nav class="crumbs" aria-label="Breadcrumb"><a href="/saaz/">Home</a><span>/</span><span>Inspected cars</span></nav>
-    <div class="top" style="margin-top:14px"><span class="status planned">Planned · Early 2027</span></div>
+    <div class="top" style="margin-top:14px"></div>
     <h1 style="margin-top:12px">Inspected cars</h1>
     <p class="sub" style="margin-top:10px">Every car here passed a Saaz inspection at a partner garage. The report is on the listing.</p>
   </div>
@@ -75,7 +76,7 @@
     <details class="filter-box" open>
       <summary>Filters</summary>
       <form id="carfilter" hidden>
-        
+        <label>Make<select name="make"><option value="">Any</option></select></label><label>Body type<select name="body"><option value="">Any</option></select></label><label>Price (UGX)<select name="price"><option value="">Any</option><option value="0-19999999">Under 20m</option><option value="20000000-39999999">20m to 40m</option><option value="40000000-69999999">40m to 70m</option><option value="70000000-99999999">70m to 100m</option><option value="100000000-">Over 100m</option></select></label><label>Year<select name="year"><option value="">Any</option><option value="0-2010">2010 and older</option><option value="2011-2014">2011 to 2014</option><option value="2015-2017">2015 to 2017</option><option value="2018-">2018 and newer</option></select></label><label>Fuel<select name="fuel"><option value="">Any</option></select></label><label>Gearbox<select name="gearbox"><option value="">Any</option></select></label>
         <button type="reset" class="reset">Clear filters</button>
       </form>
       <noscript><p class="note">Filters need JavaScript. All cars are listed.</p></noscript>
@@ -96,7 +97,7 @@
     </div>
     <div class="cars" id="carlist"></div>
     <div class="empty" id="nomatch" hidden><b>No cars match these filters</b><span>Clear a filter to see more cars.</span></div>
-    <div class="empty"><b>No cars listed yet</b><span>A car appears here only after it passes a Saaz inspection. Inspections are planned to start early 2027.</span></div>
+    <div class="empty" id="carsempty"><b>No cars listed yet</b><span>A car appears here only after it passes a Saaz review. Check back soon.</span></div>
   </div>
 </div></section>
 
@@ -110,7 +111,8 @@
   </ol>
   <p class="note" style="margin-top:28px"><a href="/saaz/inspections/">How Saaz inspections work</a> · <a href="/saaz/sell/">Sell your car</a></p>
 </div></section>
-
+<script>window.SAAZ={"base": "/saaz/", "supabaseUrl": "https://dkxyvlkhpnajbpethwqb.supabase.co", "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRreHl2bGtocG5hamJwZXRod3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwODc3ODYsImV4cCI6MjEwNzY2Mzc4Nn0.EiMjr4rSL00V5pv8mHEYDN5_jnqwB2wXDIX25lEJ4YA", "whatsapp": ""}</script>
+<script src="/saaz/assets/live-cars.js" defer></script>
 
 </main>
 <footer class="site-footer"><div class="wrap">

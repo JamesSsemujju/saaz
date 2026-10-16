@@ -6,10 +6,12 @@
   "basePath": "/saaz/",
   "_basePath": "GitHub Pages project URL is jamesssemujju.github.io/saaz/. Use \"/\" if the site moves to its own domain.",
   "city": "Kampala",
-  "launch": "early 2027",
-  "_launch": "ESTIMATE from the spec plan: first paid inspection 15 Jan 2027.",
   "whatsapp": "",
   "_whatsapp": "PLACEHOLDER. Digits only with country code, e.g. 2567XXXXXXXX. Empty = every WhatsApp link stays hidden.",
   "year": "2026",
-  "payments": "MTN MoMo or Airtel Money"
+  "payments": "MTN MoMo or Airtel Money",
+  "supabaseUrl": "https://dkxyvlkhpnajbpethwqb.supabase.co",
+  "_supabaseUrl": "From Supabase: Project Settings > API > Project URL, e.g. https://abcd1234.supabase.co. Empty = admin page shows set-up instructions and the site uses src/data/cars.json only.",
+  "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRreHl2bGtocG5hamJwZXRod3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwODc3ODYsImV4cCI6MjEwNzY2Mzc4Nn0.EiMjr4rSL00V5pv8mHEYDN5_jnqwB2wXDIX25lEJ4YA",
+  "_supabaseAnonKey": "From Supabase: Project Settings > API > anon public key. This key is meant to be public; the database rules in supabase/schema.sql protect the data. Never put the service_role key here."
 }
