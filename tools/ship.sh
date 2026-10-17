@@ -21,9 +21,19 @@ unzip -oq "$ZIP" -d .
 python3 build.py
 git add docs src supabase tools build.py README.md
 
-if git diff --cached --quiet; then echo "Nothing changed. Nothing to push."; exit 0; fi
+if git diff --cached --quiet; then
+  ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+  if [ "$ahead" -gt 0 ]; then
+    echo "$ahead saved update(s) not on GitHub yet. Pushing now."
+    git push origin main && echo "Pushed. The site updates in about a minute."
+  else
+    echo "Nothing changed. Nothing to push."
+  fi
+  exit 0
+fi
 git diff --cached --stat | tail -1
 read -r -p "Push to the live site? (y/n) " answer
+case "$answer" in [yY]|[yY][eE][sS]) answer=y;; esac
 if [ "$answer" = "y" ]; then
   git commit -q -m "Update from $(basename "$ZIP")"
   git push origin main

@@ -14,7 +14,7 @@ How it fits together:
   src/data/modules.json   every service: drives nav, homepage list, footer, module pages
   src/data/images.json    fixed design images (files live in src/assets/img/)
   src/data/cars.json      real listings (empty until inspections run)
-  src/layouts/            base.html wraps every page; module.html = each service page; car.html = each car page
+  src/layouts/            base.html wraps every page; app.html wraps the marketplace app; module.html = each service page; car.html = each car page
   src/partials/           header, footer, icons, car illustration
   src/pages/              one-off pages. A page named like a service (cars.html) replaces that service's template page.
   src/modules/<slug>.html extra sections for one service page (optional)
@@ -29,7 +29,7 @@ MONO = ' class="mono"'
 
 ROOT = Path(__file__).resolve().parent
 SRC, DOCS = ROOT / "src", ROOT / "docs"
-CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "admin.css"]
+CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "admin.css", "app.css"]
 DESKTOP_NAV = ["inspections", "cars", "sell", "import", "finance", "garages"]
 BUYER_FOOT = ["inspections", "history", "cars", "import", "finance"]
 SELLER_FOOT = ["sell", "garages", "partners"]
@@ -126,7 +126,7 @@ def build_site(out, base, cars, preview):
         body = render(content, ctx)
         ctx.update(title=esc(meta["title"]), description=esc(meta["description"]), content=body)
         if meta.get("noindex"): ctx["robots"] = '\n<meta name="robots" content="noindex,nofollow">'
-        return render((SRC / "layouts/base.html").read_text(encoding="utf-8"), ctx)
+        return render((SRC / "layouts" / (meta.get("layout", "base") + ".html")).read_text(encoding="utf-8"), ctx)
 
     # ---- cars ----
     def photo(c, cls="car-photo", tag=True):

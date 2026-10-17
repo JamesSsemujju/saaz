@@ -1,6 +1,6 @@
 # Saaz website
 
-The public Saaz website: a homepage, one page for each service, and help pages. It is built from small source files into plain HTML for GitHub Pages. Nothing on it is live yet. Every service shows its planned date.
+The public Saaz website (homepage, one page per service, help pages) and the Saaz marketplace app at `/app/`. Built from small source files into plain HTML for GitHub Pages; the app reads and writes the Saaz Supabase database.
 
 ## Build and publish
 1. Edit files in `src/`.
@@ -40,24 +40,32 @@ docs/                    built output. Never edit by hand
 - 8 service pages: Saaz Check, Vehicle history, Inspected cars, Sell your car, Partner garages, Import desk, Finance, Become a partner garage
 - How it works, Buying safely, Questions, About, Privacy
 
-## Admin and the car database (added 17 Oct 2026)
-- `/admin/` is the staff sign-in. It is not linked anywhere, and it carries noindex. Admins add, edit, publish, unpublish, mark sold and delete cars, and upload photos. Photos are resized to 1600 px WebP in the browser.
-- Data lives in Supabase. `supabase/schema.sql` creates the `cars` and `admins` tables, a public `car-photos` bucket, and the access rules:
-  - The public can read published cars only.
-  - Only people in `admins` can write.
-  - The database refuses to publish a car without a Passed review, a review date, a certified shop and plates confirmed hidden.
-- Set-up, done once:
-  1. Create a Supabase project.
-  2. Run `schema.sql` in the SQL Editor.
-  3. Turn off public sign-ups.
-  4. Add admin users and their rows in `admins`.
-  5. Put the Project URL and anon key in `src/data/site.json`, then rebuild.
-- Published cars appear on `/cars/` and `/car/?ref=SZ-0001` straight from the database, with no rebuild (`src/scripts/live-cars.js`).
-- Only a masked chassis number is saved (for example ZSU60-•••2210).
-- Removing a photo from a car doesn't yet delete the file from storage.
-- Tested against a simulated Supabase: wrong password, non-admin, saving a draft, publishing refused without a review, publishing with a review, and a duplicate ref.
-- Live project (17 Oct 2026): ref `dkxyvlkhpnajbpethwqb`, region eu-west-1. Schema applied as 6 migrations (saaz_admins, saaz_cars, saaz_is_admin, saaz_touch_trigger, saaz_policies, saaz_photo_bucket). Checked on the live database: the public can't add cars (refused by row-level security), and publishing without a review is refused by `publish_needs_review`. Admin sign-in from a browser is not tested yet.
-- The Supabase security advisor warns that anyone can call `is_admin()`. Kept on purpose: the access rules need it, and it only says whether the caller is an admin.
+## Marketplace app (added 17 Oct 2026)
+Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at `/app/` (one page, hash routes). The header's Sign in opens it.
+
+**The rule:** no Saaz review, no listing. A review is made inside Saaz by a signed-in member of a certified garage, on a job arranged through Saaz.
+
+**Files**
+- `supabase/marketplace_1_tables.sql` to `_4_access.sql`: tables, every action as a database function, and read rules. Run them in order after `schema.sql`. Nothing in `schema.sql` changes.
+- `src/pages/app.html`, `src/layouts/app.html`, `src/styles/app.css`
+- `src/scripts/app-core.js` (sign-in, router), `app-public.js` (browse, car page, what's selling, verify, report document), `app-seller.js` (list a car, my cars, offers, deals), `app-garage.js` (apply, jobs, review editor, team), `app-admin.js` (all admin tabs)
+- `src/scripts/supabase.js`: supabase-js 2.45.4 (MIT), kept locally instead of a CDN.
+- `/admin/` now forwards to `/app/#/admin`. `/car/?ref=` forwards to the app. `/cars/` lists live cars from the marketplace. The old `cars` table is no longer used (dropping it needs your approval).
+
+**Security:** the website never decides who may do what. Every change goes through a database function that checks the caller. Tables have read rules only; nobody writes them directly. Internal helpers can't be called from the website. The audit trail can't be edited or deleted.
+
+**What's built:** accounts (one type, Sign in as Buyer, Seller, Garage team or Admin); VIN-first listing with the vehicle record and odometer history; garage applications, direct adds and teams; the garage line (one garage in play per car, nearest first, 24-hour contact window, pass, decline, time-out, release, admin assign and restart); in-app conversation with phone numbers and emails hidden until the seller agrees; the Saaz review editor (12 checks, body map, odometer, notes) and the report document (number, version, score, rosette and wave bands from the fingerprint, signature block, QR and verification code, A4 print); public Verify that detects altered records; admin approval; offers with offer rules, auto-reject or flag, counters, admin propose and mark agreed, completion; contacts shared only after agreement; demand counts (views one per person per day, saves, offers, auto-rejected, 14-day chart, model comparison) and What's selling with Selling fast; inbox, outbox and audit trail; Saaz-owned cars and Saaz imports; settings.
+
+**Left out on purpose:** payments of any kind, and the platform fee (no money moves through Saaz).
+
+**Placeholders:** every number in Admin, Settings. Mobile numbers aren't verified by SMS (`require_phone_verified` is off until an SMS provider is connected). Email and SMS notices land in the in-app inbox only. VIN decoding uses starter tables. The fingerprint is a check value, not a cryptographic signature. The QR code loads from cdnjs.
+
+**Tested (17 Oct 2026):**
+- Database: 72 checks against a local Postgres copy of the Saaz Supabase setup, including the upgrade from the live schema with an existing admin.
+- Browser: the whole flow at 320, 390 and 1280 px against a local stand-in for Supabase (66 checks each): garage applies, admin approves, seller lists with photos, garage contacts, seller agrees, garage issues the review, public verify, admin approves, buyer offers (auto-rejected, then accepted after a counter), contacts shared, admin completes, What's selling, every admin tab. No sideways scroll, no script errors.
+- Not tested: the real Supabase project (the schema isn't applied yet), real email confirmation, a real phone on slow data.
+
+**Open calls:** one garage in play per car (built) or per seller across all their cars; the platform fee (left out).
 
 ## VIN decoder (added 17 Oct 2026)
 - The first live feature. Use the homepage field or the Vehicle history page (`/history/#decode`).
