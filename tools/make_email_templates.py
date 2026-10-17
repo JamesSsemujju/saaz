@@ -57,11 +57,8 @@ def prepare_icons():
 
 def footer():
     help_line = f'Our team is here to help. <a href="mailto:{esc(CFG["help_email"])}" style="color:{LINK}">Write to us</a>'
-    phones = CFG["phone"] if isinstance(CFG["phone"], list) else [CFG["phone"]]
-    phones = [p for p in phones if p]
-    if phones:
-        links = " or ".join(f'<a href="tel:{esc(p.replace(" ", ""))}" style="color:{LINK};white-space:nowrap">{esc(p)}</a>' for p in phones)
-        help_line += f' or call us on {links}'
+    if CFG["phone"]:
+        help_line += f' or <a href="tel:{esc(CFG["phone"].replace(" ", ""))}" style="color:{LINK}">call us</a>'
     site = CFG["site_url"].replace("https://", "").rstrip("/")
     rows = [
         f'<tr><td style="padding:6px 0;font-size:13px;color:{INK}">{help_line}.</td></tr>',

@@ -4,32 +4,17 @@
   "image_base": "https://jamesssemujju.github.io/saaz/assets/img/",
   "_image_base": "Emails can't carry images inside them. Email apps download each image from this public address, so images only show once the site is shipped.",
   "help_email": "info@saazinvestmentsltd.com",
-  "phone": [
-    "+256 705 298 524",
-    "+256 705 276 226"
-  ],
-  "_phone": "From James, 17 Oct 2026. Shown as 'call us on ...'. Empty list = hidden.",
+  "phone": "",
+  "_phone": "PLACEHOLDER. Shown as 'Call us'. Digits with country code, e.g. +2567XXXXXXXX. Empty = hidden.",
   "legal_name": "Saaz",
   "_legal_name": "ASSUMPTION: registered company name not confirmed (the email domain suggests Saaz Investments Ltd). Same as legalName in src/data/site.json.",
   "address": "Kampala, Uganda",
   "_address": "PLACEHOLDER. Add the street address once confirmed.",
   "year": "2026",
   "social": [
-    {
-      "name": "TikTok",
-      "url": "https://www.tiktok.com/@saaz__automotive",
-      "icon": "social/tiktok.png"
-    },
-    {
-      "name": "Instagram",
-      "url": "https://www.instagram.com/saaz__automotive",
-      "icon": "social/instagram.png"
-    },
-    {
-      "name": "YouTube",
-      "url": "",
-      "icon": "social/youtube.png"
-    }
+    {"name": "TikTok", "url": "", "icon": "social/tiktok.png"},
+    {"name": "Instagram", "url": "", "icon": "social/instagram.png"},
+    {"name": "YouTube", "url": "", "icon": "social/youtube.png"}
   ],
-  "_social": "TikTok and Instagram from James, 17 Oct 2026 (tracking parts of the links removed). YouTube PLACEHOLDER: link not given yet, so its button is hidden. Icons in src/assets/img/social/ supplied by James."
+  "_social": "PLACEHOLDER URLs: paste each profile link, e.g. https://www.tiktok.com/@yourhandle. Empty url = that button is left out. If the icon file exists in src/assets/img/ it is shown; if not, the name is shown in a round button."
 }
