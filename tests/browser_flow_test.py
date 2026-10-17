@@ -10,8 +10,13 @@ for i, c in enumerate([(200, 40, 40), (40, 120, 200), (30, 160, 80), (220, 180, 
     p = os.path.join(D, f"p{i}.jpg"); Image.new("RGB", (1600, 1200), c).save(p); photos.append(p)
 db = psycopg2.connect(host="/var/tmp/saazpg", port=5433, user="postgres", dbname="sb"); db.autocommit = True
 def sql(q, a=()):
-    c = db.cursor(); c.execute(q, a); return c.fetchall() if c.description else None
+    c = db.cursor(); c.execute(q, a or None); return c.fetchall() if c.description else None
 ok = bad = 0
+import base64, hashlib, hmac, struct, time
+def totp(secret, t=None):
+    k = base64.b32decode(secret + "=" * (-len(secret) % 8)); c = int((t or time.time()) // 30)
+    h = hmac.new(k, struct.pack(">Q", c), hashlib.sha1).digest(); o = h[-1] & 15
+    return "%06d" % ((struct.unpack(">I", h[o:o + 4])[0] & 0x7fffffff) % 1000000)
 def check(name, cond, extra=""):
     global ok, bad
     if cond: ok += 1; print("PASS", name)
@@ -40,8 +45,28 @@ with sync_playwright() as pw:
     # Admin
     adm = ctx("admin"); signup(adm, "Ann Admin", "admin@saaz.test")
     sql("insert into public.admins (user_id, name) select id, 'Ann Admin' from auth.users where email='admin@saaz.test'")
-    signin(adm, "admin@saaz.test", "admin")
+    # The normal sign-in has no Admin choice, and Admin looks like a missing page without the authenticator
+    go(adm, "#/signin"); check("normal sign-in offers no Admin", adm.locator("input[name=as][value=admin]").count() == 0 and "Admin" not in adm.inner_text("#view"))
+    signin(adm, "admin@saaz.test", "buyer")
+    go(adm, "#/admin"); check("admin pages hidden after password only", "Page not found" in adm.inner_text("#view"), adm.inner_text("#view")[:200])
+    adm.click("#acct summary"); check("no Admin area in the menu after password only", adm.locator(".acctmenu [data-mode=admin]").count() == 0)
+    adm.click("#signout"); adm.wait_for_timeout(800)
+    # Staff sign-in: password, add the authenticator, approve it from the SQL Editor, sign in again with a code
+    def staff(code_from_key=None):
+        go(adm, "#/ops-7q4k"); adm.fill("input[name=email]", "admin@saaz.test"); adm.fill("input[name=password]", "demo1234"); adm.click("#pf button"); adm.wait_for_timeout(1200)
+    staff()
+    key = adm.inner_text(".key code").strip(); check("staff page shows a QR code and key", adm.locator("img.qr").count() == 1 and len(key) >= 16)
+    adm.fill("input[name=code]", "000000" if totp(key) != "000000" else "111111"); adm.click("#cf button"); adm.wait_for_timeout(800)
+    check("wrong code refused", "Wrong code" in adm.inner_text("#cerr"), adm.inner_text("#view")[:200])
+    adm.fill("input[name=code]", totp(key)); adm.click("#cf button"); adm.wait_for_timeout(1500)
+    check("authenticator added, waiting for approval", "Authenticator added" in adm.inner_text("#view"), adm.inner_text("#view")[:300])
+    pin = open(os.path.join(os.environ.get("SAAZ_REPO", os.path.join(D, "..")), "supabase", "marketplace_10b_pin_admin_authenticator.sql")).read().replace("ssemujjujames@saazinvestmentsltd.com", "admin@saaz.test")
+    sql(pin)
+    adm.click("#so"); adm.wait_for_timeout(800)
+    staff(); check("second sign-in asks only for the code", adm.locator("img.qr").count() == 0 and adm.locator("input[name=code]").count() == 1)
+    adm.fill("input[name=code]", totp(key)); adm.click("#cf button"); adm.wait_for_timeout(1800)
     check("admin lands on overview", "#/admin" in adm.url and adm.locator("text=Garage applications").count() == 1, adm.url)
+    check("admin sign-in in the activity log", sql("select count(*) from audit_log where action='admin signed in with authenticator'")[0][0] == 1)
     overflow(adm, "admin overview")
 
     # Garage applies with a new account in the same form

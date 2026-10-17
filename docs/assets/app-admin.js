@@ -26,6 +26,72 @@
   }
   var A = function (p, h, n) { S.route("/admin" + p, h, "admin"); };
 
+  // ---------- Staff sign-in: the only way into Admin ----------
+  // Not linked from anywhere. Password, then the admin's authenticator app. The database only treats the session as admin
+  // when it passed the ONE authenticator pinned to that admin from the SQL Editor, in the last 12 hours (part 10).
+  // To move this page, change STAFF_PATH and tell the admins the new address.
+  var STAFF_PATH = "/ops-7q4k";
+  S.route(STAFF_PATH, function (v) {
+    var shell = function (h) { v.innerHTML = "<div class='narrow staff'><h1>Sign in</h1>" + h + "</div>"; };
+    var fail = function (msg) { S.db.auth.signOut().finally(function () { S.state.roles = null; S.mode("buyer"); shell("<p class='err' role='alert'>" + esc(msg) + "</p><p><a href='#" + STAFF_PATH + "' onclick='Saaz.render()'>Start again</a></p>"); }); };
+    var enter = function () {
+      return S.loadRoles().then(function (r) {
+        if (!r || !r.admin) {
+          var just = S._staffEnrolled; S._staffEnrolled = false;
+          if (just) { shell("<div class='box good'><b>Authenticator added</b><p>It works. It has to be approved for this account before you can continue (README, Admin sign-in). Then sign in here again.</p></div><button class='btn' id='so'>Sign out</button>"); S.$("#so").onclick = function () { fail("Signed out."); }; return; }
+          return fail("This account can't sign in here.");
+        }
+        return S.rpc("admin_signed_in").catch(function () {}).then(function () { S.mode("admin"); S.toast("Signed in to Admin."); S.go("#/admin"); });
+      });
+    };
+    var codeForm = function (factorId, intro) {
+      shell(intro + "<form id='cf' class='stack'><label>6-digit code from your authenticator app<input name='code' inputmode='numeric' autocomplete='one-time-code' pattern='[0-9]{6}' maxlength='6' required autofocus></label>" +
+        "<p class='err' id='cerr' role='alert'></p><button class='btn wide'>Continue</button></form>");
+      S.$("#cf").onsubmit = function (e) {
+        e.preventDefault(); var b = e.target.querySelector("button"), code = S.form(e.target).code; b.disabled = true; S.$("#cerr").textContent = "";
+        S.db.auth.mfa.challenge({ factorId: factorId }).then(function (c) {
+          if (c.error) throw c.error;
+          return S.db.auth.mfa.verify({ factorId: factorId, challengeId: c.data.id, code: code });
+        }).then(function (r) { if (r.error) throw r.error; return enter(); })
+          .catch(function (e2) { b.disabled = false; S.$("#cerr").textContent = /invalid|code/i.test(e2.message || "") ? "Wrong code. Codes change every 30 seconds: use the one showing now." : S.friendly(e2); });
+      };
+    };
+    var enroll = function (all) {
+      // Clear set-ups that were started and never finished, then start a new one
+      return Promise.all(all.filter(function (f) { return f.status !== "verified"; }).map(function (f) { return S.db.auth.mfa.unenroll({ factorId: f.id }); })).then(function () {
+        return S.db.auth.mfa.enroll({ factorType: "totp", friendlyName: "Saaz admin " + new Date().toISOString().slice(0, 16), issuer: "Saaz" });
+      }).then(function (r) {
+        if (r.error) throw r.error;
+        S._staffEnrolled = true;
+        codeForm(r.data.id, "<p class='lead'>Add Saaz to an authenticator app (Google Authenticator, Microsoft Authenticator or similar). Scan the code, or type the key.</p>" +
+          "<img class='qr' src='" + esc(r.data.totp.qr_code) + "' width='200' height='200' alt='QR code for your authenticator app'>" +
+          "<p class='key'>Key: <code>" + esc(r.data.totp.secret) + "</code></p><p class='note'>Keep this key off shared devices. Anyone with it can make codes.</p>");
+      });
+    };
+    var step2 = function () {
+      return S.db.auth.mfa.getAuthenticatorAssuranceLevel().then(function (l) {
+        if (l.error) throw l.error;
+        // Already passed an authenticator in this session. If it isn't the pinned one, enter() says no.
+        if (l.data.currentLevel === "aal2") return enter();
+        return S.db.auth.mfa.listFactors().then(function (f) {
+          if (f.error) throw f.error;
+          var ok = f.data.totp;
+          if (ok.length) return codeForm(ok[0].id, "");
+          return enroll(f.data.all || []);
+        });
+      }).catch(function (e) { fail(S.friendly(e)); });
+    };
+    if (S.signedIn()) return step2();
+    shell("<form id='pf' class='stack'><label>Email<input name='email' type='email' autocomplete='username' required></label>" +
+      "<label>Password<input name='password' type='password' autocomplete='current-password' required></label><p class='err' id='perr' role='alert'></p><button class='btn wide'>Continue</button></form>");
+    S.$("#pf").onsubmit = function (e) {
+      e.preventDefault(); var f = S.form(e.target), b = e.target.querySelector("button"); b.disabled = true; S.$("#perr").textContent = "";
+      S.db.auth.signInWithPassword({ email: f.email, password: f.password }).then(function (r) {
+        if (r.error) throw r.error; return step2();
+      }).catch(function (e2) { b.disabled = false; S.$("#perr").textContent = S.friendly(e2); });
+    };
+  });
+
   // Audit trail, shown on the page of the thing it is about. Each row links to what it touched.
   function aboutLink(a) {
     var id = String(a.entity_id);
@@ -184,17 +250,16 @@
           .filter(function (x) { return x[1] != null && x[1] !== ""; }).map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl>" +
         (acts.length ? "<form id='gd' class='stack'><label>Note (needed for more information, reject and suspend)<textarea name='note' rows='2'></textarea></label><div class='row'>" + acts.join("") + "</div></form>" : "") +
         "<section><h2>Team</h2>" + table(["Name", "Email", "Role", "Status", ""], r[1].map(function (t) {
-          return "<tr><td>" + esc(t.name) + "</td><td>" + esc(t.email) + "</td><td>" + esc(S.label(t.role)) + "</td><td>" + esc(S.label(t.status)) + "</td><td>" + (t.user_id && t.status !== "removed" ? "<button class='btn small ghost dark' data-rm='" + t.id + "'>Remove</button>" : "") +
-            (!t.user_id ? "<button class='btn small ghost dark' data-inv='" + esc(t.email) + "'>Send invite email</button>" : "") + "</td></tr>";
+          var info = S.inviteInfo(t);
+          return "<tr><td>" + esc(t.name) + "</td><td>" + esc(t.email) + "</td><td>" + esc(S.label(t.role)) + "</td><td>" + esc(S.label(t.kind === "invite" ? "invited" : t.status)) + (info ? "<br><small>" + info + "</small>" : "") + "</td><td>" + S.teamActions(t, true) + "</td></tr>";
         })) + "</section><section><h2>Car inspection reports this garage issued</h2>" + table(["Document", "Verdict", "Status", "Issued"], r[2].map(function (x) {
           return "<tr><td><a href='#/report/" + esc(x.verify_code) + "'>" + esc(x.doc_no) + "</a></td><td>" + esc(S.label(x.verdict)) + " " + x.score + "</td><td>" + S.chip(x.status) + "</td><td>" + S.day(x.issued_at) + "</td></tr>";
         })) + "</section><div id='ghist'></div>");
       var memberIds = r[1].map(function (t) { return t.id; }).concat(r[1].map(function (t) { return t.user_id; })).filter(Boolean);
       S.q(S.db.from("audit_log").select("*").or("entity_id.eq." + id + ",detail->>garage.eq." + id + (memberIds.length ? ",entity_id.in.(" + memberIds.join(",") + ")" : "")).order("at", { ascending: false }).limit(200))
         .then(function (rows) { return S.historyTable(rows, "History of this garage and its team", false); }).then(function (h) { S.$("#ghist").innerHTML = h; });
-      S.wireInvites(v);
+      S.wireTeam(v);
       var gd = S.$("#gd"); if (gd) gd.onsubmit = function (e) { e.preventDefault(); var b = e.submitter, f = S.form(gd); S.act(b, function () { return S.rpc("admin_decide_garage", { p_garage: id, p_decision: b.value, p_note: f.note }); }, "Saved. The owner is told."); };
-      S.$$("[data-rm]").forEach(function (b) { b.onclick = function () { S.confirmBtn(b, function () { S.act(b, function () { return S.rpc("remove_garage_member", { p_member: b.dataset.rm }); }, "Removed."); }); }; });
     });
   });
   A("/garage-new", function (v) {

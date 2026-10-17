@@ -83,6 +83,22 @@ Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at `/app/`
 - Email needs set-up in Supabase before it reaches real people: (1) Authentication, URL Configuration: Site URL `https://jamesssemujju.github.io/saaz/app/`, and add the same under Redirect URLs. (2) A custom SMTP sender (Authentication, Emails, SMTP Settings). Without it Supabase only emails members of the project's team (source: supabase.com/docs/guides/auth/auth-smtp).
 - Tested: browser flow 73 checks at 320, 390 and 1280 px; text audit with stress values, 0 problems. The Edge Function is not tested (no Deno here).
 
+## Admin sign-in (added 18 Oct 2026)
+Admin is not linked from anywhere and is not on the normal sign-in page. Admins sign in at `app/#/ops-7q4k` (to move it, change `STAFF_PATH` in `src/scripts/app-admin.js`).
+The address is not the lock. The site's code is public, so anyone who reads it can find the address. The lock is in the database:
+
+- `is_admin()` (part 10) is true only if this session passed the admin's own pinned authenticator app, in the last 12 hours. Every admin page, table rule and function uses it, and so does the invite email function.
+- A stolen password gives nothing. A stolen password plus a thief's own authenticator gives nothing, because only the pinned one counts.
+- Without the code, admin pages show "Page not found", like any missing page.
+- Each admin sign-in is written to All activity with the IP address and browser.
+
+First time, or after a lost phone:
+1. Open the staff address, sign in, scan the QR code with an authenticator app, enter the code.
+2. In the Supabase SQL Editor, run `supabase/marketplace_10b_pin_admin_authenticator.sql`. It refuses unless the account has exactly one verified authenticator.
+3. Sign in at the staff address again with a code.
+
+Lost phone: in Supabase, Authentication, Users, open the admin and remove the old authenticator ("factor"), then do steps 1 to 3. A new admin added in the app can't open Admin until steps 1 to 3 are done for them (change the email in the pin script).
+
 ## VIN decoder (added 17 Oct 2026)
 - The first live feature. Use the homepage field or the Vehicle history page (`/history/#decode`).
 - `src/scripts/vin.js` sends the VIN from the visitor's browser to the free NHTSA vPIC API (`DecodeVinValues`, no key). Saaz stores nothing.

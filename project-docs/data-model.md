@@ -1,6 +1,6 @@
 # Data model
 
-Database: Supabase Postgres 17, project `dkxyvlkhpnajbpethwqb`. Source of truth for every rule. Files in order: `supabase/schema.sql` (admins, old cars), `marketplace_1_tables.sql` to `_5_hardening.sql` (live), `_6_audit_fixes.sql` (waiting for approval).
+Database: Supabase Postgres 17, project `dkxyvlkhpnajbpethwqb`. Source of truth for every rule. Files in order: `supabase/schema.sql` (admins, old cars), `marketplace_1_tables.sql` to `_5_hardening.sql` (live), `_6_audit_fixes.sql` (live 17 Oct 2026), `_7_inspection_wording.sql` and `_8_report_privacy.sql` (SQL Editor, combined in `marketplace_run_in_sql_editor_2026-10-17b.sql`).
 
 ## Entities
 
@@ -32,7 +32,7 @@ Indexes: unique partial indexes for one active listing, one open conversation, o
 
 | Change | Why | Status |
 |---|---|---|
-| Part 6: Uganda-only guard, garage needs an Active member, one notice per admin, automatic re-queue, East Africa Time, photo bucket limits | Findings F-03 to F-07, F-16 | Tested locally (10 checks), waiting for approval |
+| Part 6: Uganda-only guard, garage needs an Active member, one notice per admin, automatic re-queue, East Africa Time, photo bucket limits | Findings F-03 to F-07, F-16 | Live 17 Oct 2026 |
 | Enable `pg_cron`, run `tick()` every 15 minutes | F-10 | Proposal |
 | `email_outbox` table: one row per email, status queued, sent, failed, attempts, last error (no message secrets) | F-14 | After SMTP is chosen |
 | `enquiries` and `enquiry_messages` | F-13 | Proposal, needs approval |

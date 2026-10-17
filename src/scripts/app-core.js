@@ -9,6 +9,14 @@
     if (!/(^|&)(access_token|error_description)=/.test(h)) return null;
     var p = new URLSearchParams(h); return { type: p.get("type"), error: p.get("error_description") };
   })();
+  // New email links: ?token_hash=...&type=...#/confirm. The code is only used when the person taps on the page,
+  // so email scanners that open links (Gmail does) can't use it up first. Taken out of the address straight away.
+  var EMAIL_CODE = (function () {
+    var q = new URLSearchParams(location.search), th = q.get("token_hash"), ty = q.get("type");
+    if (!th || !ty) return null;
+    try { history.replaceState(null, "", location.pathname + "#/confirm"); } catch (e) {}
+    return { token_hash: th, type: ty };
+  })();
   // Where an email link should land: ?next=seller (sign-up as seller) or ?next=garage (garage invite)
   var NEXT = new URLSearchParams(location.search).get("next");
   var S = window.Saaz = { routes: [], state: { session: null, roles: null } };
@@ -61,6 +69,19 @@
     return S.db.rpc(fn, args || {}).then(function (r) { if (r.error) throw r.error; return r.data; });
   };
   S.q = function (promise) { return promise.then(function (r) { if (r.error) throw r.error; return r.data; }); };
+  // Pop-up over the current page. buttons: [{text, primary, click(close)}]. Closes on the X, Escape, or a button.
+  S.popup = function (title, html, buttons) {
+    var old = document.getElementById("saaz-pop"); if (old) old.remove();
+    var d = document.createElement("dialog"); d.id = "saaz-pop"; d.className = "pop"; d.setAttribute("aria-labelledby", "pop-h");
+    d.innerHTML = "<button class='pop-x' aria-label='Close'>&times;</button><h2 id='pop-h'>" + S.esc(title) + "</h2><div class='pop-body'>" + html + "</div><div class='pop-acts'></div>";
+    var close = function () { if (d.open) d.close(); d.remove(); };
+    (buttons || [{ text: "OK", primary: true }]).forEach(function (b) {
+      var el = document.createElement("button"); el.className = "btn" + (b.primary ? "" : " ghost"); el.textContent = b.text;
+      el.onclick = function () { if (b.click) b.click(close, el); else close(); }; d.querySelector(".pop-acts").appendChild(el);
+    });
+    d.querySelector(".pop-x").onclick = close; d.addEventListener("cancel", function (e) { e.preventDefault(); close(); });
+    document.body.appendChild(d); d.showModal(); return close;
+  };
   S.toast = function (msg, bad) {
     var t = S.$("#toast"); t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
     clearTimeout(S._t); S._t = setTimeout(function () { t.className = "toast"; }, 4200);
@@ -79,17 +100,35 @@
   // Invite email for someone added to a garage who has no Saaz account yet (Edge Function invite-user)
   S.sendInvite = function (email) {
     return S.db.functions.invoke("invite-user", { body: { email: email, redirectTo: location.origin + location.pathname + "?next=garage" } }).then(function (r) {
-      if (!r.error) return "Invite email sent to " + email + ". The link lets them set a password.";
+      if (!r.error) return (r.data && r.data.kind === "password_link" ? "Set-password email sent to " : "Invite email sent to ") + email + ". The link works for " + (S.linkHours || 24) + " hours.";
       var ctx = r.error.context;
       return (ctx && ctx.json ? ctx.json().catch(function () { return {}; }) : Promise.resolve({})).then(function (b) {
-        if (ctx && ctx.status === 404 && !b.error) throw new Error("Invite emails aren't switched on yet. Tell them to sign up with " + email + ".");
-        throw new Error((b && b.error) || "Couldn't send the invite email. Tell them to sign up with " + email + ".");
+        throw new Error((b && b.error) || "Couldn't send the invite email to " + email + ". They're saved on your team: tap Send invite email to try again.");
       });
     });
   };
+  // Team rows (garage Team page and admin garage page): invite state, and the buttons an owner or admin gets
+  S.inviteInfo = function (t) {
+    if (t.kind === "invite") return "Invite not sent yet";
+    if (t.status !== "invited" || !t.invited_at) return "";
+    var expired = t.link_expires_at && new Date(t.link_expires_at) < new Date();
+    return "Invite sent " + S.when(t.invited_at) + " · " + (expired ? "<b class='bad'>link expired " + S.when(t.link_expires_at) + "</b>" : "link expires " + S.when(t.link_expires_at));
+  };
+  S.teamActions = function (t, manage) {
+    if (!manage || t.status === "removed" || (t.user_id && t.user_id === S.me().id)) return "";
+    var e = S.esc(t.email);
+    if (t.kind === "invite") return "<button class='btn small ghost dark' data-inv='" + e + "'>Send invite</button> <button class='btn small ghost dark' data-rv='" + t.id + "'>Revoke</button>";
+    if (t.status === "invited") return "<button class='btn small ghost dark' data-inv='" + e + "'>Resend invite</button> <button class='btn small ghost dark' data-rm='" + t.id + "' data-what='revoke'>Revoke</button>";
+    return "<button class='btn small ghost dark' data-rm='" + t.id + "'>Remove</button>";
+  };
+  S.wireTeam = function (root) {
+    S.wireInvites(root);
+    S.$$("[data-rv]", root).forEach(function (b) { b.onclick = function () { S.confirmBtn(b, function () { S.act(b, function () { return S.rpc("revoke_garage_invite", { p_invite: b.dataset.rv }); }, "Invite revoked."); }); }; });
+    S.$$("[data-rm]", root).forEach(function (b) { b.onclick = function () { S.confirmBtn(b, function () { S.act(b, function () { return S.rpc("remove_garage_member", { p_member: b.dataset.rm }); }, b.dataset.what === "revoke" ? "Invite revoked. The link no longer opens the garage." : "Removed."); }); }; });
+  };
   S.wireInvites = function (root) {
     S.$$("[data-inv]", root).forEach(function (b) {
-      b.onclick = function () { b.disabled = true; S.sendInvite(b.dataset.inv).then(function (m) { S.toast(m); }).catch(function (e) { S.toast(S.friendly(e), true); b.disabled = false; }); };
+      b.onclick = function () { b.disabled = true; S.sendInvite(b.dataset.inv).then(function (m) { S.toast(m); setTimeout(S.render, 1200); }).catch(function (e) { S.toast(S.friendly(e), true); b.disabled = false; }); };
     });
   };
   S.bars = function (rows) { // tiny bar chart: [{label, value}]
@@ -110,7 +149,7 @@
   S.mode = function (m) {
     try { if (m) localStorage.setItem("saaz-mode", m); return m || localStorage.getItem("saaz-mode") || "buyer"; } catch (e) { return m || "buyer"; }
   };
-  S.home = function () { return { seller: "#/my/cars", garage: "#/garage", admin: "#/admin" }[S.mode()] || "#/browse"; };
+  S.home = function () { var m = S.mode(); if (m === "admin" && !S.isAdmin()) m = "buyer"; return { seller: "#/my/cars", garage: "#/garage", admin: "#/admin" }[m] || "#/browse"; };
   S.signedIn = function () { return !!(S.state.roles && S.state.roles.signed_in); };
   S.isAdmin = function () { return !!(S.state.roles && S.state.roles.admin); };
   S.me = function () { return (S.state.roles && S.state.roles.profile) || {}; };
@@ -119,24 +158,66 @@
   S.route = function (pattern, handler, need) { S.routes.push({ re: new RegExp("^" + pattern + "$"), handler: handler, need: need }); };
   S.go = function (hash) { if (location.hash === hash) S.render(); else location.hash = hash; };
 
-  function header() {
-    var r = S.state.roles, mode = S.mode(), modes = [];
+  // ---------- shell: one top bar everywhere, plus a work-area bar in Selling, Garage and Admin ----------
+  // Everyone starts on the marketplace. The logo and "Buy cars" always go back to it; the account menu switches area.
+  function areaOf(path) {
+    if (/^\/(my\/|sell\/)/.test(path)) return "seller";
+    if (/^\/garage(\/|$)/.test(path) && path !== "/garage/apply") return "garage";
+    if (/^\/admin(\/|$)/.test(path)) return "admin";
+    return "";
+  }
+  S.areaOf = areaOf;
+  function initials(p) {
+    var n = String(p.name || p.email || "?").trim().split(/\s+/);
+    return ((n[0] || "?")[0] + (n.length > 1 ? n[n.length - 1][0] : "")).toUpperCase();
+  }
+  function areas(r) {
+    var a = [["buyer", "Buying", "#/browse"], ["seller", "Selling", "#/my/cars"]];
+    if (r.garage) a.push(["garage", "Garage: " + (r.garage.name || "my garage"), "#/garage"]);
+    if (r.admin) a.push(["admin", "Admin", "#/admin"]);
+    return a;
+  }
+  function header(path, area) {
+    var r = S.state.roles, on = function (test) { return test ? " aria-current='page'" : ""; };
+    var links = "<a href='#/browse'" + on(path === "/browse" && !/saved=1/.test(location.hash) || /^\/car\//.test(path)) + ">Buy cars</a>" +
+      "<a href='#/selling'" + on(path === "/selling") + ">What's selling</a><a href='#/verify'" + on(path === "/verify" || /^\/report\//.test(path)) + ">Verify a report</a>";
+    var right;
     if (r && r.signed_in) {
-      modes.push(["buyer", "Buyer"], ["seller", "Seller"]);
-      if (r.garage) modes.push(["garage", "Garage team"]);
-      if (r.admin) modes.push(["admin", "Admin"]);
+      var p = S.me(), cur = area || "buyer";
+      right = "<a class='hide-s' href='#/browse?saved=1'" + on(/saved=1/.test(location.hash)) + ">Saved</a>" +
+        "<a class='hide-s' href='#/offers'" + on(path === "/offers" || /^\/deals\//.test(path)) + ">My offers</a>" +
+        "<a href='#/inbox' class='inbox'" + on(path === "/inbox") + ">Inbox<b id='unread' hidden></b></a>" +
+        "<a class='sellbtn' href='#/sell/new'>Sell a car</a>" +
+        "<details class='acct' id='acct'><summary aria-label='Account menu'><span class='av'>" + S.esc(initials(p)) + "</span> ▾</summary><div class='acctmenu'>" +
+        "<p class='who'><b>" + S.esc(p.name || "") + "</b><small>" + S.esc(p.email || "") + "</small></p>" +
+        "<b class='mh'>Switch area</b>" + areas(r).map(function (x) {
+          return "<a href='" + x[2] + "' data-mode='" + x[0] + "'" + (x[0] === cur ? " aria-current='true'" : "") + ">" + S.esc(x[1]) + (x[0] === cur ? " <small>you're here</small>" : "") + "</a>";
+        }).join("") +
+        "<hr><a class='show-s' href='#/browse?saved=1'>Saved</a><a class='show-s' href='#/offers'>My offers</a>" +
+        "<a href='#/account'>My account</a><button type='button' id='signout'>Sign out</button></div></details>";
+    } else {
+      right = "<a href='#/signin'" + on(path === "/signin") + ">Sign in</a><a class='hide-s' href='#/signup'" + on(path === "/signup") + ">Create account</a><a class='sellbtn' href='#/sell/new'>Sell a car</a>";
     }
-    var links = "<a href='#/browse'>Browse</a><a href='#/selling'>What's selling</a><a href='#/verify'>Verify</a>";
-    var right = r && r.signed_in
-      ? "<a href='" + S.home() + "' class='dash'>Dashboard</a><a href='#/inbox' class='inbox' aria-label='Inbox'>Inbox<b id='unread' hidden></b></a>" +
-        "<select id='modesw' aria-label='Switch role'>" + modes.map(function (m) { return "<option value='" + m[0] + "'" + (m[0] === mode ? " selected" : "") + ">" + m[1] + "</option>"; }).join("") + "</select>" +
-        "<button type='button' class='link' id='signout'>Sign out</button>"
-      : "<a href='#/signin' class='dash'>Sign in</a>";
-    return "<header class='apphead'><div class='wrap'><a class='logo' href='" + S.site + "'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
-      "<nav class='appnav'>" + links + "</nav><div class='appright'>" + right + "</div></div></header>";
+    var head = "<header class='apphead'><div class='wrap'><a class='logo' href='#/browse' aria-label='Saaz marketplace'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
+      "<nav class='appnav' aria-label='Marketplace'>" + links + "</nav><div class='appright'>" + right + "</div></div></header>";
+    return head + areaBar(path, area);
+  }
+  function areaBar(path, area) {
+    if (!area || !S.signedIn()) return "";
+    var r = S.state.roles, tabs = [], title = "";
+    if (area === "seller") { title = "Selling"; tabs = [["#/my/cars", "My cars", /^\/my\//.test(path)], ["#/sell/new", "List a car", /^\/sell\//.test(path)]]; }
+    if (area === "garage") { title = "Garage" + (r.garage && r.garage.name ? ": " + r.garage.name : ""); tabs = [["#/garage", "Jobs", path !== "/garage/team"], ["#/garage/team", "Team", path === "/garage/team"]]; }
+    if (area === "admin") title = "Admin";
+    return "<div class='areabar'><div class='wrap'><a class='back' href='#/browse'>‹ Back to marketplace</a><b>" + S.esc(title) + "</b>" +
+      (tabs.length ? "<nav aria-label='" + S.esc(title) + "'>" + tabs.map(function (t) { return "<a href='" + t[0] + "'" + (t[2] ? " aria-current='page'" : "") + ">" + t[1] + "</a>"; }).join("") + "</nav>" : "") + "</div></div>";
   }
   function wireHeader() {
-    var sw = S.$("#modesw"); if (sw) sw.onchange = function () { S.mode(sw.value); S.go(S.home()); };
+    var acct = S.$("#acct");
+    if (acct) {
+      S.$$("[data-mode]", acct).forEach(function (a) { a.onclick = function () { S.mode(a.dataset.mode); }; });
+      document.onclick = function (e) { if (acct.open && !acct.contains(e.target)) acct.open = false; };
+      acct.onkeydown = function (e) { if (e.key === "Escape") { acct.open = false; acct.querySelector("summary").focus(); } };
+    }
     var so = S.$("#signout"); if (so) so.onclick = function () { S.db.auth.signOut().then(function () { S.state.roles = null; S.mode("buyer"); S.go("#/browse"); }); };
     if (S.signedIn()) S.q(S.db.from("notifications").select("id", { count: "exact", head: false }).eq("read", false).eq("user_id", S.me().id)).then(function (rows) {
       var b = S.$("#unread"); if (b && rows.length) { b.hidden = false; b.textContent = rows.length; }
@@ -169,12 +250,16 @@
       if (S.signedIn()) S.rpc("tick").catch(function () {}); // garage time-outs and review expiry
       var match = null, m;
       for (var i = 0; i < S.routes.length; i++) { m = S.routes[i].re.exec(path); if (m) { match = S.routes[i]; break; } }
-      root.innerHTML = header() + "<main id='view' class='wrap pad'><p class='loading'>Loading…</p></main>";
+      var area = S.signedIn() ? areaOf(path) : "";
+      if (area && (area !== "garage" || S.state.roles.garage) && (area !== "admin" || S.isAdmin())) S.mode(area);
+      root.innerHTML = header(path, area) + "<main id='view' class='wrap pad" + (area ? " inarea" : "") + "'><p class='loading'>Loading…</p></main>";
       wireHeader();
       var view = S.$("#view");
-      if (!match) { view.innerHTML = "<div class='empty'><b>Page not found</b><span><a href='#/browse'>Browse cars</a></span></div>"; return; }
+      var notFound = "<div class='empty'><b>Page not found</b><span><a href='#/browse'>Browse cars</a></span></div>";
+      if (!match) { view.innerHTML = notFound; return; }
+      // Admin pages look like any missing page unless this session passed the admin's authenticator (checked by the database)
+      if (match.need === "admin" && !S.isAdmin()) { view.innerHTML = notFound; return; }
       if (match.need && !S.signedIn()) { S.after = location.hash; S.go("#/signin"); return; }
-      if (match.need === "admin" && !S.isAdmin()) { view.innerHTML = "<div class='empty'><b>Admins only</b></div>"; return; }
       window.scrollTo(0, 0);
       Promise.resolve(match.handler(view, m.slice(1), query)).catch(function (e) {
         view.innerHTML = "<div class='empty'><b>Couldn't load this page</b><span>" + S.esc(S.friendly(e)) + "</span></div>";
@@ -183,11 +268,11 @@
   };
 
   // ---------- sign in, sign up, passwords ----------
-  var ROLES = [["buyer", "Buyer"], ["seller", "Seller"], ["garage", "Garage team"], ["admin", "Admin"]];
+  var ROLES = [["buyer", "Buyer"], ["seller", "Seller"], ["garage", "Garage team"]];
   S.route("/signin", function (v) {
     v.innerHTML = "<div class='narrow'><h1>Sign in</h1>" +
       "<form id='f' class='stack'><fieldset class='seg'><legend>Sign in as</legend>" + ROLES.map(function (r, i) {
-        return "<label><input type='radio' name='as' value='" + r[0] + "'" + (r[0] === S.mode() || (!i && !S.mode()) ? " checked" : "") + "><span>" + r[1] + "</span></label>";
+        return "<label><input type='radio' name='as' value='" + r[0] + "'" + (r[0] === S.mode() || (!i && ["seller", "garage"].indexOf(S.mode()) < 0) ? " checked" : "") + "><span>" + r[1] + "</span></label>";
       }).join("") + "</fieldset>" +
       "<label>Email<input name='email' type='email' autocomplete='email' required></label>" +
       "<label>Password<input name='password' type='password' autocomplete='current-password' required></label>" +
@@ -200,7 +285,6 @@
         if (r.error) throw r.error;
         return S.loadRoles();
       }).then(function (roles) {
-        if (f.as === "admin" && !roles.admin) { S.mode("buyer"); throw new Error("This account is not an admin."); }
         if (f.as === "garage") return S.rpc("garage_sign_in").then(function (g) {
           if (!g.ok) { S.mode("buyer"); throw new Error(g.message); }
           S.mode("garage"); S.go("#/garage");
@@ -225,11 +309,22 @@
     S.$("#f").onsubmit = function (e) {
       e.preventDefault(); var f = S.form(e.target), err = S.$("#err"), b = e.target.querySelector("button");
       b.disabled = true; err.textContent = "";
-      S.db.auth.signUp({ email: f.email, password: f.password, options: { data: { name: f.name, country: "UG", mobile: f.mobile }, emailRedirectTo: location.origin + location.pathname + "?next=" + (f.as === "seller" ? "seller" : "buyer") } })
+      S.db.auth.signUp({ email: f.email, password: f.password, options: { data: { name: f.name, country: "UG", mobile: f.mobile, as: f.as === "seller" ? "seller" : "buyer" }, emailRedirectTo: location.origin + location.pathname + "?next=" + (f.as === "seller" ? "seller" : "buyer") } })
         .then(function (r) {
           if (r.error) throw r.error;
           if (r.data.user && r.data.user.identities && !r.data.user.identities.length) throw new Error("exists");
-          if (!r.data.session) { v.innerHTML = "<div class='narrow'><h1>Check your email</h1><p>Saaz sent a link to " + S.esc(f.email) + ". Open it to confirm your email; it signs you in" + (f.as === "seller" ? " and takes you to My cars" : "") + ".</p><p class='note'>Nothing after a few minutes? Check spam, or <a href='#/signup'>try again</a>.</p></div>"; return; }
+          if (!r.data.session) {
+            b.disabled = false;
+            S.popup("Check your email", "<p>We sent a link to <strong>" + S.esc(f.email) + "</strong>. Open it to confirm your email; it signs you in" + (f.as === "seller" ? " and takes you to My cars" : "") + ".</p><p class='note'>Nothing after a few minutes? Check spam.</p>", [
+              { text: "Resend email", click: function (close, el) {
+                el.disabled = true;
+                S.db.auth.resend({ type: "signup", email: f.email, options: { emailRedirectTo: location.origin + location.pathname + "?next=" + (f.as === "seller" ? "seller" : "buyer") } })
+                  .then(function (x) { if (x.error) throw x.error; el.textContent = "Sent again"; })
+                  .catch(function (e3) { el.disabled = false; S.toast(S.friendly(e3), true); });
+              } },
+              { text: "OK", primary: true, click: function (close) { close(); S.go("#/signin"); } }]);
+            return;
+          }
           S.mode(f.as === "seller" ? "seller" : "buyer"); S.toast("Welcome to Saaz."); S.go(S.after || (f.as === "seller" ? "#/my/cars" : "#/browse"));
         }).catch(function (e2) {
           var m = S.friendly(e2);
@@ -242,12 +337,53 @@
 
   S.route("/forgot", function (v) {
     v.innerHTML = "<div class='narrow'><h1>Reset your password</h1><form id='f' class='stack'><label>Email<input name='email' type='email' required></label>" +
-      "<button class='btn wide'>Send reset link</button></form><p class='note'>The link works for 24 hours.</p></div>";
+      "<button class='btn wide'>Send reset link</button></form><p class='note'>The link in the email works once. <a href='#/signin'>Back to sign in</a></p></div>";
     S.$("#f").onsubmit = function (e) {
-      e.preventDefault(); var f = S.form(e.target);
-      S.db.auth.resetPasswordForEmail(f.email, { redirectTo: location.origin + location.pathname + "#/reset" }).then(function () {
-        v.innerHTML = "<div class='narrow'><h1>Check your email</h1><p>If " + S.esc(f.email) + " has a Saaz account, a reset link is on its way.</p></div>";
+      e.preventDefault(); var f = S.form(e.target), b = e.target.querySelector("button"); b.disabled = true;
+      S.db.auth.resetPasswordForEmail(f.email, { redirectTo: location.origin + location.pathname + "#/reset" }).then(function (r) {
+        b.disabled = false;
+        if (r && r.error && /rate|too many|seconds/i.test(r.error.message || "")) { S.toast(S.friendly(r.error), true); return; }
+        S.popup("Check your email", "<p>If <strong>" + S.esc(f.email) + "</strong> has a Saaz account, a reset link is on its way.</p><p class='note'>Nothing after a few minutes? Check spam.</p>",
+          [{ text: "OK", primary: true, click: function (close) { close(); S.go("#/signin"); } }]);
       });
+    };
+  });
+  // Email links land here (see EMAIL_CODE). One tap uses the code; invites and resets set the password in the same step.
+  S.route("/confirm", function (v) {
+    var code = EMAIL_CODE, ty = code && code.type;
+    var used = function (msg) {
+      var next = { invite: "Ask your garage owner, or Saaz, to send a new invite from the Team page.", recovery: "<a href='#/forgot'>Get a new reset link</a>.",
+        signup: "<a href='#/signin'>Sign in</a>: if your email isn't confirmed yet, Saaz offers to send a new link." }[ty] || "<a href='#/signin'>Sign in</a>.";
+      v.innerHTML = "<div class='narrow'><h1>This link can't be used</h1><p>" + S.esc(msg || "Links from Saaz emails work once, and only until they expire.") + "</p><p>" + next + "</p></div>";
+    };
+    if (!code) return used();
+    var pw = ty === "invite" || ty === "recovery";
+    var title = { invite: "Set up your garage account", recovery: "Set a new password", signup: "Confirm your email", email_change: "Confirm your new email", magiclink: "Sign in to Saaz" }[ty] || "Continue";
+    v.innerHTML = "<div class='narrow'><h1>" + title + "</h1>" +
+      (ty === "invite" ? "<p class='lead'>Choose a password. You'll use it with your email to sign in as Garage team.</p>" : "") +
+      "<form id='f' class='stack'>" + (pw ? "<label>New password (8 characters or more)<input name='password' type='password' minlength='8' required autocomplete='new-password'></label>" +
+        "<label>Type it again<input name='password2' type='password' minlength='8' required autocomplete='new-password'></label>" : "") +
+      "<p class='err' id='err' role='alert'></p><button class='btn wide'>" + ({ invite: "Save password and open my dashboard", recovery: "Save new password", signup: "Confirm my email", email_change: "Confirm new email" }[ty] || "Continue") + "</button></form></div>";
+    S.$("#f").onsubmit = function (e) {
+      e.preventDefault(); var f = S.form(e.target), err = S.$("#err"), b = e.target.querySelector("button");
+      if (pw && f.password !== f.password2) { err.textContent = "The two passwords don't match."; return; }
+      b.disabled = true; err.textContent = "";
+      S.db.auth.verifyOtp({ token_hash: code.token_hash, type: ty }).then(function (r) {
+        if (r.error) { EMAIL_CODE = null; used(/expired|invalid/i.test(r.error.message) ? "This link has expired or was already used." : S.friendly(r.error)); throw null; }
+        EMAIL_CODE = null;
+        return pw ? S.db.auth.updateUser({ password: f.password }).then(function (u) { if (u.error) throw u.error; }) : null;
+      }).then(function () { return S.loadRoles(); }).then(function (roles) {
+        var meta = ((S.state.session || {}).user || {}).user_metadata || {};
+        if (roles && roles.garage && (ty === "invite" || ty === "recovery")) {
+          return S.rpc("garage_sign_in").then(function (g) {
+            if (g && g.ok === false) { S.toast(g.message, true); S.go("#/browse"); return; }
+            S.mode("garage"); S.toast(ty === "invite" ? "Password saved. Welcome to " + (roles.garage.name || "your garage") + "." : "Password saved."); S.go("#/garage");
+          });
+        }
+        if (ty === "signup") { S.mode(meta.as === "seller" ? "seller" : "buyer"); S.toast("Email confirmed. Welcome to Saaz."); return S.go(meta.as === "seller" ? "#/my/cars" : "#/browse"); }
+        if (ty === "email_change") { S.toast("New email confirmed."); return S.go("#/account"); }
+        S.toast(pw ? "Password saved." : "Signed in."); S.go(S.home());
+      }).catch(function (x) { if (x) { err.textContent = S.friendly(x); b.disabled = false; } });
     };
   });
   S.route("/reset", function (v, m, q) {
@@ -295,7 +431,7 @@
     return S.q(S.db.from("notifications").select("*").eq("user_id", S.me().id).order("created_at", { ascending: false }).limit(100)).then(function (rows) {
       v.innerHTML = "<h1>Inbox</h1><p class='note'>Placeholder: email and SMS aren't connected yet, so every notice lands here.</p>" +
         (rows.length ? "<ul class='list'>" + rows.map(function (n) {
-          return "<li class='" + (n.read ? "" : "unread") + "'><a href='" + S.esc(n.link || "#/inbox") + "'><b>" + S.esc(n.body) + "</b><small>" + S.when(n.created_at) + " · " + S.esc(n.channels.join(", ")) + "</small></a></li>";
+          return "<li class='" + (n.read ? "" : "unread") + "'><a href='" + S.esc(n.link || "#/inbox") + "'>" + (n.read ? "<span>" + S.esc(n.body) + "</span>" : "<b>" + S.esc(n.body) + "</b><span class='new'>New</span>") + "<small>" + S.when(n.created_at) + " · " + S.esc(n.channels.join(", ")) + "</small></a></li>";
         }).join("") + "</ul>" : "<div class='empty'><b>No notices yet</b></div>");
       var unread = rows.filter(function (n) { return !n.read; }).map(function (n) { return n.id; });
       if (unread.length) S.rpc("mark_read", { p_ids: unread }).catch(function () {});

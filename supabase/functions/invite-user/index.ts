@@ -1,6 +1,6 @@
 // invite-user: sends a Saaz invite email ("set your password") to someone added as a garage owner or member.
 // Called from the Saaz app. Runs on Supabase's servers; the service key never leaves them.
-// Allowed callers: an admin, or the active owner of the garage the invite belongs to.
+// Allowed callers: an admin signed in with their authenticator, or the active owner of the garage the invite belongs to.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const cors = {
@@ -29,24 +29,34 @@ Deno.serve(async (req: Request) => {
   const email = String(body.email ?? "").trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return reply(400, { error: "Enter a valid email." });
 
-  // There must be an unused invite for this email, and the caller must be allowed to send it.
+  // Find what is waiting for this email: an invite with no account yet, or a member who hasn't started yet (status invited).
   const { data: invite } = await server.from("garage_invites").select("id, garage_id, name").eq("email", email).eq("used", false)
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (!invite) return reply(404, { error: "No waiting invite for this email." });
-  const { data: admin } = await server.from("admins").select("user_id").eq("user_id", who.user.id).maybeSingle();
+    .is("revoked_at", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const { data: profile } = await server.from("profiles").select("id, name").eq("email", email).maybeSingle();
+  const { data: member } = profile
+    ? await server.from("garage_members").select("garage_id").eq("user_id", profile.id).eq("status", "invited").maybeSingle()
+    : { data: null };
+  const garageId = invite?.garage_id ?? member?.garage_id;
+  if (!garageId) return reply(404, { error: "No waiting invite for this email." });
+  // Admin only counts when this session passed the admin's pinned authenticator: the database decides (is_admin, part 10)
+  const { data: admin } = await asCaller.rpc("is_admin");
   const { data: owner } = await server.from("garage_members").select("id").eq("user_id", who.user.id)
-    .eq("garage_id", invite.garage_id).eq("role", "owner").eq("status", "active").maybeSingle();
+    .eq("garage_id", garageId).eq("role", "owner").eq("status", "active").maybeSingle();
   if (!admin && !owner) return reply(403, { error: "Only an admin or this garage's owner can send this invite." });
 
-  const { error } = await server.auth.admin.inviteUserByEmail(email, {
-    data: { name: invite.name ?? "" },
-    redirectTo: typeof body.redirectTo === "string" ? body.redirectTo : undefined,
-  });
+  const redirectTo = typeof body.redirectTo === "string" ? body.redirectTo : undefined;
+  let kind = "invite";
+  let { error } = await server.auth.admin.inviteUserByEmail(email, { data: { name: invite?.name ?? profile?.name ?? "" }, redirectTo });
+  if (error && member && /already been registered|already exists/i.test(error.message)) {
+    // The account exists and its email is confirmed, but they never set up: send a set-password (recovery) link instead
+    kind = "password_link";
+    ({ error } = await server.auth.resetPasswordForEmail(email, { redirectTo }));
+  }
   if (error) {
     const exists = /already been registered|already exists/i.test(error.message);
     return reply(exists ? 409 : 500, { error: exists ? "This email already has a Saaz account. Ask them to sign in." : error.message });
   }
   await server.from("audit_log").insert({ actor_id: who.user.id, actor_role: admin ? "admin" : "garage", entity: "member",
-    entity_id: email, action: "invite email sent", detail: { garage: invite.garage_id } });
-  return reply(200, { sent: true });
+    entity_id: email, action: kind === "invite" ? "invite email sent" : "set-password email sent", detail: { garage: garageId } });
+  return reply(200, { sent: true, kind });
 });

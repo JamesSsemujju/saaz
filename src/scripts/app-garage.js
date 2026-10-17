@@ -74,7 +74,7 @@
               (c.review_date ? " · inspection " + S.day(c.review_date) : "") + (j.draft ? " · draft by " + esc(j.draft.member) : "") + "</small></div></a></li>";
           }).join("") + "</ul>";
         }
-        v.innerHTML = "<div class='pagehead row'><h1>" + esc(g.garage) + "</h1><span class='chip'>" + esc(S.label(g.role)) + "</span>" + (g.role === "owner" ? "<a class='btn small' href='#/garage/team'>Team</a>" : "") + "</div>" +
+        v.innerHTML = "<div class='pagehead'><h1>" + esc(g.garage) + "</h1><span class='chip'>" + esc(S.label(g.role)) + "</span></div>" +
           "<section><h2>Offered to you</h2><p class='note'>Only your garage can contact these sellers right now, inside Saaz. Message within the time shown or the next garage comes in.</p>" + rows(inplay, "Nothing offered right now.") + "</section>" +
           "<section><h2>My jobs</h2>" + rows(booked, "No booked jobs.") + "</section>" + (past.length ? "<section><h2>Past</h2>" + rows(past.slice(0, 20), "") + "</section>" : "");
       });
@@ -188,16 +188,15 @@
   S.route("/garage/team", function (v) {
     return S.rpc("garage_team", { p_garage: null }).then(function (team) {
       var owner = ((S.state.roles || {}).garage || {}).member_role === "owner";
-      v.innerHTML = "<p class='crumbs'><a href='#/garage'>Garage</a> / Team</p><h1>Team</h1><ul class='list'>" + team.map(function (t) {
-        return "<li><div><b>" + esc(t.name || t.email) + "</b> <span class='chip'>" + esc(S.label(t.role)) + "</span> " + S.chip(t.status.split(" ")[0]) + "<small>" + esc(t.email) + (t.status.indexOf("no account") > 0 ? " · waiting for them to create a Saaz account" : "") + "</small></div>" +
-          (owner && t.user_id && t.user_id !== S.me().id && t.status !== "removed" ? "<button class='btn small ghost dark' data-rm='" + t.id + "'>Remove</button>" : "") +
-          (owner && !t.user_id ? "<button class='btn small ghost dark' data-inv='" + esc(t.email) + "'>Send invite email</button>" : "") + "</li>";
+      v.innerHTML = "<p class='crumbs'><a href='#/garage'>Garage</a> / Team</p><h1>Team</h1><ul class='list team'>" + team.map(function (t) {
+        var info = S.inviteInfo(t);
+        return "<li><div><b>" + esc(t.name || t.email) + "</b> <span class='chip'>" + esc(S.label(t.role)) + "</span> " + S.chip(t.kind === "invite" ? "invited" : t.status) + "<small>" + esc(t.email) + "</small>" + (info ? "<small class='inv'>" + info + "</small>" : "") + "</div>" +
+          "<div class='row'>" + S.teamActions(t, owner) + "</div></li>";
       }).join("") + "</ul>" +
         (owner ? "<h2>Add a member</h2><form id='f' class='stack'><div class='grid2'><label>Name<input name='name' required></label><label>Email<input name='email' type='email' required></label>" +
           "<label>Mobile<input name='mobile' type='tel'></label><label>Role<select name='role'><option value='inspector'>Inspector</option><option value='owner'>Owner</option></select></label></div>" +
-          "<button class='btn'>Add member</button><p class='note'>New people get an invite email with a link to set their password. Anyone who already has a Saaz account just signs in. They become Active on their first Garage team sign-in. Removing a member ends their access at once and discards their drafts.</p></form>" : "");
-      S.$$("[data-rm]").forEach(function (b) { b.onclick = function () { S.confirmBtn(b, function () { S.act(b, function () { return S.rpc("remove_garage_member", { p_member: b.dataset.rm }); }, "Removed."); }); }; });
-      S.wireInvites(v);
+          "<button class='btn'>Add member</button><p class='note'>New people get an invite email with a link to set their password; the link works for 24 hours, and you can resend or revoke it here. Anyone who already has a Saaz account just signs in. They become Active on their first Garage team sign-in. Removing a member ends their access at once and discards their drafts.</p></form>" : "");
+      S.wireTeam(v);
       var f = S.$("#f"); if (f) f.onsubmit = function (e) {
         e.preventDefault(); var x = S.form(f);
         S.act(f.querySelector("button"), function () { return S.rpc("add_garage_member", { p_email: x.email, p_name: x.name, p_mobile: x.mobile, p_role: x.role }); },

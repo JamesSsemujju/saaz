@@ -1,20 +1,41 @@
 {
-  "_comment": "Settings for the Saaz email templates. Change a value, run: python3 tools/make_email_templates.py, then paste the 4 files into Supabase. Empty value = that line is left out of the emails.",
+  "_comment": "Settings for the Saaz email templates. Change a value, run: python3 tools/make_email_templates.py, then paste the 6 files into Supabase. Empty value = that line is left out.",
   "site_url": "https://jamesssemujju.github.io/saaz/",
   "image_base": "https://jamesssemujju.github.io/saaz/assets/img/",
   "_image_base": "Emails can't carry images inside them. Email apps download each image from this public address, so images only show once the site is shipped.",
   "help_email": "info@saazinvestmentsltd.com",
-  "phone": "",
-  "_phone": "PLACEHOLDER. Shown as 'Call us'. Digits with country code, e.g. +2567XXXXXXXX. Empty = hidden.",
-  "legal_name": "Saaz",
-  "_legal_name": "ASSUMPTION: registered company name not confirmed (the email domain suggests Saaz Investments Ltd). Same as legalName in src/data/site.json.",
-  "address": "Kampala, Uganda",
-  "_address": "PLACEHOLDER. Add the street address once confirmed.",
+  "phone": [
+    "+256 705 298 524",
+    "+256 705 276 226"
+  ],
+  "_phone": "From James, 17 Oct 2026. Shown as 'call us on ...'. Empty list = hidden.",
+  "legal_name": "Saaz Investments Limited",
+  "_legal_name": "From the Registrar of Companies notice of registered office, dated 14 Oct 2024 (James, 17 Oct 2026).",
+  "address": "10 Naguru Road, Naguru I, Nakawa Division, Kampala, Uganda",
+  "_address": "From the same notice: registered office Naguru I, Village 31 A, Nakawa Division, Kampala; postal 174864 Kampala GPO, 10 Naguru Road. Reading '10 Naguru Road' as the street address is Likely, not certain.",
   "year": "2026",
   "social": [
-    {"name": "TikTok", "url": "", "icon": "social/tiktok.png"},
-    {"name": "Instagram", "url": "", "icon": "social/instagram.png"},
-    {"name": "YouTube", "url": "", "icon": "social/youtube.png"}
+    {
+      "name": "TikTok",
+      "url": "https://www.tiktok.com/@saaz__automotive",
+      "icon": "social/tiktok.png"
+    },
+    {
+      "name": "Instagram",
+      "url": "https://www.instagram.com/saaz__automotive",
+      "icon": "social/instagram.png"
+    },
+    {
+      "name": "YouTube",
+      "url": "",
+      "icon": "social/youtube.png"
+    }
   ],
-  "_social": "PLACEHOLDER URLs: paste each profile link, e.g. https://www.tiktok.com/@yourhandle. Empty url = that button is left out. If the icon file exists in src/assets/img/ it is shown; if not, the name is shown in a round button."
+  "_social": "TikTok and Instagram from James, 17 Oct 2026 (tracking parts of the links removed). YouTube PLACEHOLDER: link not given yet, so its button is hidden. Icons in src/assets/img/social/ supplied by James.",
+  "brand_name": "Saaz",
+  "postal": "P.O. Box 174864, Kampala GPO",
+  "app_url": "https://jamesssemujju.github.io/saaz/app/",
+  "_app_url": "Email buttons open this page with a one-time code. The page asks the person to tap before the code is used, so email scanners (Gmail checks links) can't use it up first.",
+  "link_hours": 24,
+  "_link_hours": "Must equal Supabase: Authentication > Sign In / Providers > Email > Email OTP Expiration (86400 seconds). Also the email_link_hours setting in the database."
 }

@@ -1,10 +1,10 @@
 """Tests for the audit fixes (part 6) on a fresh database."""
-import json, psycopg2
+import json, psycopg2, admin_session
 conn = psycopg2.connect(host="/var/tmp/saazpg", port=5433, user="postgres", dbname="sb"); conn.autocommit = True; cur = conn.cursor()
 ok = bad = 0
 def su(q, a=()): cur.execute("reset role; select set_config('request.jwt.claims','',false)"); cur.execute(q, a); return cur.fetchall() if cur.description else None
 def as_(uid, q, a=()):
-    cur.execute("reset role; select set_config('request.jwt.claims',%s,false)", (json.dumps({"sub": str(uid), "role": "authenticated"}),)); cur.execute("set role authenticated")
+    cur.execute("reset role; select set_config('request.jwt.claims',%s,false)", (admin_session.claims(cur, uid),)); cur.execute("set role authenticated")
     try: cur.execute(q, a); return cur.fetchall() if cur.description else None
     finally: cur.execute("reset role")
 def err(uid, q, a=()):

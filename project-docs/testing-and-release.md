@@ -22,24 +22,23 @@ All results from 17 Oct 2026, on the local test stack (see `tests/README.md`). T
 | 4 | Admin approves or rejects; status shows everywhere | Verified locally | Approve tested in browser; reject and changes in database tests |
 | 5 | Customer books an inspection and gets confirmation | Partly | Sellers book through the garage line (verified). Buyers can't book an inspection of a car not listed (F-11, decision needed) |
 | 6 | Inspector completes the inspection, records evidence, report generated | Partly | Checklist, body map, odometer, notes, report: verified. Photo evidence missing (F-24) |
-| 7 | Right person sees the report; others can't | Gap found | Drafts are protected (database test). But issued reviews can be listed by anyone through the API (F-25). Fix proposed |
+| 7 | Right person sees the report; others can't | Fix ready | Part 8: public sees only the current inspection of a public car; report and verify links still work (tested locally). Waiting for SQL Editor run |
 | 8 | Garage applies, is reviewed, gets only permitted access | Verified locally | Blocked sign-in until certified; access to its own jobs only |
 | 9 | Enquiry stored, routed, answered, closed | Missing | F-13 |
 | 10 | Notification failure visible to admins and retryable | Missing | F-14, after SMTP |
 | 11 | Unauthorized users can't open or change others' records | Verified locally | Database tests: listings, messages, pass reasons, profiles, audit, internal functions |
-| 12 | Uganda only: prices, places, workflows | Screens verified; database guard waiting | Browser tests: no Kenya, no country chooser, UGX, EAT. Part 6 adds the database guard |
+| 12 | Uganda only: prices, places, workflows | Verified | Browser tests: no Kenya, no country chooser, UGX, EAT. Database guard live (part 6) |
 
 ## Release checklist
 
 Done:
 - [x] Marketplace schema parts 1 to 5 live, checked read-only
+- [x] Part 6 audit fixes applied to live 17 Oct 2026 (James approved); checked: 5 triggers, 4 new functions, 9 functions on East Africa Time, photo limit 2 MB
 - [x] Site build passes, every internal link resolves
 - [x] No secret keys in the repository
 
 Waiting for James (dashboard or decisions):
-- [ ] Approve and apply `supabase/marketplace_6_audit_fixes.sql` (no deletes, can run from here)
-- [ ] Approve the report-privacy fix (F-25), run in the SQL Editor
-- [ ] Run `supabase/marketplace_7_inspection_wording.sql` in the SQL Editor ("review" becomes "inspection" in database messages)
+- [ ] Run `supabase/marketplace_run_in_sql_editor_2026-10-17b.sql` in the SQL Editor (part 7 inspection wording + part 8 report privacy F-25; tested locally: 72 and 10 pass, hidden report still opens by code)
 - [ ] Paste the 4 email templates and subjects (email document, set-up steps)
 - [ ] Custom SMTP sender (route A or B in the email document)
 - [ ] Authentication, URL Configuration: Site URL and Redirect URL `https://jamesssemujju.github.io/saaz/app/`

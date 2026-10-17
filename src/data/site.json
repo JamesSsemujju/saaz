@@ -1,8 +1,8 @@
 {
   "_comment": "Every site-wide setting lives here. Change a value, run build.py, commit docs/.",
   "name": "Saaz",
-  "legalName": "Saaz",
-  "_legalName": "ASSUMPTION: company registration not verified. Use the registered name once confirmed.",
+  "legalName": "Saaz Investments Limited",
+  "_legalName": "From the Registrar of Companies notice, 14 Oct 2024.",
   "basePath": "/saaz/",
   "_basePath": "GitHub Pages project URL is jamesssemujju.github.io/saaz/. Use \"/\" if the site moves to its own domain.",
   "city": "Kampala",

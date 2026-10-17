@@ -5,4 +5,4 @@ D=${SAAZ_TEST:-$(cd "$(dirname "$0")" && pwd)}
 S=${SAAZ_REPO:-$(cd "$(dirname "$0")/../.." && pwd)}/supabase
 $P -c "drop database if exists sb with (force)" -c "create database sb" 2>&1 | grep -v NOTICE
 $P -d sb -f $D/stub.sql -f $S/schema.sql 2>&1 | grep -v NOTICE
-for f in 1_tables 2_core 3_reviews_deals 4_access 5_hardening 6_audit_fixes; do $P -d sb -f $S/marketplace_$f.sql 2>&1 | grep -v NOTICE; done
+for f in 1_tables 2_core 3_reviews_deals 4_access 5_hardening 6_audit_fixes 7_inspection_wording 8_report_privacy 9_invites 10_admin_mfa; do $P -d sb -f $S/marketplace_$f.sql 2>&1 | grep -v NOTICE; done

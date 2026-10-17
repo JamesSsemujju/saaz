@@ -1,5 +1,5 @@
 """End-to-end test of the Saaz marketplace schema on a local Postgres stand-in for Supabase."""
-import json, psycopg2, sys
+import json, psycopg2, admin_session, sys
 conn = psycopg2.connect(host="/var/tmp/saazpg", port=5433, user="postgres", dbname=sys.argv[1] if len(sys.argv) > 1 else "sb")
 conn.autocommit = True
 cur = conn.cursor()
@@ -10,7 +10,7 @@ def su(sql, args=()):
     return cur.fetchall() if cur.description else None
 
 def as_(uid, sql, args=()):
-    claims = json.dumps({"sub": str(uid), "role": "authenticated"}) if uid else ""
+    claims = admin_session.claims(cur, uid)
     cur.execute("reset role; select set_config('request.jwt.claims',%s,false)", (claims,))
     cur.execute("set role " + ("authenticated" if uid else "anon"))
     try:

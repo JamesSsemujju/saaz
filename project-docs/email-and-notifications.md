@@ -51,7 +51,7 @@ After either: set DMARC to `p=quarantine` with a reports address once mail passe
 
 ## How the templates are made
 
-`supabase/email-templates/email-config.json` holds the footer details (help address, phone, company name, address, TikTok, Instagram and YouTube links). `python3 tools/make_email_templates.py` writes the 4 templates from it. Empty values are left out, so nothing invented ever goes out.
+`supabase/email-templates/email-config.json` holds the footer details (help address, phone, company name, address, TikTok, Instagram and YouTube links). `python3 tools/make_email_templates.py` writes the 6 templates from it. Set 17 Oct 2026: phones +256 705 298 524 and +256 705 276 226; TikTok and Instagram @saaz__automotive with the icons James supplied; YouTube link not given yet (hidden). Empty values are left out, so nothing invented ever goes out.
 
 Images: an email can't carry the logo inside it. Email apps download it from the live site (`assets/img/brand/saaz-wordmark-black-240.png`), so it shows once the site is shipped. PNG, not WebP or SVG, because Gmail and Outlook don't show those reliably. Some apps hide images until the reader allows them; every image has alt text ("Saaz").
 
@@ -102,3 +102,13 @@ Business notices (stored in `notifications` with intended channels; delivered in
 4. Templates: one Saaz layout, mobile-friendly, with a link back to the right page.
 
 Built only after the sender (route A or B) is chosen, so it's tested against the real thing.
+
+## Email links and invites (17 Oct 2026)
+
+**Finding (Certain, Supabase auth log 17 Oct 12:21 UTC):** the first invite link to cenakamoga@gmail.com was opened twice in the same second, once from a Google address (Gmail checking the link) and once from the phone. The one-time link was used up, so the phone showed "This link has expired".
+
+**Fix:** email buttons now open `app/?token_hash=...&type=...#/confirm`. The page uses the one-time code only when the person taps (and, for invites and resets, after they type a password). Link checkers open the page but don't tap. Templates use `{{ .TokenHash }}`, so they must be pasted again.
+
+**Expiry:** emails say links work 24 hours. Set Supabase: Authentication > Sign In / Providers > Email > Email OTP Expiration = 86400. The database setting `email_link_hours` (24) drives the "link expires" time on the Team pages; keep both equal.
+
+**Invites:** owners (Team page) and admins (garage page) see each invite: not sent yet, sent at, link expires at, or expired. Buttons: Send or Resend invite, Revoke. Resend to someone whose account exists but never set a password sends a set-password (reset) email. Revoke on an unsent invite marks it revoked (part 9); on a sent invite it removes the membership. Every action is in the audit log.
