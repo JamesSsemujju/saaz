@@ -39,7 +39,8 @@ Deno.serve(async (req: Request) => {
   const garageId = invite?.garage_id ?? member?.garage_id;
   if (!garageId) return reply(404, { error: "No waiting invite for this email." });
   // Admin only counts when this session passed the admin's pinned authenticator: the database decides (is_admin, part 10)
-  const { data: admin } = await asCaller.rpc("is_admin");
+  const { data: isAdmin } = await asCaller.rpc("is_admin");
+  const admin = isAdmin === true;
   const { data: owner } = await server.from("garage_members").select("id").eq("user_id", who.user.id)
     .eq("garage_id", garageId).eq("role", "owner").eq("status", "active").maybeSingle();
   if (!admin && !owner) return reply(403, { error: "Only an admin or this garage's owner can send this invite." });
