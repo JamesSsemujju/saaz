@@ -145,7 +145,7 @@ begin
   returning id into gid;
   insert into public.garage_members (garage_id, user_id, role, status) values (gid, u, 'owner', 'active');
   perform public.audit('garage','garage',gid::text,'applied', jsonb_build_object('after',p));
-  perform public.notify_admins('garage_applied','New garage application: ' || (p->>'name'), '#/admin/garages/' || gid);
+  perform public.notify_admins('garage_applied','New garage application: ' || (p->>'name'), '#/admin/garage/' || gid);
   return gid;
 end $$;
 
@@ -159,7 +159,7 @@ begin
     specialties = coalesce(array(select jsonb_array_elements_text(p->'specialties')),'{}'), status = 'applied'
   where id = p_garage;
   perform public.audit('garage','garage',p_garage::text,'resubmitted', jsonb_build_object('before',to_jsonb(g),'after',p));
-  perform public.notify_admins('garage_applied','Garage application resubmitted: ' || g.name, '#/admin/garages/' || p_garage);
+  perform public.notify_admins('garage_applied','Garage application resubmitted: ' || g.name, '#/admin/garage/' || p_garage);
 end $$;
 
 create or replace function public.admin_decide_garage(p_garage uuid, p_decision text, p_note text default null) returns void
@@ -355,7 +355,7 @@ begin
   gid := public.next_garage(l);
   if gid is null then
     update public.listings set line_empty = true where id = p_listing;
-    perform public.notify_admins('line_empty','No garage left in line for ' || l.ref || '. Assign one or restart the line.','#/admin/cars/' || l.id);
+    perform public.notify_admins('line_empty','No garage left in line for ' || l.ref || '. Assign one or restart the line.','#/admin/car/' || l.id);
     perform public.notify(u, 'line_empty', 'Saaz will find a garage for ' || l.ref || ' and let you know.', '#/my/cars/' || l.id)
       from public.seller_side_users(l) u;
     perform public.audit('system','listing',l.id::text,'garage line empty');
@@ -367,7 +367,7 @@ begin
   update public.listings set line_empty = false where id = p_listing;
   select name into gname from public.garages where id = gid;
   perform public.notify_garage(gid,'garage_in_play','A ' || l.year || ' ' || l.make || ' ' || l.model || ' in ' || l.region ||
-    ' is yours to contact. Message the seller within ' || (public.setting('garage_contact_hours')) || ' hours.','#/garage/jobs/' || cid);
+    ' is yours to contact. Message the seller within ' || (public.setting('garage_contact_hours')) || ' hours.','#/garage/job/' || cid);
   perform public.notify(u, 'garage_in_play', gname || ' will contact you about ' || l.ref || ' inside Saaz.', '#/my/cars/' || l.id)
     from public.seller_side_users(l) u;
   perform public.audit('system','conversation',cid::text,'garage put in play', jsonb_build_object('listing',l.ref,'garage',gname));
@@ -513,7 +513,7 @@ begin
   if side = 'garage' then
     perform public.notify(x, 'garage_message', 'New message from the garage about ' || l.ref || '.', '#/my/cars/' || l.id) from public.seller_side_users(l) x;
   else
-    perform public.notify_garage(c.garage_id, 'seller_message', 'New message from the seller of ' || l.ref || '.', '#/garage/jobs/' || p_conv);
+    perform public.notify_garage(c.garage_id, 'seller_message', 'New message from the seller of ' || l.ref || '.', '#/garage/job/' || p_conv);
   end if;
 end $$;
 
@@ -530,11 +530,11 @@ begin
     if c.garage_first_message_at is null then raise exception 'You can agree once the garage has messaged you.'; end if;
     update public.conversations set status = 'agreed' where id = p_conv;
     update public.listings set status = 'review_booked', updated_at = now() where id = l.id;
-    perform public.notify_garage(c.garage_id,'seller_agreed','The seller of ' || l.ref || ' agreed. Set a review date and start the review when the car is with you.','#/garage/jobs/' || p_conv);
+    perform public.notify_garage(c.garage_id,'seller_agreed','The seller of ' || l.ref || ' agreed. Set a review date and start the review when the car is with you.','#/garage/job/' || p_conv);
     perform public.audit(case when l.saaz_owned then 'admin' else 'seller' end,'conversation',p_conv::text,'agreed');
   else
     if coalesce(trim(p_reason),'') <> '' then insert into public.pass_reasons values (p_conv, trim(p_reason)); end if;
-    perform public.notify_garage(c.garage_id,'seller_passed','The seller of ' || l.ref || ' chose another garage.','#/garage/jobs');
+    perform public.notify_garage(c.garage_id,'seller_passed','The seller of ' || l.ref || ' chose another garage.','#/garage');
     perform public.audit(case when l.saaz_owned then 'admin' else 'seller' end,'conversation',p_conv::text,'passed');
     perform public.pass_on(p_conv, 'passed');
   end if;
@@ -577,7 +577,7 @@ begin
   insert into public.conversations (listing_id, garage_id, round, status, assigned_by_admin, garage_first_message_at)
   values (p_listing, p_garage, l.line_round, 'agreed', true, now()) returning id into cid;
   update public.listings set status = 'review_booked', line_empty = false, updated_at = now() where id = p_listing;
-  perform public.notify_garage(p_garage,'assigned','Saaz assigned you ' || l.ref || '. Message the seller to arrange the review.','#/garage/jobs/' || cid);
+  perform public.notify_garage(p_garage,'assigned','Saaz assigned you ' || l.ref || '. Message the seller to arrange the review.','#/garage/job/' || cid);
   perform public.notify(x,'assigned','Saaz booked your Saaz review for ' || l.ref || '. The garage will message you here.','#/my/cars/' || l.id) from public.seller_side_users(l) x;
   perform public.audit('admin','listing',l.id::text,'garage assigned directly', jsonb_build_object('garage',p_garage));
 end $$;

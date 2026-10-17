@@ -285,3 +285,24 @@ create table public.audit_log (
   detail jsonb not null default '{}'::jsonb        -- {"before":...,"after":...} or other facts, never message text
 );
 create index audit_entity on public.audit_log (entity, entity_id);
+
+-- Lock every new table at once (no rule = nobody reads or writes). Part 4 adds the read rules.
+alter table public.settings enable row level security;
+alter table public.regions enable row level security;
+alter table public.profiles enable row level security;
+alter table public.vehicles enable row level security;
+alter table public.odometer_readings enable row level security;
+alter table public.listings enable row level security;
+alter table public.garages enable row level security;
+alter table public.garage_members enable row level security;
+alter table public.garage_invites enable row level security;
+alter table public.conversations enable row level security;
+alter table public.pass_reasons enable row level security;
+alter table public.messages enable row level security;
+alter table public.reviews enable row level security;
+alter table public.deals enable row level security;
+alter table public.deal_events enable row level security;
+alter table public.listing_views enable row level security;
+alter table public.saves enable row level security;
+alter table public.notifications enable row level security;
+alter table public.audit_log enable row level security;

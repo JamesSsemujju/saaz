@@ -63,7 +63,9 @@ Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at `/app/`
 **Tested (17 Oct 2026):**
 - Database: 72 checks against a local Postgres copy of the Saaz Supabase setup, including the upgrade from the live schema with an existing admin.
 - Browser: the whole flow at 320, 390 and 1280 px against a local stand-in for Supabase (66 checks each): garage applies, admin approves, seller lists with photos, garage contacts, seller agrees, garage issues the review, public verify, admin approves, buyer offers (auto-rejected, then accepted after a counter), contacts shared, admin completes, What's selling, every admin tab. No sideways scroll, no script errors.
-- Not tested: the real Supabase project (the schema isn't applied yet), real email confirmation, a real phone on slow data.
+- Applied to the live Supabase project on 17 Oct 2026: parts 1, 2a, 2b and 5 (hardening) from this chat; the rest via `supabase/marketplace_run_in_sql_editor_2026-10-17.sql` in the SQL Editor (the connection here stops on SQL containing the word "delete"). Checked after: 21 tables, all with row-level security; 80 functions; internal helpers not callable from the website; sign-in-only actions not callable by visitors; James is admin with a profile.
+- Supabase security check after: 19 functions callable by visitors, on purpose (public browse, car stats, verify, report, what's selling, and the helpers the read rules use); `listing_views` has no read rule on purpose; leaked-password protection is off (dashboard setting).
+- Not tested yet: the live site against the real project, real email confirmation, a real phone on slow data.
 
 **Open calls:** one garage in play per car (built) or per seller across all their cars; the platform fee (left out).
 

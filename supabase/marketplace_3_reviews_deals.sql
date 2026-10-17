@@ -111,7 +111,7 @@ begin
   perform public.notify(x, 'review_issued', 'Your Saaz review for ' || l.ref || ' is issued (' || initcap(r.verdict) || ', ' || r.score || '/100). ' ||
     case when auto_live then 'Your car is live.' else 'Saaz will check it within ' || (public.setting('approval_response')#>>'{}') || '.' end,
     '#/my/cars/' || l.id, '{app,email,sms}') from public.seller_side_users(l) x;
-  if not auto_live then perform public.notify_admins('review_issued','Review issued for ' || l.ref || ': waiting for approval.','#/admin/cars/' || l.id); end if;
+  if not auto_live then perform public.notify_admins('review_issued','Review issued for ' || l.ref || ': waiting for approval.','#/admin/car/' || l.id); end if;
   return jsonb_build_object('doc_no',r.doc_no,'verify_code',code,'verdict',r.verdict,'score',r.score,'live',auto_live);
 end $$;
 
@@ -314,7 +314,7 @@ begin
   insert into public.deal_events (deal_id, by_side, kind, amount, message) values (p_deal, 'system', 'agreed', d.amount, p_note);
   perform public.notify(d.buyer_id,'deal_agreed','Deal agreed on ' || l.ref || '. You can now see the seller''s contact details.','#/deals/' || p_deal,'{app,email,sms}');
   perform public.notify(x,'deal_agreed','Deal agreed on ' || l.ref || '. You can now see the buyer''s contact details.','#/deals/' || p_deal,'{app,email,sms}') from public.seller_side_users(l) x;
-  perform public.notify_admins('deal_agreed','Deal agreed on ' || l.ref || ': confirm the handover to complete it.','#/admin/deals/' || p_deal);
+  perform public.notify_admins('deal_agreed','Deal agreed on ' || l.ref || ': confirm the handover to complete it.','#/deals/' || p_deal);
 end $$;
 
 -- Contacts are shared only after agreement
