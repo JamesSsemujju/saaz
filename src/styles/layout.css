@@ -1,12 +1,13 @@
 /* layout.css: preview strip, header, menu, footer */
 .strip{background:var(--navy-deep);color:#B9C7D8;font-size:13px;padding:7px 0}
 .strip b{color:var(--white);font-weight:600}
-.site-header{position:sticky;top:0;z-index:10;background:rgba(11,37,69,.97)}
+.site-header{position:sticky;top:0;z-index:10;background:rgba(11,11,12,.97)}
 .site-header .wrap{display:flex;align-items:center;gap:var(--s-4);height:60px}
 .logo{display:flex;align-items:center;gap:10px;color:var(--white);text-decoration:none;font-weight:800;letter-spacing:2px;font-size:19px}
+.logo img{display:block;height:32px;width:auto}
 .logo i{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;font-style:normal;color:var(--navy);font-size:16px;letter-spacing:0}
 .mainnav{display:none;margin-left:auto;gap:22px;font-size:15px}
-.mainnav a{color:#DCE6F2;text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
+.mainnav a{color:#E4E6EA;text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
 .mainnav a:hover{color:var(--white)}
 .mainnav a[aria-current="page"]{color:var(--white);border-bottom-color:var(--accent)}
 .hwa{color:var(--white);font-size:14px;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 12px}

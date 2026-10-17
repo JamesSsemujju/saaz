@@ -137,7 +137,7 @@ declare u uuid := public.require_user(); gid uuid;
 begin
   if exists (select 1 from public.garage_members where user_id = u and status <> 'removed') then
     raise exception 'This account is already on a garage team.'; end if;
-  if not coalesce((p->>'honest_declaration')::boolean,false) then raise exception 'Tick the honest-reviews declaration.'; end if;
+  if not coalesce((p->>'honest_declaration')::boolean,false) then raise exception 'Tick the honest-inspections declaration.'; end if;
   insert into public.garages (name, business_type, country, region, address, phone, registration_no, years, specialties, honest_declaration, created_by)
   values (trim(p->>'name'), p->>'business_type', p->>'country', p->>'region', trim(p->>'address'), trim(p->>'phone'),
           trim(p->>'registration_no'), nullif(p->>'years','')::int,
@@ -451,11 +451,11 @@ begin
   perform public.require_user();
   select * into l from public.listings where id = p_listing;
   if l is null or not public.is_listing_seller(l) then raise exception 'Not your listing.'; end if;
-  if l.status not in ('live','re_review_due') then raise exception 'Only live cars use this. Cars in review must be withdrawn to edit.'; end if;
+  if l.status not in ('live','re_review_due') then raise exception 'Only live cars use this. Cars in inspection must be withdrawn to edit.'; end if;
   if exists (select 1 from public.deals where listing_id = l.id and status in ('negotiating','agreed','on_hold')) then
     raise exception 'Close or reject open offers before changing anything other than the price.'; end if;
   update public.listings set status = 'draft', updated_at = now() where id = l.id;
-  perform public.audit(case when l.saaz_owned then 'admin' else 'seller' end,'listing',l.id::text,'taken off sale to edit; needs a new Saaz review');
+  perform public.audit(case when l.saaz_owned then 'admin' else 'seller' end,'listing',l.id::text,'taken off sale to edit; needs a new Saaz inspection');
 end $$;
 
 create or replace function public.withdraw_listing(p_listing uuid) returns void language plpgsql security definer set search_path = public as $$
@@ -530,7 +530,7 @@ begin
     if c.garage_first_message_at is null then raise exception 'You can agree once the garage has messaged you.'; end if;
     update public.conversations set status = 'agreed' where id = p_conv;
     update public.listings set status = 'review_booked', updated_at = now() where id = l.id;
-    perform public.notify_garage(c.garage_id,'seller_agreed','The seller of ' || l.ref || ' agreed. Set a review date and start the review when the car is with you.','#/garage/job/' || p_conv);
+    perform public.notify_garage(c.garage_id,'seller_agreed','The seller of ' || l.ref || ' agreed. Set an inspection date and start the inspection when the car is with you.','#/garage/job/' || p_conv);
     perform public.audit(case when l.saaz_owned then 'admin' else 'seller' end,'conversation',p_conv::text,'agreed');
   else
     if coalesce(trim(p_reason),'') <> '' then insert into public.pass_reasons values (p_conv, trim(p_reason)); end if;
@@ -557,8 +557,8 @@ begin
     perform public.pass_on(p_conv, 'released');
   elsif p_action = 'set_date' and c.status = 'agreed' then
     update public.conversations set review_date = p_date where id = p_conv;
-    perform public.notify(x,'review_date','Review date for ' || l.ref || ': ' || to_char(p_date,'Dy DD Mon YYYY') || '.','#/my/cars/' || l.id) from public.seller_side_users(l) x;
-    perform public.audit('garage','conversation',p_conv::text,'review date set', jsonb_build_object('after',p_date));
+    perform public.notify(x,'review_date','Inspection date for ' || l.ref || ': ' || to_char(p_date,'Dy DD Mon YYYY') || '.','#/my/cars/' || l.id) from public.seller_side_users(l) x;
+    perform public.audit('garage','conversation',p_conv::text,'inspection date set', jsonb_build_object('after',p_date));
   else
     raise exception 'That action is not available now.';
   end if;
@@ -569,7 +569,7 @@ declare l public.listings; cid uuid;
 begin
   perform public.require_admin();
   select * into l from public.listings where id = p_listing;
-  if l.status not in ('awaiting_review','review_booked') then raise exception 'The car is not waiting for a review.'; end if;
+  if l.status not in ('awaiting_review','review_booked') then raise exception 'The car is not waiting for an inspection.'; end if;
   if not exists (select 1 from public.garages where id = p_garage and status = 'certified' and country = l.country) then
     raise exception 'Choose a certified garage in the same country.'; end if;
   update public.conversations set status = 'closed', closed_at = now() where listing_id = p_listing and status in ('in_play','agreed');
@@ -577,8 +577,8 @@ begin
   insert into public.conversations (listing_id, garage_id, round, status, assigned_by_admin, garage_first_message_at)
   values (p_listing, p_garage, l.line_round, 'agreed', true, now()) returning id into cid;
   update public.listings set status = 'review_booked', line_empty = false, updated_at = now() where id = p_listing;
-  perform public.notify_garage(p_garage,'assigned','Saaz assigned you ' || l.ref || '. Message the seller to arrange the review.','#/garage/job/' || cid);
-  perform public.notify(x,'assigned','Saaz booked your Saaz review for ' || l.ref || '. The garage will message you here.','#/my/cars/' || l.id) from public.seller_side_users(l) x;
+  perform public.notify_garage(p_garage,'assigned','Saaz assigned you ' || l.ref || '. Message the seller to arrange the inspection.','#/garage/job/' || cid);
+  perform public.notify(x,'assigned','Saaz booked your Saaz inspection for ' || l.ref || '. The garage will message you here.','#/my/cars/' || l.id) from public.seller_side_users(l) x;
   perform public.audit('admin','listing',l.id::text,'garage assigned directly', jsonb_build_object('garage',p_garage));
 end $$;
 

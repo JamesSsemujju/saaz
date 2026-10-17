@@ -2,6 +2,15 @@
    Every change goes through a database function (supabase/marketplace_*.sql). The page never decides who may do what. */
 (function () {
   var C = window.SAAZ || {};
+  // Links in Saaz emails (invite, password reset, email confirmation) arrive as #access_token=...&type=...
+  // Read them before the Supabase client clears the address bar.
+  var AUTH_LINK = (function () {
+    var h = location.hash.replace(/^#/, "");
+    if (!/(^|&)(access_token|error_description)=/.test(h)) return null;
+    var p = new URLSearchParams(h); return { type: p.get("type"), error: p.get("error_description") };
+  })();
+  // Where an email link should land: ?next=seller (sign-up as seller) or ?next=garage (garage invite)
+  var NEXT = new URLSearchParams(location.search).get("next");
   var S = window.Saaz = { routes: [], state: { session: null, roles: null } };
   var configured = C.supabaseUrl && C.supabaseAnonKey && window.supabase;
   S.db = configured ? window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
@@ -11,10 +20,18 @@
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   S.esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   S.money = function (cur, n) { return n == null ? "" : (cur || "UGX") + " " + Number(n).toLocaleString("en-US"); };
-  S.day = function (iso) { if (!iso) return ""; var d = new Date(iso.length === 10 ? iso + "T00:00:00" : iso); return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear(); };
-  S.when = function (iso) { if (!iso) return ""; var d = new Date(iso); return S.day(iso) + ", " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+  // Saaz runs on East Africa Time (Africa/Kampala), whatever the visitor's device is set to
+  var EAT = { timeZone: "Africa/Kampala" };
+  function parts(d, o) { var r = {}; new Intl.DateTimeFormat("en-GB", Object.assign({}, EAT, o)).formatToParts(d).forEach(function (x) { r[x.type] = x.value; }); return r; }
+  S.day = function (iso) {
+    if (!iso) return "";
+    var d = new Date(iso.length === 10 ? iso + "T12:00:00+03:00" : iso), p = parts(d, { day: "numeric", month: "short", year: "numeric" });
+    return p.day + " " + p.month + " " + p.year;
+  };
+  S.when = function (iso) { if (!iso) return ""; var p = parts(new Date(iso), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); return S.day(iso) + ", " + p.hour + ":" + p.minute + " EAT"; };
   S.km = function (n) { return n == null ? "" : Number(n).toLocaleString("en-US") + " km"; };
-  S.label = function (s) { return String(s || "").replace(/_/g, " ").replace(/^./, function (c) { return c.toUpperCase(); }); };
+  // Status words come from the database; "review" there means the Saaz inspection
+  S.label = function (s) { return String(s || "").replace(/_/g, " ").replace(/\breview\b/g, "inspection").replace(/^./, function (c) { return c.toUpperCase(); }); };
   S.name = function (l) { return l.year + " " + l.make + " " + l.model; };
   S.photo = function (p) { return p ? C.supabaseUrl + "/storage/v1/object/public/car-photos/" + p : ""; };
   S.chip = function (status) { return "<span class='chip s-" + S.esc(status) + "'>" + S.esc(S.label(status)) + "</span>"; };
@@ -25,8 +42,10 @@
     try { var d = localStorage.getItem("saaz-device"); if (!d) { d = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem("saaz-device", d); } return d; }
     catch (e) { return null; }
   };
-  S.REGIONS = { UG: ["Kampala", "Wakiso", "Entebbe", "Mukono", "Jinja", "Mbarara", "Gulu"], KE: ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret"] };
-  S.COUNTRY = { UG: "Uganda", KE: "Kenya" };
+  // Saaz operates in Uganda only. Regions must match the regions table in the database.
+  S.COUNTRY_CODE = "UG";
+  S.REGIONS = { UG: ["Kampala", "Wakiso", "Entebbe", "Mukono", "Jinja", "Mbarara", "Gulu"] };
+  S.COUNTRY = { UG: "Uganda" };
 
   // Database errors come back as plain sentences from the functions. Show them as they are.
   S.friendly = function (e) {
@@ -56,6 +75,22 @@
     if (btn.dataset.armed) return fn();
     btn.dataset.armed = "1"; var t = btn.textContent; btn.textContent = "Tap again to confirm";
     setTimeout(function () { delete btn.dataset.armed; btn.textContent = t; }, 4000);
+  };
+  // Invite email for someone added to a garage who has no Saaz account yet (Edge Function invite-user)
+  S.sendInvite = function (email) {
+    return S.db.functions.invoke("invite-user", { body: { email: email, redirectTo: location.origin + location.pathname + "?next=garage" } }).then(function (r) {
+      if (!r.error) return "Invite email sent to " + email + ". The link lets them set a password.";
+      var ctx = r.error.context;
+      return (ctx && ctx.json ? ctx.json().catch(function () { return {}; }) : Promise.resolve({})).then(function (b) {
+        if (ctx && ctx.status === 404 && !b.error) throw new Error("Invite emails aren't switched on yet. Tell them to sign up with " + email + ".");
+        throw new Error((b && b.error) || "Couldn't send the invite email. Tell them to sign up with " + email + ".");
+      });
+    });
+  };
+  S.wireInvites = function (root) {
+    S.$$("[data-inv]", root).forEach(function (b) {
+      b.onclick = function () { b.disabled = true; S.sendInvite(b.dataset.inv).then(function (m) { S.toast(m); }).catch(function (e) { S.toast(S.friendly(e), true); b.disabled = false; }); };
+    });
   };
   S.bars = function (rows) { // tiny bar chart: [{label, value}]
     var max = Math.max.apply(null, rows.map(function (r) { return r.value; }).concat([1]));
@@ -97,7 +132,7 @@
         "<select id='modesw' aria-label='Switch role'>" + modes.map(function (m) { return "<option value='" + m[0] + "'" + (m[0] === mode ? " selected" : "") + ">" + m[1] + "</option>"; }).join("") + "</select>" +
         "<button type='button' class='link' id='signout'>Sign out</button>"
       : "<a href='#/signin' class='dash'>Sign in</a>";
-    return "<header class='apphead'><div class='wrap'><a class='logo' href='" + S.site + "'><i aria-hidden='true'>S</i>SAAZ</a>" +
+    return "<header class='apphead'><div class='wrap'><a class='logo' href='" + S.site + "'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
       "<nav class='appnav'>" + links + "</nav><div class='appright'>" + right + "</div></div></header>";
   }
   function wireHeader() {
@@ -108,7 +143,24 @@
     }).catch(function () {});
   }
 
+  var linkPending = false;
   S.render = function () {
+    if (linkPending) return; // the Supabase client may change the address while it reads an email link
+    if (AUTH_LINK) {
+      var link = AUTH_LINK; AUTH_LINK = null; linkPending = true;
+      var next = function () {
+        linkPending = false;
+        if (link.error) { history.replaceState(null, "", location.pathname + "#/signin"); setTimeout(function () { S.toast(link.error.replace(/\+/g, " ") + " Ask for a new link.", true); }, 600); }
+        else {
+          if (NEXT === "seller" || NEXT === "garage") S.mode(NEXT);
+          var land = link.type === "invite" ? "#/reset?first=1" : link.type === "recovery" ? "#/reset" : (NEXT === "seller" ? "#/my/cars" : "#/browse");
+          history.replaceState(null, "", location.pathname + land);
+        }
+        S.render(); if (link.type === "signup") S.toast("Email confirmed. Welcome to Saaz.");
+      };
+      // Let the Supabase client read the sign-in from the address bar first, then tidy the address
+      return S.db ? S.db.auth.getSession().then(next, next) : next();
+    }
     var hash = location.hash.replace(/^#/, "") || "/";
     var path = hash.split("?")[0], query = new URLSearchParams(hash.split("?")[1] || "");
     var root = S.$("#app");
@@ -161,9 +213,11 @@
 
   S.route("/signup", function (v) {
     v.innerHTML = "<div class='narrow'><h1>Create your Saaz account</h1><p class='lead'>One account to buy and sell.</p>" +
-      "<form id='f' class='stack'><label>Full name<input name='name' autocomplete='name' required minlength='2'></label>" +
+      "<form id='f' class='stack'><fieldset class='seg'><legend>I'm here to</legend><label><input type='radio' name='as' value='buyer' checked><span>Buy a car</span></label>" +
+      "<label><input type='radio' name='as' value='seller'><span>Sell a car</span></label></fieldset>" +
+      "<label>Full name<input name='name' autocomplete='name' required minlength='2'></label>" +
       "<label>Email<input name='email' type='email' autocomplete='email' required></label>" +
-      "<label>Country<select name='country' required><option value='UG'>Uganda</option><option value='KE'>Kenya</option></select></label>" +
+
       "<label>Mobile number<input name='mobile' type='tel' autocomplete='tel' placeholder='+256 7XX XXX XXX' required></label>" +
       "<label>Password<input name='password' type='password' autocomplete='new-password' minlength='8' required></label>" +
       "<p class='err' id='err' role='alert'></p><button class='btn wide'>Create account</button></form>" +
@@ -171,15 +225,16 @@
     S.$("#f").onsubmit = function (e) {
       e.preventDefault(); var f = S.form(e.target), err = S.$("#err"), b = e.target.querySelector("button");
       b.disabled = true; err.textContent = "";
-      S.db.auth.signUp({ email: f.email, password: f.password, options: { data: { name: f.name, country: f.country, mobile: f.mobile }, emailRedirectTo: location.origin + location.pathname + "#/signin" } })
+      S.db.auth.signUp({ email: f.email, password: f.password, options: { data: { name: f.name, country: "UG", mobile: f.mobile }, emailRedirectTo: location.origin + location.pathname + "?next=" + (f.as === "seller" ? "seller" : "buyer") } })
         .then(function (r) {
           if (r.error) throw r.error;
           if (r.data.user && r.data.user.identities && !r.data.user.identities.length) throw new Error("exists");
-          if (!r.data.session) { v.innerHTML = "<div class='narrow'><h1>Check your email</h1><p>Saaz sent a link to " + S.esc(f.email) + ". Open it to finish creating your account, then sign in.</p></div>"; return; }
-          S.mode("buyer"); S.toast("Welcome to Saaz."); S.go(S.after || "#/browse");
+          if (!r.data.session) { v.innerHTML = "<div class='narrow'><h1>Check your email</h1><p>Saaz sent a link to " + S.esc(f.email) + ". Open it to confirm your email; it signs you in" + (f.as === "seller" ? " and takes you to My cars" : "") + ".</p><p class='note'>Nothing after a few minutes? Check spam, or <a href='#/signup'>try again</a>.</p></div>"; return; }
+          S.mode(f.as === "seller" ? "seller" : "buyer"); S.toast("Welcome to Saaz."); S.go(S.after || (f.as === "seller" ? "#/my/cars" : "#/browse"));
         }).catch(function (e2) {
           var m = S.friendly(e2);
-          err.innerHTML = /exists|already registered/i.test(m) ? "That email already has an account. <a href='#/forgot'>Forgot your password?</a>" : S.esc(m);
+          // Same answer whether or not the email is taken, so the form can't be used to find out who has an account
+          err.innerHTML = /exists|already registered/i.test(m) ? "We couldn't create an account with these details. If you already have one, <a href='#/signin'>sign in</a> or <a href='#/forgot'>reset your password</a>." : S.esc(m);
           b.disabled = false;
         });
     };
@@ -195,24 +250,45 @@
       });
     };
   });
-  S.route("/reset", function (v) {
-    v.innerHTML = "<div class='narrow'><h1>Set a new password</h1><form id='f' class='stack'><label>New password<input name='password' type='password' minlength='8' required autocomplete='new-password'></label>" +
+  S.route("/reset", function (v, m, q) {
+    var first = q.get("first") === "1";
+    if (!S.signedIn()) { v.innerHTML = "<div class='narrow'><h1>This link has expired</h1><p>Links from Saaz emails work once. <a href='#/forgot'>Get a new link</a>.</p></div>"; return; }
+    v.innerHTML = "<div class='narrow'><h1>" + (first ? "Set your password" : "Set a new password") + "</h1>" +
+      (first ? "<p class='lead'>Welcome to Saaz, " + S.esc(S.me().email) + ". Choose a password to finish setting up your account.</p>" : "") +
+      "<form id='f' class='stack'><label>New password (8 characters or more)<input name='password' type='password' minlength='8' required autocomplete='new-password'></label>" +
       "<p class='err' id='err'></p><button class='btn wide'>Save password</button></form></div>";
     S.$("#f").onsubmit = function (e) {
       e.preventDefault(); var f = S.form(e.target);
-      S.db.auth.updateUser({ password: f.password }).then(function (r) { if (r.error) throw r.error; S.toast("Password saved."); S.go(S.home()); })
+      S.db.auth.updateUser({ password: f.password }).then(function (r) {
+        if (r.error) throw r.error; S.toast("Password saved.");
+        S.go(first && S.state.roles && S.state.roles.garage ? (S.mode("garage"), "#/garage") : S.home());
+      })
         .catch(function (e2) { S.$("#err").textContent = S.friendly(e2) + " Open the link from your email again."; });
     };
   });
 
   S.route("/account", function (v) {
     var p = S.me();
-    v.innerHTML = "<div class='narrow'><h1>Your account</h1><form id='f' class='stack'>" +
-      "<label>Full name<input name='name' value='" + S.esc(p.name) + "' required></label>" +
-      "<label>Country<select name='country'><option value='UG'" + (p.country === "UG" ? " selected" : "") + ">Uganda</option><option value='KE'" + (p.country === "KE" ? " selected" : "") + ">Kenya</option></select></label>" +
-      "<label>Mobile number<input name='mobile' type='tel' value='" + S.esc(p.mobile) + "'></label>" +
-      "<p class='note'>Email: " + S.esc(p.email) + (p.trusted ? " · Trusted seller" : "") + "</p><button class='btn'>Save</button></form></div>";
-    S.$("#f").onsubmit = function (e) { e.preventDefault(); var f = S.form(e.target); S.act(e.target.querySelector("button"), function () { return S.rpc("update_profile", { p_name: f.name, p_country: f.country, p_mobile: f.mobile }); }, "Saved."); };
+    v.innerHTML = "<div class='narrow'><h1>Your account</h1><section><h2>Details</h2><form id='f' class='stack'>" +
+      "<label>Full name<input name='name' value='" + S.esc(p.name) + "' required minlength='2'></label>" +
+      "<label>Mobile number<input name='mobile' type='tel' value='" + S.esc(p.mobile) + "' placeholder='+256 7XX XXX XXX'></label>" +
+      "<p class='note'>" + (p.trusted ? "Trusted seller. " : "") + "Saaz operates in Uganda.</p><button class='btn'>Save details</button></form></section>" +
+      "<section><h2>Password</h2><form id='pw' class='stack'><label>New password (8 characters or more)<input name='password' type='password' minlength='8' required autocomplete='new-password'></label>" +
+      "<label>Type it again<input name='again' type='password' minlength='8' required autocomplete='new-password'></label><p class='err' id='pwerr' role='alert'></p><button class='btn'>Change password</button></form></section>" +
+      "<section><h2>Email</h2><p>Now: <b>" + S.esc(p.email) + "</b></p><form id='em' class='stack'><label>New email<input name='email' type='email' required autocomplete='email'></label>" +
+      "<p class='err' id='emerr' role='alert'></p><button class='btn'>Change email</button><p class='note'>Saaz sends a confirmation link. The change only happens once it is opened.</p></form></section></div>";
+    S.$("#f").onsubmit = function (e) { e.preventDefault(); var f = S.form(e.target); S.act(e.target.querySelector("button"), function () { return S.rpc("update_profile", { p_name: f.name, p_country: "UG", p_mobile: f.mobile }); }, "Saved."); };
+    S.$("#pw").onsubmit = function (e) {
+      e.preventDefault(); var f = S.form(e.target), err = S.$("#pwerr"); err.textContent = "";
+      if (f.password !== f.again) { err.textContent = "The two passwords don't match."; return; }
+      S.db.auth.updateUser({ password: f.password }).then(function (r) { if (r.error) throw r.error; e.target.reset(); S.toast("Password changed."); })
+        .catch(function (e2) { err.textContent = /reauthentication|recent/i.test(e2.message || "") ? "For safety, sign out and sign in again, then change your password." : S.friendly(e2); });
+    };
+    S.$("#em").onsubmit = function (e) {
+      e.preventDefault(); var f = S.form(e.target), err = S.$("#emerr"); err.textContent = "";
+      S.db.auth.updateUser({ email: f.email }, { emailRedirectTo: location.origin + location.pathname + "#/account" }).then(function (r) { if (r.error) throw r.error; e.target.reset(); S.toast("Check " + f.email + " for the confirmation link."); })
+        .catch(function (e2) { err.textContent = S.friendly(e2); });
+    };
   }, "user");
 
   S.route("/inbox", function (v) {
@@ -227,6 +303,23 @@
   }, "user");
 
   S.route("/", function () { S.go(S.signedIn() ? S.home() : "#/browse"); });
+
+  // Every field that must be filled in gets a red asterisk after its label
+  S.markRequired = function (root) {
+    S.$$("label", root || document).forEach(function (l) {
+      if (l.querySelector(".req") || !l.querySelector("input[required],select[required],textarea[required]")) return;
+      var star = document.createElement("span"); star.className = "req"; star.setAttribute("aria-hidden", "true"); star.textContent = " *";
+      var field = l.querySelector("input,select,textarea");
+      if (l.classList.contains("inline")) { l.appendChild(star); return; }
+      // keep the label words and the * on one line: wrap everything before the field
+      var words = document.createElement("span"); words.className = "lbl";
+      while (l.firstChild && l.firstChild !== field && !(l.firstChild.contains && l.firstChild.contains(field))) words.appendChild(l.firstChild);
+      words.appendChild(star); l.insertBefore(words, l.firstChild);
+    });
+  };
+  if (window.MutationObserver) document.addEventListener("DOMContentLoaded", function () {
+    new MutationObserver(function () { S.markRequired(S.$("#app")); }).observe(S.$("#app"), { childList: true, subtree: true });
+  });
 
   window.addEventListener("hashchange", S.render);
   document.addEventListener("DOMContentLoaded", function () {

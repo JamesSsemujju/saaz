@@ -19,7 +19,7 @@ echo "Zip:  $(basename "$ZIP")"
 git pull --ff-only origin main
 unzip -oq "$ZIP" -d .
 python3 build.py
-git add docs src supabase tools build.py README.md
+git add docs src supabase tools tests project-docs build.py README.md
 
 if git diff --cached --quiet; then
   ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)

@@ -1,11 +1,12 @@
 /* tokens.css: every colour, size and font in one place.
-   Colours are the current palette (navy + orange), kept until a brand direction is chosen.
-   Orange is used for decoration and on dark backgrounds only; on light backgrounds text uses --accent-ink (5.18:1 on white). */
+   Brand: Saaz Automotive logo (17 Oct 2026): black, silver, white. See brand/README.md.
+   Variable names are older than the brand (--navy is now Saaz Black); kept so nothing else had to change.
+   Silver (--accent) is for dark backgrounds only; on light backgrounds accents use --accent-ink (graphite). */
 :root{
-  --navy:#0B2545; --navy-2:#123563; --navy-deep:#06172C;
-  --ink:#111827; --mut:#5B6675; --mut-on-dark:#C9D6E6;
+  --navy:#0B0B0C; --navy-2:#232327; --navy-deep:#000000;
+  --ink:#111827; --mut:#5B6675; --mut-on-dark:#C4C7CC;
   --soft:#F4F6F9; --line:#E3E8EF; --white:#FFFFFF;
-  --accent:#F26B1D; --accent-ink:#C2410C; --ice:#CFE0F5;
+  --accent:#D8DBE0; --accent-ink:#3A3D42; --ice:#E7E9EC;
   --focus:#8FB1FF;
   --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;

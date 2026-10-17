@@ -21,13 +21,13 @@
 .apphead .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;min-height:56px;padding-top:6px;padding-bottom:6px}
 .apphead .logo{color:var(--white)}
 .appnav{display:flex;gap:14px;order:3;width:100%;overflow-x:auto;font-size:14px;padding-bottom:4px}
-.appnav a,.appright a{color:#DCE6F2;text-decoration:none;white-space:nowrap}
-.appright{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:14px}
+.appnav a,.appright a{color:#E4E6EA;text-decoration:none;white-space:nowrap}
+.appright{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 10px;font-size:14px;min-width:0}
 .appright .dash{font-weight:700;color:var(--white)}
 .appright .inbox b{display:inline-block;background:var(--accent);color:var(--navy);border-radius:999px;padding:0 6px;margin-left:4px;font-size:12px}
 .appbody .apphead .appright select{background:var(--navy-2);color:var(--white);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:3px 4px;font:inherit;font-size:13px;max-width:110px;width:auto}
 .appright .link{white-space:nowrap}
-.appright .link{background:none;border:0;color:#DCE6F2;font:inherit;cursor:pointer;padding:0}
+.appright .link{background:none;border:0;color:#E4E6EA;font:inherit;cursor:pointer;padding:0}
 @media(min-width:900px){.appnav{order:0;width:auto;margin-left:18px;padding:0}}
 
 /* buttons and forms */
@@ -88,10 +88,10 @@
 .appbody .crumbs a{color:var(--mut)}
 .appbody .tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:var(--s-3)}
 .appbody .tabs a{padding:10px 12px;color:var(--mut);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;font-weight:600;font-size:14px}
-.appbody .tabs a[aria-current=page]{color:var(--navy);border-bottom-color:var(--accent)}
+.appbody .tabs a[aria-current=page]{color:var(--navy);border-bottom-color:var(--navy)}
 .appbody .list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
 .appbody .list li{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between}
-.appbody .list li.unread{border-left:4px solid var(--accent)}
+.appbody .list li.unread{border-left:4px solid var(--navy)}
 .appbody .list a{color:var(--ink);text-decoration:none;display:grid;gap:4px;flex:1;justify-items:start}
 .appbody .rows{list-style:none;padding:0;margin:0;display:grid;gap:10px}
 .appbody .rows a{display:flex;gap:12px;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:10px;color:var(--ink);text-decoration:none}
@@ -122,7 +122,7 @@
 .progress li{flex:1;text-align:center;padding-top:22px;position:relative;color:var(--mut)}
 .progress li:before{content:"";position:absolute;top:6px;left:0;right:0;height:6px;border-radius:3px;background:#D5DCE5}
 .progress li.done:before{background:#1E7B45}
-.progress li.now:before{background:var(--accent)}
+.progress li.now:before{background:var(--navy-2);opacity:.55}
 .progress li.now{color:var(--navy);font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media(min-width:760px){.stats{grid-template-columns:repeat(5,minmax(0,1fr))}}
@@ -207,3 +207,30 @@
   .appbody{background:#fff}.appbody .pad{padding:0}
   .report{border:0;max-width:none;padding:0}
 }
+
+/* Long unbroken values wrap inside their box (names, emails, references, VINs) */
+.appbody .grid2>*,.appbody .stats>div,.appbody .rows .grow,.appbody .list a,.appbody .list li>div,.appbody .chathead,.appbody .demand span,
+.appbody .pagehead h1,.appbody .pagehead h2,.appbody .box,.appbody .verdict,.appbody .timeline li,.appbody .lead,.appbody .crumbs,
+.appbody .checks li span,.appbody .sigs p,.appbody .verify p,.appbody .rhead>div,.appbody .buybox>*{min-width:0;overflow-wrap:anywhere}
+
+/* required fields */
+.appbody .req{color:#B42318;font-weight:700}
+
+/* admin layout: grouped side menu (wide screens), "Go to" menu (phones) */
+.adminwrap{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.adminmain{min-width:0}
+.adminside{display:none}
+.appbody .adminjump{margin-bottom:12px}
+@media(min-width:1000px){
+  .adminwrap{grid-template-columns:210px minmax(0,1fr)}
+  .adminside{display:block;position:sticky;top:76px;align-self:start;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
+  .adminside .navgroup{padding:6px 0;border-bottom:1px solid var(--line)}
+  .adminside .navgroup:last-child{border-bottom:0}
+  .adminside b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);padding:4px 8px}
+  .adminside a{display:block;padding:6px 8px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px}
+  .adminside a:hover{background:var(--soft)}
+  .adminside a[aria-current=page]{background:var(--navy);color:var(--white);font-weight:700}
+  .appbody .adminjump{display:none}
+}
+
+.report .replogo{display:block;height:34px;width:auto}

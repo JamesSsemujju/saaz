@@ -16,11 +16,11 @@ begin
     raise exception 'This car is not booked with your garage.'; end if;
   select p.name into other from public.reviews r join public.profiles p on p.id = r.member_id
     where r.listing_id = p_listing and r.garage_id = gid and r.status = 'draft' and r.member_id <> u;
-  if other is not null then raise exception 'In progress: % is writing this review.', other; end if;
+  if other is not null then raise exception 'In progress: % is writing this inspection report.', other; end if;
   select id into rid from public.reviews where listing_id = p_listing and member_id = u and status = 'draft';
   if rid is null then
     insert into public.reviews (listing_id, vehicle_id, garage_id, member_id) values (p_listing, l.vehicle_id, gid, u) returning id into rid;
-    perform public.audit('garage','review',rid::text,'review started', jsonb_build_object('listing',l.ref));
+    perform public.audit('garage','review',rid::text,'inspection started', jsonb_build_object('listing',l.ref));
   end if;
   return rid;
 end $$;
@@ -65,7 +65,7 @@ begin
   if public.my_garage_id() is distinct from r.garage_id then raise exception 'Your garage access has ended.'; end if;
   if not exists (select 1 from public.conversations where listing_id = r.listing_id and garage_id = r.garage_id and status = 'agreed') then
     raise exception 'This car is no longer booked with your garage.'; end if;
-  if not r.in_person then raise exception 'Confirm the car was reviewed in person and the VIN checked.'; end if;
+  if not r.in_person then raise exception 'Confirm the car was inspected in person and the VIN checked.'; end if;
   if r.odometer is null then raise exception 'Enter the odometer reading.'; end if;
   foreach k in array public.review_keys() loop
     val := r.checks->>k;
@@ -108,10 +108,10 @@ begin
   where id = l.id;
   update public.conversations set status = 'closed', closed_at = now() where listing_id = l.id and garage_id = r.garage_id and status = 'agreed';
   perform public.audit('garage','review',r.id::text,'issued', jsonb_build_object('doc_no',r.doc_no,'verdict',r.verdict,'score',r.score,'odometer',r.odometer,'flag',v_flag));
-  perform public.notify(x, 'review_issued', 'Your Saaz review for ' || l.ref || ' is issued (' || initcap(r.verdict) || ', ' || r.score || '/100). ' ||
+  perform public.notify(x, 'review_issued', 'Your Saaz inspection report for ' || l.ref || ' is issued (' || initcap(r.verdict) || ', ' || r.score || '/100). ' ||
     case when auto_live then 'Your car is live.' else 'Saaz will check it within ' || (public.setting('approval_response')#>>'{}') || '.' end,
     '#/my/cars/' || l.id, '{app,email,sms}') from public.seller_side_users(l) x;
-  if not auto_live then perform public.notify_admins('review_issued','Review issued for ' || l.ref || ': waiting for approval.','#/admin/car/' || l.id); end if;
+  if not auto_live then perform public.notify_admins('review_issued','Inspection report issued for ' || l.ref || ': waiting for approval.','#/admin/car/' || l.id); end if;
   return jsonb_build_object('doc_no',r.doc_no,'verify_code',code,'verdict',r.verdict,'score',r.score,'live',auto_live);
 end $$;
 
@@ -120,7 +120,7 @@ create or replace function public.verify_review(p_code text) returns jsonb langu
 declare r public.reviews; v public.vehicles; l public.listings;
 begin
   select * into r from public.reviews where verify_code = upper(trim(p_code));
-  if r is null then return jsonb_build_object('genuine',false,'message','No Saaz review has this code.'); end if;
+  if r is null then return jsonb_build_object('genuine',false,'message','No Saaz inspection has this code.'); end if;
   select * into v from public.vehicles where id = r.vehicle_id;
   select * into l from public.listings where id = r.listing_id;
   return jsonb_build_object('genuine', true,
@@ -166,13 +166,13 @@ begin
   perform public.require_admin();
   if coalesce(trim(p_reason),'') = '' then raise exception 'A reason is required.'; end if;
   select * into r from public.reviews where id = p_review;
-  if r.status <> 'issued' then raise exception 'Only an issued review can be voided.'; end if;
+  if r.status <> 'issued' then raise exception 'Only an issued inspection report can be voided.'; end if;
   update public.reviews set status = 'void', void_reason = p_reason where id = p_review;
   select * into l from public.listings where id = r.listing_id;
   update public.deals set status = 'closed', updated_at = now() where listing_id = l.id and status in ('negotiating','on_hold');
   update public.listings set status = 'awaiting_review', current_review_id = null, updated_at = now() where id = l.id and status not in ('sold','reserved','withdrawn');
-  perform public.notify_garage(r.garage_id,'review_void','Saaz voided review ' || r.doc_no || ': ' || p_reason,'#/garage');
-  perform public.notify(x,'review_void','The Saaz review for ' || l.ref || ' was voided. Saaz is arranging a new one.','#/my/cars/' || l.id) from public.seller_side_users(l) x;
+  perform public.notify_garage(r.garage_id,'review_void','Saaz voided inspection report ' || r.doc_no || ': ' || p_reason,'#/garage');
+  perform public.notify(x,'review_void','The Saaz inspection for ' || l.ref || ' was voided. Saaz is arranging a new one.','#/my/cars/' || l.id) from public.seller_side_users(l) x;
   perform public.audit('admin','review',p_review::text,'voided', jsonb_build_object('reason',p_reason));
   perform public.put_next_in_play(l.id);
 end $$;

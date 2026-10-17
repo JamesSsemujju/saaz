@@ -2,6 +2,9 @@
 
 The public Saaz website (homepage, one page per service, help pages) and the Saaz marketplace app at `/app/`. Built from small source files into plain HTML for GitHub Pages; the app reads and writes the Saaz Supabase database.
 
+## Project documents (17 Oct 2026)
+The system audit, module inventory, workflows, data model, roles, email findings, admin navigation and test results are in `project-docs/`. Tests are in `tests/`.
+
 ## Build and publish
 1. Edit files in `src/`.
 2. Run `python3 build.py`. It needs Python 3.8+ only and fails on any unknown placeholder or broken internal link.
@@ -65,9 +68,20 @@ Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at `/app/`
 - Browser: the whole flow at 320, 390 and 1280 px against a local stand-in for Supabase (66 checks each): garage applies, admin approves, seller lists with photos, garage contacts, seller agrees, garage issues the review, public verify, admin approves, buyer offers (auto-rejected, then accepted after a counter), contacts shared, admin completes, What's selling, every admin tab. No sideways scroll, no script errors.
 - Applied to the live Supabase project on 17 Oct 2026: parts 1, 2a, 2b and 5 (hardening) from this chat; the rest via `supabase/marketplace_run_in_sql_editor_2026-10-17.sql` in the SQL Editor (the connection here stops on SQL containing the word "delete"). Checked after: 21 tables, all with row-level security; 80 functions; internal helpers not callable from the website; sign-in-only actions not callable by visitors; James is admin with a profile.
 - Supabase security check after: 19 functions callable by visitors, on purpose (public browse, car stats, verify, report, what's selling, and the helpers the read rules use); `listing_views` has no read rule on purpose; leaked-password protection is off (dashboard setting).
+- Text audit (17 Oct 2026): every site page, preview page and app page at 320, 390, 768 and 1280 px, checked for text spilling out of its box. Found one (the VIN decoder's Series value, e.g. ASA44L/ASA42L/AVA44L, ran into the Body column). Fixed with a wrap rule for long unbroken values in base.css and app.css. Re-run with every typed field and every decoder value filled with 43 characters without spaces: 0 problems.
 - Not tested yet: the live site against the real project, real email confirmation, a real phone on slow data.
 
 **Open calls:** one garage in play per car (built) or per seller across all their cars; the platform fee (left out).
+
+**Changes, 17 Oct 2026 (afternoon)**
+- History lives with the thing it's about: each car, garage (with its team), account and deal page shows its own history. Admin, All activity still lists everything, and each row now links to the car, garage, account or deal it touched. New admin page per account (`#/admin/user/<id>`): details, cars listed, offers made, garage team, history.
+- "Reviews" renamed to "Car review reports": a Saaz review is always a report on one car, made by a certified garage. Saaz doesn't rate sellers or garages yet.
+- Required fields show a red * (added automatically to every required field in the app).
+- Direct-add reason now reads "Why are you adding this garage directly, without an application?", with an example.
+- Links from Saaz emails (invite, password reset, email confirmation) now open the right page. An invite opens "Set your password".
+- Invite emails: `supabase/functions/invite-user/index.ts` (Edge Function, not deployed yet). Admins and garage owners get "Send invite email" next to anyone added who has no account yet. The service key stays on Supabase's servers.
+- Email needs set-up in Supabase before it reaches real people: (1) Authentication, URL Configuration: Site URL `https://jamesssemujju.github.io/saaz/app/`, and add the same under Redirect URLs. (2) A custom SMTP sender (Authentication, Emails, SMTP Settings). Without it Supabase only emails members of the project's team (source: supabase.com/docs/guides/auth/auth-smtp).
+- Tested: browser flow 73 checks at 320, 390 and 1280 px; text audit with stress values, 0 problems. The Edge Function is not tested (no Deno here).
 
 ## VIN decoder (added 17 Oct 2026)
 - The first live feature. Use the homepage field or the Vehicle history page (`/history/#decode`).

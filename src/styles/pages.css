@@ -1,5 +1,5 @@
 /* pages.css: home hero and the module page hero */
-.hero{background:radial-gradient(1200px 500px at 80% 10%,#1B4C8C 0%,rgba(27,76,140,0) 60%),var(--navy);color:var(--white);overflow:hidden}
+.hero{background:radial-gradient(1200px 500px at 80% 10%,#3A3D42 0%,rgba(58,61,66,0) 60%),var(--navy);color:var(--white);overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s-2);padding-top:40px;padding-bottom:var(--s-2)}
 .eyebrow{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
 .hero h1{margin:10px 0 14px}
@@ -15,7 +15,7 @@
 @keyframes pulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.car .scan,.car .dot{animation:none}}
 .promise{display:grid;gap:14px;padding:22px 0 34px;border-top:1px solid rgba(255,255,255,.12);margin-top:10px}
-.promise div{display:flex;gap:12px;align-items:flex-start;color:#DCE6F2;font-size:15px}
+.promise div{display:flex;gap:12px;align-items:flex-start;color:#E4E6EA;font-size:15px}
 .promise .icon{width:22px;height:22px;color:var(--accent);margin-top:1px}
 @media(min-width:760px){
   .hero .wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:center;padding-top:72px}

@@ -33,14 +33,14 @@
     });
   }
 
-  var PROGRESS = [["Listed", ["draft", "changes_requested"]], ["Saaz review", ["awaiting_review", "review_booked"]], ["Approved", ["awaiting_approval", "live", "re_review_due"]], ["Deal agreed", ["reserved"]], ["Sold", ["sold"]]];
+  var PROGRESS = [["Listed", ["draft", "changes_requested"]], ["Saaz inspection", ["awaiting_review", "review_booked"]], ["Approved", ["awaiting_approval", "live", "re_review_due"]], ["Deal agreed", ["reserved"]], ["Sold", ["sold"]]];
   function progress(status) {
     var at = PROGRESS.findIndex(function (p) { return p[1].indexOf(status) >= 0; });
     return "<ol class='progress'>" + PROGRESS.map(function (p, i) { return "<li class='" + (i < at ? "done" : i === at ? "now" : "") + "'>" + p[0] + "</li>"; }).join("") + "</ol>";
   }
-  var STATUS_TEXT = { draft: "Draft. Only you can see it.", awaiting_review: "Waiting for a garage. Saaz puts one certified garage in play at a time.", review_booked: "Booked with a garage for its Saaz review.",
-    awaiting_approval: "Saaz review issued. Saaz is checking it.", changes_requested: "Saaz asked for changes.", live: "Live on Saaz.", reserved: "Reserved: a deal is agreed.", sold: "Sold.",
-    rejected: "Not approved.", withdrawn: "Withdrawn.", re_review_due: "The Saaz review expired. Submit again for a new review." };
+  var STATUS_TEXT = { draft: "Draft. Only you can see it.", awaiting_review: "Waiting for a garage. Saaz puts one certified garage in play at a time.", review_booked: "Booked with a garage for its Saaz inspection.",
+    awaiting_approval: "Saaz inspection issued. Saaz is checking it.", changes_requested: "Saaz asked for changes.", live: "Live on Saaz.", reserved: "Reserved: a deal is agreed.", sold: "Sold.",
+    rejected: "Not approved.", withdrawn: "Withdrawn.", re_review_due: "The Saaz inspection expired. Submit again for a new review." };
 
   // ---------- List a car ----------
   function sellForm(v, existing, saaz, preVin) {
@@ -50,19 +50,19 @@
       var dis = locked ? " readonly" : "";
       return "<div class='grid2'><label>Make<input name='make' required value='" + esc(l.make || "") + "'" + dis + "></label><label>Model<input name='model' required value='" + esc(l.model || "") + "'" + dis + "></label>" +
         "<label>Year<input name='year' type='number' min='1980' max='" + (new Date().getFullYear() + 1) + "' required value='" + esc(l.year || "") + "'" + dis + "></label>" +
-        "<label>Fuel<select name='fuel'" + (locked ? " disabled" : "") + ">" + ["Petrol", "Diesel", "Hybrid", "Electric"].map(function (x) { return "<option" + (l.fuel === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
-        "<label>Gearbox<select name='gearbox'" + (locked ? " disabled" : "") + ">" + ["Automatic", "Manual"].map(function (x) { return "<option" + (l.gearbox === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
-        "<label>Body<select name='body'" + (locked ? " disabled" : "") + ">" + ["Saloon", "Hatchback", "SUV", "Station wagon", "Pickup", "Van", "Minibus", "Coupe"].map(function (x) { return "<option" + (l.body === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
+        "<label>Fuel<select name='fuel' required" + (locked ? " disabled" : "") + ">" + ["Petrol", "Diesel", "Hybrid", "Electric"].map(function (x) { return "<option" + (l.fuel === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
+        "<label>Gearbox<select name='gearbox' required" + (locked ? " disabled" : "") + ">" + ["Automatic", "Manual"].map(function (x) { return "<option" + (l.gearbox === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
+        "<label>Body<select name='body' required" + (locked ? " disabled" : "") + ">" + ["Saloon", "Hatchback", "SUV", "Station wagon", "Pickup", "Van", "Minibus", "Coupe"].map(function (x) { return "<option" + (l.body === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
         "<label>Engine<input name='engine' placeholder='2.0' value='" + esc(l.engine || "") + "'" + dis + "></label><label>Colour<input name='colour' required value='" + esc(l.colour || "") + "'></label>" +
         "<label>Mileage (km)<input name='mileage' type='number' min='0' max='1000000' required value='" + esc(l.mileage == null ? "" : l.mileage) + "'></label>" +
-        "<label>Country<select name='country' id='ctry'><option value='UG'" + (l.country !== "KE" ? " selected" : "") + ">Uganda</option><option value='KE'" + (l.country === "KE" ? " selected" : "") + ">Kenya</option></select></label>" +
-        "<label>Region<select name='region' id='reg'></select></label><label>Number plate<input name='plate' required placeholder='UBA 123X' value='" + esc(l.plate || "") + "' autocapitalize='characters'></label>" +
-        "<label>Asking price<input name='price' type='number' required min='1' value='" + esc(l.price || "") + "'></label></div>" +
+        "<input type='hidden' name='country' id='ctry' value='UG'>" +
+        "<label>Region<select name='region' id='reg' required></select></label><label>Number plate (Uganda)<input name='plate' required placeholder='UBA 123X' value='" + esc(l.plate || "") + "' autocapitalize='characters'></label>" +
+        "<label>Asking price (UGX)<input name='price' type='number' required min='1000000' step='1000' value='" + esc(l.price || "") + "'></label></div>" +
         "<label>Description<textarea name='description' rows='4' minlength='30' required>" + esc(l.description || "") + "</textarea></label>" +
-        "<div><b>Photos</b> <small>4 to 12. Shrunk to about 30 KB each.</small><div id='thumbs' class='thumbs'></div><input type='file' id='files' accept='image/*' multiple></div>" +
-        (saaz ? "" : "<label class='inline'><input type='checkbox' name='logbook_name_matches' value='1'" + (l.logbook_name_matches ? " checked" : "") + "> The logbook is in my name</label>" +
+        "<div><b>Photos<span class='req' aria-hidden='true'> *</span></b> <small>4 to 12. Shrunk to about 30 KB each.</small><div id='thumbs' class='thumbs'></div><input type='file' id='files' accept='image/*' multiple></div>" +
+        (saaz ? "" : "<p class='note'>Tick one of these two<span class='req' aria-hidden='true'> *</span></p><label class='inline'><input type='checkbox' name='logbook_name_matches' value='1'" + (l.logbook_name_matches ? " checked" : "") + "> The logbook is in my name</label>" +
           "<label class='inline'><input type='checkbox' name='owner_authorised' value='1'" + (l.owner_authorised ? " checked" : "") + "> The owner authorised me to sell</label>") +
-        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn' name='go' value='save'>Save draft</button><button class='btn dark' name='go' value='submit'>Save and submit for a Saaz review</button></div>";
+        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn' name='go' value='save'>Save draft</button><button class='btn dark' name='go' value='submit'>Save and submit for a Saaz inspection</button></div>";
     }
     function drawThumbs() {
       S.$("#thumbs").innerHTML = photos.map(function (p, i) { return "<figure><img src='" + esc(S.photo(p)) + "' alt=''><button type='button' data-i='" + i + "' aria-label='Remove photo'>×</button></figure>"; }).join("");
@@ -74,7 +74,7 @@
     }
     function showForm(locked) {
       S.$("#rest").innerHTML = lockedMsg + "<form id='f' class='stack'>" + fieldsHtml(locked) + "</form>";
-      regions(); S.$("#ctry").onchange = regions; drawThumbs();
+      regions(); drawThumbs();
       S.$("#files").onchange = function (e) {
         var files = Array.prototype.slice.call(e.target.files, 0, 12 - photos.length);
         S.toast("Uploading " + files.length + " photo" + (files.length === 1 ? "" : "s") + "…");
@@ -101,7 +101,7 @@
       };
     }
     v.innerHTML = "<div class='narrow wide'><h1>" + (existing ? "Edit " + esc(l.ref) : saaz ? "New Saaz car" : "List a car") + "</h1>" +
-      "<p class='lead'>Start with the VIN or chassis number. The listing stays private until a Saaz review is issued and approved.</p>" +
+      "<p class='lead'>Start with the VIN or chassis number. The listing stays private until a Saaz inspection is issued and approved.</p>" +
       "<form id='vf' class='check light'><label for='vin'>VIN or chassis number</label><input id='vin' name='vin' required autocapitalize='characters' value='" + esc(preVin || "") + "'" + (existing ? " readonly" : "") + "><button>" + (existing ? "VIN locked" : "Look up") + "</button></form>" +
       "<div id='look' aria-live='polite'></div><div id='rest'></div></div>";
     if (existing) {
@@ -166,10 +166,10 @@
     var closed = ["in_play", "agreed"].indexOf(c.status) < 0;
     return "<div class='chat'><div class='chathead'><b>" + esc(c.garages ? c.garages.name : "Garage") + "</b> " + S.chip(c.status) +
       (c.status === "in_play" && !c.garage_first_message_at ? "<small>Has until " + S.when(c.deadline) + " to message you</small>" : "") +
-      (c.review_date ? "<small>Review date: " + S.day(c.review_date) + "</small>" : "") + "</div>" +
+      (c.review_date ? "<small>Inspection date: " + S.day(c.review_date) + "</small>" : "") + "</div>" +
       "<div class='msgs'>" + (msgs.length ? msgs.map(function (x) {
         return "<p class='msg " + (x.side === (sellerSide ? "seller" : "garage") ? "me" : "them") + "'>" + esc(x.body) + "<small>" + S.when(x.created_at) + "</small></p>";
-      }).join("") : "<p class='note'>" + (sellerSide ? "The garage messages first." : "Message the seller to arrange the review.") + "</p>") + "</div>" +
+      }).join("") : "<p class='note'>" + (sellerSide ? "The garage messages first." : "Message the seller to arrange the inspection.") + "</p>") + "</div>" +
       (closed ? "" : "<form class='send' data-c='" + c.id + "'><input name='body' placeholder='Write a message' maxlength='2000' required" + (sellerSide && !c.garage_first_message_at ? " disabled" : "") + "><button class='btn small'" + (sellerSide && !c.garage_first_message_at ? " disabled" : "") + ">Send</button></form>") +
       (c.status === "in_play" && closed === false ? "<p class='note'>Phone numbers and emails are hidden until " + (sellerSide ? "you agree" : "the seller agrees") + ". After that, share whatever you like. Saaz doesn't read these messages.</p>" : "") + "</div>";
   }
@@ -203,12 +203,12 @@
   function draw(v, l, open, msgs, st, deals, hist, review, convs) {
     var editable = ["draft", "changes_requested"].indexOf(l.status) >= 0;
     var actions = [];
-    if (editable) actions.push("<a class='btn' href='#/my/edit/" + l.id + "'>Edit</a>", "<button class='btn dark' id='submit'>Submit for a Saaz review</button>");
-    if (l.status === "re_review_due") actions.push("<button class='btn dark' id='submit'>Submit for a new Saaz review</button>");
+    if (editable) actions.push("<a class='btn' href='#/my/edit/" + l.id + "'>Edit</a>", "<button class='btn dark' id='submit'>Submit for a Saaz inspection</button>");
+    if (l.status === "re_review_due") actions.push("<button class='btn dark' id='submit'>Submit for a new Saaz inspection</button>");
     if (["live", "re_review_due"].indexOf(l.status) >= 0) actions.push("<button class='btn ghost dark' id='reopen'>Change something other than the price</button>");
     if (["reserved", "sold", "withdrawn", "rejected"].indexOf(l.status) < 0) actions.push("<button class='btn ghost dark' id='withdraw'>Withdraw</button>");
     var priceForm = ["live", "draft", "changes_requested", "awaiting_review", "review_booked", "awaiting_approval"].indexOf(l.status) >= 0
-      ? "<form id='pricef' class='inlineform'><label>Price (" + l.currency + ")<input name='price' type='number' value='" + l.price + "' required></label><button class='btn small'>Change price</button></form><p class='note'>A live car keeps its review when only the price changes.</p>" : "";
+      ? "<form id='pricef' class='inlineform'><label>Price (" + l.currency + ")<input name='price' type='number' value='" + l.price + "' required></label><button class='btn small'>Change price</button></form><p class='note'>A live car keeps its inspection when only the price changes.</p>" : "";
     var daily = (st.daily_14 || []).map(function (d) { return { label: S.day(d.day), short: String(new Date(d.day + "T00:00:00").getDate()), value: d.views }; });
     var model = st.model || {};
     v.innerHTML = "<p class='crumbs'><a href='" + (l.saaz_owned ? "#/admin/saaz" : "#/my/cars") + "'>" + (l.saaz_owned ? "Saaz cars" : "My cars") + "</a> / " + esc(l.ref) + "</p>" +
@@ -217,9 +217,9 @@
       (l.admin_note ? "<p class='box warn'><b>Note from Saaz:</b> " + esc(l.admin_note) + "</p>" : "") +
       "<div class='row'>" + actions.join("") + "</div>" + priceForm +
       (open ? "<section><h2>" + (open.status === "agreed" ? "Your garage" : "Garage in play") + "</h2>" + convoHtml(open, msgs, true) +
-        (open.status === "in_play" ? "<div class='row'><button class='btn' id='agree'" + (open.garage_first_message_at ? "" : " disabled") + ">Agree: book my review with this garage</button>" +
+        (open.status === "in_play" ? "<div class='row'><button class='btn' id='agree'" + (open.garage_first_message_at ? "" : " disabled") + ">Agree: book my inspection with this garage</button>" +
           "<button class='btn ghost dark' id='pass'>Pass to the next garage</button></div><div id='passbox'></div>" : "") + "</section>" : "") +
-      (review ? "<section><h2>Saaz review</h2><div class='insp-card'><div class='insp-head'>" + S.chip(review.verdict) + "<span>" + review.score + "/100 · " + esc(review.doc_no) + "</span></div>" +
+      (review ? "<section><h2>Saaz inspection</h2><div class='insp-card'><div class='insp-head'>" + S.chip(review.verdict) + "<span>" + review.score + "/100 · " + esc(review.doc_no) + "</span></div>" +
         (review.odometer_flag ? "<p class='err'>Odometer flag: " + esc(review.odometer_flag) + "</p>" : "") + "<a href='#/report/" + esc(review.verify_code) + "'>Open the report</a></div></section>" : "") +
       "<section><h2>Demand</h2><div class='stats'>" +
         [["Views, last 7 days", st.views_7d], ["Views in total", st.views_total], ["Saves", st.saves], ["Offers", st.offers], ["Auto-rejected offers", st.auto_rejected],
@@ -238,14 +238,14 @@
         return "<li><a href='#/deals/" + d.id + "'><b>" + S.money(l.currency, d.amount) + "</b> " + S.chip(d.status) + (d.flag ? " <span class='chip s-flag'>Breaks your offer rules</span>" : "") +
           (d.trade_in ? " <small>with trade-in</small>" : "") + "<small>" + S.when(d.updated_at) + "</small></a></li>";
       }).join("") + "</ul>" : "<p class='note'>No offers yet.</p>") + "</section>" +
-      "<section><h2>History</h2><ul class='timeline'>" + hist.map(function (h) { return "<li><small>" + S.when(h.at) + "</small> " + esc(h.who) + ": " + esc(h.action) + "</li>"; }).join("") + "</ul>" +
+      "<section><h2>History of this car</h2><ul class='timeline'>" + hist.map(function (h) { return "<li><small>" + S.when(h.at) + "</small> " + esc(h.who) + ": " + esc(h.action) + "</li>"; }).join("") + "</ul>" +
       (convs.length > 1 ? "<p class='note'>Garages so far: " + convs.map(function (c) { return esc(c.garages.name) + " (" + S.label(c.status) + ")"; }).join(", ") + "</p>" : "") + "</section>";
     S.wireSend(v);
     var b;
     if ((b = S.$("#submit"))) b.onclick = function () { S.act(b, function () { return S.rpc("submit_listing", { p_listing: l.id }); }, "Submitted. Saaz is putting a garage in play."); };
     if ((b = S.$("#withdraw"))) { var wb = b; wb.onclick = function () { S.confirmBtn(wb, function () { S.act(wb, function () { return S.rpc("withdraw_listing", { p_listing: l.id }); }, "Withdrawn."); }); }; }
-    if ((b = S.$("#reopen"))) { var rb = b; rb.onclick = function () { S.confirmBtn(rb, function () { S.act(rb, function () { return S.rpc("reopen_for_changes", { p_listing: l.id }); }, "Back to draft. Submitting again books a new Saaz review."); }); }; }
-    if ((b = S.$("#agree"))) { var ab = b; ab.onclick = function () { S.act(ab, function () { return S.rpc("seller_respond", { p_conv: open.id, p_agree: true }); }, "Agreed. The garage will set a review date."); }; }
+    if ((b = S.$("#reopen"))) { var rb = b; rb.onclick = function () { S.confirmBtn(rb, function () { S.act(rb, function () { return S.rpc("reopen_for_changes", { p_listing: l.id }); }, "Back to draft. Submitting again books a new Saaz inspection."); }); }; }
+    if ((b = S.$("#agree"))) { var ab = b; ab.onclick = function () { S.act(ab, function () { return S.rpc("seller_respond", { p_conv: open.id, p_agree: true }); }, "Agreed. The garage will set a inspection date."); }; }
     if ((b = S.$("#pass"))) b.onclick = function () {
       S.$("#passbox").innerHTML = "<form id='pf' class='stack box'><label>Reason (optional, the garage won't see it)<input name='reason' maxlength='300'></label><button class='btn small'>Pass to the next garage</button></form>";
       S.$("#pf").onsubmit = function (e) { e.preventDefault(); var f = S.form(e.target); S.act(e.target.querySelector("button"), function () { return S.rpc("seller_respond", { p_conv: open.id, p_agree: false, p_reason: f.reason }); }, "Passed. The next garage is coming in."); };
@@ -292,7 +292,7 @@
         (d.contacts ? "<div class='box good'><b>Contact details</b><p>" + esc(d.contacts.name) + (d.contacts.mobile ? " · " + esc(d.contacts.mobile) : "") + (d.contacts.email ? " · " + esc(d.contacts.email) : "") + (d.contacts.note ? " · " + esc(d.contacts.note) : "") +
           "</p><p class='note'>Arrange the handover between you. No money moves through Saaz.</p></div>" : "") +
         "<div class='row'>" + acts.join("") + "</div>" +
-        "<section><h2>History</h2><ul class='timeline'>" + (d.events || []).map(function (e) {
+        "<section><h2>History of this deal</h2><ul class='timeline'>" + (d.events || []).map(function (e) {
           return "<li><small>" + S.when(e.created_at) + "</small> " + esc(S.label(e.by_side)) + ": " + esc(S.label(e.kind)) + (e.amount ? " " + S.money(cur, e.amount) : "") + (e.message ? " · “" + esc(e.message) + "”" : "") + "</li>";
         }).join("") + "</ul></section>";
       S.$$("[data-a]", v).forEach(function (b) {

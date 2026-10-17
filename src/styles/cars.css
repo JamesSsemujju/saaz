@@ -37,7 +37,7 @@
 @media(min-width:620px){.cars{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:1180px){.cars{grid-template-columns:repeat(3,1fr)}}
 .car{display:grid;gap:12px;text-decoration:none;color:inherit}
-.car-photo{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,#1B4C8C,var(--navy));display:grid;place-items:center;color:rgba(207,224,245,.55)}
+.car-photo{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,#3A3D42,var(--navy));display:grid;place-items:center;color:rgba(207,224,245,.55)}
 .car-photo img{width:100%;height:100%;object-fit:cover}
 .car-photo .ph{width:72%;height:auto;aspect-ratio:600/240}
 .car-photo .phl{position:absolute;bottom:10px;right:12px;font-size:11px;color:rgba(207,224,245,.8)}
@@ -52,7 +52,7 @@
 .car-price b{font-size:19px;color:var(--ink);font-variant-numeric:tabular-nums}
 .car-price small{color:var(--mut);font-size:13px}
 .car:hover .car-name{color:var(--accent-ink)}
-.car:hover .car-photo{box-shadow:0 12px 28px rgba(11,37,69,.18)}
+.car:hover .car-photo{box-shadow:0 12px 28px rgba(11,11,12,.18)}
 
 /* car page */
 .carpage{padding-block:var(--s-4) var(--s-6);background:var(--white)}

@@ -16,7 +16,7 @@
         ["Visit a partner garage", "The garage checks the code and gives you the Saaz price."],
         ["Get the report", "Checks and photos on a link you can share on WhatsApp."]
       ],
-      "depends": ["Partner garages signed and vetted", "Payments by mobile money", "Inspection checklist agreed with the garages"],
+      "depends": ["Partner garages signed and vetted", "Inspection checklist agreed with the garages"],
       "platform": ["Accounts and consent", "Codes and booking", "Shop check-in", "Inspection report", "Payments", "Notifications"],
       "related": ["history", "garages", "cars"]
     },
