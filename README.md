@@ -1,6 +1,6 @@
 # Saaz website
 
-The public Saaz website (homepage, one page per service, help pages) and the Saaz marketplace app at `/app/`. Built from small source files into plain HTML for GitHub Pages; the app reads and writes the Saaz Supabase database.
+The public Saaz website (homepage, one page per service, help pages) and the Saaz marketplace app at the site root (one address for everything; `/app/` forwards there). Built from small source files into plain HTML for GitHub Pages; the app reads and writes the Saaz Supabase database.
 
 ## Project documents (17 Oct 2026)
 The system audit, module inventory, workflows, data model, roles, email findings, admin navigation and test results are in `project-docs/`. Tests are in `tests/`.
@@ -44,7 +44,7 @@ docs/                    built output. Never edit by hand
 - How it works, Buying safely, Questions, About, Privacy
 
 ## Marketplace app (added 17 Oct 2026)
-Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at `/app/` (one page, hash routes). The header's Sign in opens it.
+Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at the site root since 18 Oct 2026 (one page, hash routes); `/app/` forwards there.
 
 **The rule:** no Saaz review, no listing. A review is made inside Saaz by a signed-in member of a certified garage, on a job arranged through Saaz.
 
@@ -53,7 +53,7 @@ Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at `/app/`
 - `src/pages/app.html`, `src/layouts/app.html`, `src/styles/app.css`
 - `src/scripts/app-core.js` (sign-in, router), `app-public.js` (browse, car page, what's selling, verify, report document), `app-seller.js` (list a car, my cars, offers, deals), `app-garage.js` (apply, jobs, review editor, team), `app-admin.js` (all admin tabs)
 - `src/scripts/supabase.js`: supabase-js 2.45.4 (MIT), kept locally instead of a CDN.
-- `/admin/` now forwards to `/app/#/admin`. `/car/?ref=` forwards to the app. `/cars/` lists live cars from the marketplace. The old `cars` table is no longer used (dropping it needs your approval).
+- `/admin/` is gone (18 Oct 2026): admin is reached from the account menu. `/car/?ref=` forwards to the app. `/cars/` lists live cars from the marketplace. The old `cars` table is no longer used (dropping it needs your approval).
 
 **Security:** the website never decides who may do what. Every change goes through a database function that checks the caller. Tables have read rules only; nobody writes them directly. Internal helpers can't be called from the website. The audit trail can't be edited or deleted.
 
@@ -80,24 +80,60 @@ Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at `/app/`
 - Direct-add reason now reads "Why are you adding this garage directly, without an application?", with an example.
 - Links from Saaz emails (invite, password reset, email confirmation) now open the right page. An invite opens "Set your password".
 - Invite emails: `supabase/functions/invite-user/index.ts` (Edge Function, not deployed yet). Admins and garage owners get "Send invite email" next to anyone added who has no account yet. The service key stays on Supabase's servers.
-- Email needs set-up in Supabase before it reaches real people: (1) Authentication, URL Configuration: Site URL `https://jamesssemujju.github.io/saaz/app/`, and add the same under Redirect URLs. (2) A custom SMTP sender (Authentication, Emails, SMTP Settings). Without it Supabase only emails members of the project's team (source: supabase.com/docs/guides/auth/auth-smtp).
+- Email needs set-up in Supabase before it reaches real people: (1) Authentication, URL Configuration: Site URL `https://jamesssemujju.github.io/saaz/`, and under Redirect URLs add both `https://jamesssemujju.github.io/saaz/**` and `https://jamesssemujju.github.io/saaz/app/**`. (2) A custom SMTP sender (Authentication, Emails, SMTP Settings). Without it Supabase only emails members of the project's team (source: supabase.com/docs/guides/auth/auth-smtp).
 - Tested: browser flow 73 checks at 320, 390 and 1280 px; text audit with stress values, 0 problems. The Edge Function is not tested (no Deno here).
 
-## Admin sign-in (added 18 Oct 2026)
-Admin is not linked from anywhere and is not on the normal sign-in page. Admins sign in at `app/#/ops-7q4k` (to move it, change `STAFF_PATH` in `src/scripts/app-admin.js`).
-The address is not the lock. The site's code is public, so anyone who reads it can find the address. The lock is in the database:
+## One address, roles, admin entry, sign-out (added 18 Oct 2026)
+**One address:** https://jamesssemujju.github.io/saaz/ is the marketplace app (public listings first). The old `/app/` address forwards there with its code and page, so links in emails already sent keep working. The old home page is now `/home/`.
 
-- `is_admin()` (part 10) is true only if this session passed the admin's own pinned authenticator app, in the last 12 hours. Every admin page, table rule and function uses it, and so does the invite email function.
-- A stolen password gives nothing. A stolen password plus a thief's own authenticator gives nothing, because only the pinned one counts.
-- Without the code, admin pages show "Page not found", like any missing page.
-- Each admin sign-in is written to All activity with the IP address and browser.
+**Roles** (the database decides every one; the page only shows what the database says):
+- Buyer and seller: one account. Sign-in "as" Buyer or Seller only picks the start page.
+- Garage: invited by Saaz or by the owner of a certified garage, or applies and waits for Saaz. Nothing works for a garage until Saaz certifies it (`my_garage_id`). Team list shows Invited (no password yet) or Accepted (password set), and the garage's own stage (Certified, or waiting) separately. Owners of a garage that isn't certified can't add members or send invites.
+- Admin: an admin account that signs in as Seller sees **Admin panel** in the menu under their initials. Buyers, sellers and garage users never see it. Choosing it asks for the password again, then the authenticator code (first time: scan the QR code, then pin it, below). Five wrong tries signs you out. Failed tries are written to All activity.
+
+**What makes admin admin** (`is_admin`, parts 10 and 12): this session used the authenticator pinned to the account, and the password and the code were both entered in the last 12 hours. The menu entry, the page and the address give nothing on their own.
 
 First time, or after a lost phone:
-1. Open the staff address, sign in, scan the QR code with an authenticator app, enter the code.
-2. In the Supabase SQL Editor, run `supabase/marketplace_10b_pin_admin_authenticator.sql`. It refuses unless the account has exactly one verified authenticator.
-3. Sign in at the staff address again with a code.
+1. Sign in as Seller, open the menu, choose Admin panel, enter your password, scan the QR code, enter the code.
+2. In the Supabase SQL Editor, run `supabase/marketplace_10b_pin_admin_authenticator.sql` (refuses unless there is exactly one verified authenticator).
+3. Choose Admin panel again.
+Lost phone: in Supabase, Authentication, Users, open the admin and remove the old authenticator ("factor"), then steps 1 to 3.
 
-Lost phone: in Supabase, Authentication, Users, open the admin and remove the old authenticator ("factor"), then do steps 1 to 3. A new admin added in the app can't open Admin until steps 1 to 3 are done for them (change the email in the pin script).
+**Sign-out** (`Saaz.signOut`, one function for every role): ends every session of the account on Supabase, clears what the browser kept, and opens https://jamesssemujju.github.io/saaz/ (the public listings). Never the sign-in page. Afterwards a copied token can't run any Saaz function (`require_user` checks the session is still live), and admin is gone at once. Back to a protected page shows "Sign in to see this page", not the page. A session that ends some other way (expired, signed out on another device) lands on the listings with "Your session ended".
+
+**Known limit:** table reads through row rules accept a copied token until it expires (Supabase default: 1 hour). Every function call, every write and all admin access stop at sign-out.
+
+## Inspection IDs, tracking, scopes, one inspector (added 18 Oct 2026)
+**IDs from the request.** Sending a car for inspection creates its General inspection with an ID straight away (status Requested). The seller sees it on their car page. Statuses: Requested, In progress (database: `draft`), Completed (`issued`, later `superseded`), Cancelled. If a garage leaves, its inspections go back to Requested with the same ID.
+
+**Track an inspection** (top bar, `#/track`): 1. Lookup says only "found" or "not found". 2. Only after a match does the sign-in prompt appear (Seller or Garage team). 3. `inspection_access` then decides what that account may see and do; another account gets "isn't linked to your account". Already signed in: no prompt.
+
+**Starting** (`start_inspection`) re-checks at that moment, with a row lock: the inspection exists and is Requested; the car is still with Saaz; it's booked with your garage (seller agreed); you're the inspector it was given to, or the owner taking an unassigned one. One inspector per inspection: once started, only that person can fill it in, issue it or stop it, and the owner can't hand it to someone else. Stopping puts it back to Requested with the same ID and inspector. Withdrawn or rejected cars cancel their open inspections.
+
+**Scopes** (table `inspection_scopes`, a PROPOSAL to edit): General (12 checks and body map; the only one that decides whether the car goes live) plus Engine and gearbox, Body and chassis, Electrics, Brakes steering tyres. VIN and odometer are in every scope. A seller adds scopes when submitting or while waiting for the garage. Each scope has its own ID; the garage owner gives each to one inspector. The booking closes when no open inspection is left.
+
+**Not decided yet (gaps):** inspection-only requests for cars not for sale; whether an inspection may start only on or after its inspection date; whether a Requested inspection expires; IDs are sequential, so lookups can confirm that an ID exists (nothing else).
+
+## Access inside each team, inspection IDs, Saaz opinions (added 18 Oct 2026)
+**Garage.** The owner sees and runs everything: offered cars, every job, every report, the team. The owner gives each job to a team member ("Give this job to" on the job page). An inspector sees only the jobs given to them and the reports they wrote: no offered cars, no other inspectors' work, no team list. Decline and release are the owner's. Messages from the seller reach the owner and that job's inspector only. An owner who starts an unassigned job takes it.
+
+**Inspection IDs.** Every inspection gets its ID (`SZR-YYYY-NNNNNN`) the moment it starts, and keeps it as the report number. A car can have many; each is separate. "Open an inspection by its ID" on the garage dashboard opens it (owner: any of the garage's; inspector: their own). The car pages for Saaz and the seller list every inspection of the car with its ID, garage, inspector, status and Saaz's view.
+
+**Saaz never changes a report.** Staff support or object, always with a reason; the garage (owner or the report's author) can reply. The report and the public verify page show all of it. While Saaz objects, the car can't be approved, and a live car goes off sale (open offers wait) until Saaz supports the report or asks for a new inspection. Voiding is gone.
+
+**Saaz team.** Admin: everything, including Settings and the Saaz team page. Staff: cars, garages, deals, acting for sellers and buyers, supporting or objecting. An admin adds people by the email of their Saaz account, changes roles, removes people (with a reason; their sessions end at once) and approves each new authenticator on the Saaz team page. Account flags: staff can set trusted and phone verified; suspending is admin only.
+
+Database: `supabase/marketplace_13_roles_inside_teams.sql` (run in the SQL Editor: it replaces table rules).
+
+## Admin acting for a seller or buyer (added 18 Oct 2026)
+Like event-platform staff managing an event for the organiser. On a car's admin page, "Act for the seller" can change the price, change the offer rules, send the car for inspection, take it off sale to edit, withdraw it, and agree to or pass on a garage. On a deal page, "Act for the seller" and "Act for the buyer" can counter, accept, decline or withdraw.
+
+- Every action needs a reason of 10 characters or more. The person acted for gets a notice with the reason.
+- It runs the same database function the seller or buyer would run, so the same rules apply (minimum price, 4 photos, offer rules).
+- Every row written is stamped in All activity: actor = the admin, plus who it was for, which side, and the reason. The car's history (seller and admin) and the deal history (both sides) show "Our team" or "Saaz team, for the seller" with the reason.
+- An admin can't accept a figure that an admin entered for the other side. Every agreement needs one real person, or "Mark agreed" with a note of how both sides confirmed.
+- Not included: writing garage messages as the seller, making a new offer as a buyer, editing a draft's details from the admin page (the database allows it, the page doesn't offer it yet).
+- Database: `supabase/marketplace_11_admin_on_behalf.sql`.
 
 ## VIN decoder (added 17 Oct 2026)
 - The first live feature. Use the homepage field or the Vehicle history page (`/history/#decode`).

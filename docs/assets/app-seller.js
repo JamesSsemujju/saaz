@@ -203,7 +203,8 @@
   function draw(v, l, open, msgs, st, deals, hist, review, convs) {
     var editable = ["draft", "changes_requested"].indexOf(l.status) >= 0;
     var actions = [];
-    if (editable) actions.push("<a class='btn' href='#/my/edit/" + l.id + "'>Edit</a>", "<button class='btn dark' id='submit'>Submit for a Saaz inspection</button>");
+    if (editable) actions.push("<a class='btn' href='#/my/edit/" + l.id + "'>Edit</a>", "<div id='scopebox'></div>", "<button class='btn dark' id='submit'>Submit for a Saaz inspection</button>");
+    if (["awaiting_review", "review_booked"].indexOf(l.status) >= 0 && !l.saaz_owned) actions.push("<form id='addscope' class='stack'><div id='scopebox'></div><button class='btn small ghost dark'>Request these inspections</button></form>");
     if (l.status === "re_review_due") actions.push("<button class='btn dark' id='submit'>Submit for a new Saaz inspection</button>");
     if (["live", "re_review_due"].indexOf(l.status) >= 0) actions.push("<button class='btn ghost dark' id='reopen'>Change something other than the price</button>");
     if (["reserved", "sold", "withdrawn", "rejected"].indexOf(l.status) < 0) actions.push("<button class='btn ghost dark' id='withdraw'>Withdraw</button>");
@@ -238,11 +239,24 @@
         return "<li><a href='#/deals/" + d.id + "'><b>" + S.money(l.currency, d.amount) + "</b> " + S.chip(d.status) + (d.flag ? " <span class='chip s-flag'>Breaks your offer rules</span>" : "") +
           (d.trade_in ? " <small>with trade-in</small>" : "") + "<small>" + S.when(d.updated_at) + "</small></a></li>";
       }).join("") + "</ul>" : "<p class='note'>No offers yet.</p>") + "</section>" +
+      "<section><h2>Every inspection of this car</h2><div id='insps'><p class='loading'>Loading…</p></div></section>" +
       "<section><h2>History of this car</h2><ul class='timeline'>" + hist.map(function (h) { return "<li><small>" + S.when(h.at) + "</small> " + esc(h.who) + ": " + esc(h.action) + "</li>"; }).join("") + "</ul>" +
       (convs.length > 1 ? "<p class='note'>Garages so far: " + convs.map(function (c) { return esc(c.garages.name) + " (" + S.label(c.status) + ")"; }).join(", ") + "</p>" : "") + "</section>";
+    S.loadInspections("insps", l.id);
     S.wireSend(v);
     var b;
-    if ((b = S.$("#submit"))) b.onclick = function () { S.act(b, function () { return S.rpc("submit_listing", { p_listing: l.id }); }, "Submitted. Saaz is putting a garage in play."); };
+    var extraScopes = function () { return S.$$("input[name=xscope]:checked").map(function (x) { return x.value; }); };
+    if ((b = S.$("#submit"))) b.onclick = function () { var xs = extraScopes(); S.act(b, function () {
+      return S.rpc("submit_listing", { p_listing: l.id }).then(function () { return xs.length ? S.rpc("request_inspections", { p_listing: l.id, p_scopes: xs }) : null; });
+    }, "Submitted. Your inspection IDs are on this page; Saaz is putting a garage in play."); };
+    var adds = S.$("#addscope"); if (adds) adds.onsubmit = function (e) { e.preventDefault(); var xs = extraScopes(); if (!xs.length) { S.toast("Tick at least one.", true); return; }
+      S.act(adds.querySelector("button"), function () { return S.rpc("request_inspections", { p_listing: l.id, p_scopes: xs }); }, "Requested. Each one has its own inspection ID."); };
+    S.scopes().then(function (sc) {
+      var box = S.$("#scopebox"); if (!box) return;
+      box.innerHTML = "<fieldset class='checks2'><legend>Also inspect separately (optional)</legend>" + sc.list.filter(function (x) { return x.key !== "general"; }).map(function (x) {
+        return "<label class='inline'><input type='checkbox' name='xscope' value='" + esc(x.key) + "'> " + esc(x.name) + "</label>"; }).join("") +
+        "</fieldset><p class='note'>Every car for sale gets a General inspection. Each extra one gets its own inspection ID and can be done by a different inspector. Extra reports don't decide whether the car goes live.</p>";
+    });
     if ((b = S.$("#withdraw"))) { var wb = b; wb.onclick = function () { S.confirmBtn(wb, function () { S.act(wb, function () { return S.rpc("withdraw_listing", { p_listing: l.id }); }, "Withdrawn."); }); }; }
     if ((b = S.$("#reopen"))) { var rb = b; rb.onclick = function () { S.confirmBtn(rb, function () { S.act(rb, function () { return S.rpc("reopen_for_changes", { p_listing: l.id }); }, "Back to draft. Submitting again books a new Saaz inspection."); }); }; }
     if ((b = S.$("#agree"))) { var ab = b; ab.onclick = function () { S.act(ab, function () { return S.rpc("seller_respond", { p_conv: open.id, p_agree: true }); }, "Agreed. The garage will set a inspection date."); }; }
@@ -284,6 +298,16 @@
         if (deal.status === "agreed") acts.push("<button class='btn' data-a='complete'>Sale completed (handover confirmed)</button>");
         if (deal.status === "negotiating" || deal.status === "agreed") acts.push("<button class='btn ghost dark' data-a='cancel'>Cancel deal</button>");
       }
+      var amt = function (f) { return { action: "counter", amount: +f.amount }; }, num = "<label>Counter (" + cur + ")<input name='amount' type='number' required></label>";
+      var forSeller = [{ kind: "deal_seller", target: deal.id, label: "Counter for the seller", fields: num, p: amt },
+        { kind: "deal_seller", target: deal.id, label: "Accept " + S.money(cur, deal.amount) + " for the seller", p: function () { return { action: "accept" }; } },
+        { kind: "deal_seller", target: deal.id, label: "Decline for the seller", confirm: true, p: function () { return { action: "reject" }; } }];
+      var forBuyer = [{ kind: "deal_buyer", target: deal.id, label: "Counter for the buyer", fields: num, p: amt },
+        { kind: "deal_buyer", target: deal.id, label: "Accept " + S.money(cur, deal.amount) + " for the buyer", p: function () { return { action: "accept" }; } },
+        { kind: "deal_buyer", target: deal.id, label: "Withdraw for the buyer", confirm: true, p: function () { return { action: "withdraw" }; } }];
+      var actFor = side === "admin" && deal.status === "negotiating" && !l.saaz_owned
+        ? S.actFor("afs", "Act for the seller", "Use when the seller asks you to, or can't do it themselves. You can't accept a figure an admin entered for the other side.", forSeller) +
+          S.actFor("afb", "Act for the buyer", "Use when the buyer asks you to, or can't do it themselves.", forBuyer) : "";
       v.innerHTML = "<p class='crumbs'><a href='" + (side === "buyer" ? "#/offers" : side === "admin" ? "#/admin/deals" : "#/my/cars/" + l.id) + "'>Back</a></p>" +
         "<div class='pagehead'><h1>" + esc(l.year + " " + l.make + " " + l.model) + "</h1>" + S.chip(deal.status) + "</div>" +
         "<p class='lead'>Current figure <b>" + S.money(cur, deal.amount) + "</b> · asking " + S.money(cur, l.price) + (deal.trade_in ? " · includes a trade-in" : "") + "</p>" +
@@ -291,9 +315,9 @@
         (deal.status === "negotiating" ? "<p class='note'>Buyer " + (deal.buyer_ok ? "accepts" : "hasn't accepted") + " this figure · Seller " + (deal.seller_ok ? "accepts" : "hasn't accepted") + ". The deal is agreed when both accept the latest figure.</p>" : "") +
         (d.contacts ? "<div class='box good'><b>Contact details</b><p>" + esc(d.contacts.name) + (d.contacts.mobile ? " · " + esc(d.contacts.mobile) : "") + (d.contacts.email ? " · " + esc(d.contacts.email) : "") + (d.contacts.note ? " · " + esc(d.contacts.note) : "") +
           "</p><p class='note'>Arrange the handover between you. No money moves through Saaz.</p></div>" : "") +
-        "<div class='row'>" + acts.join("") + "</div>" +
+        "<div class='row'>" + acts.join("") + "</div>" + actFor +
         "<section><h2>History of this deal</h2><ul class='timeline'>" + (d.events || []).map(function (e) {
-          return "<li><small>" + S.when(e.created_at) + "</small> " + esc(S.label(e.by_side)) + ": " + esc(S.label(e.kind)) + (e.amount ? " " + S.money(cur, e.amount) : "") + (e.message ? " · “" + esc(e.message) + "”" : "") + "</li>";
+          return "<li><small>" + S.when(e.created_at) + "</small> " + (e.admin_id ? "Saaz team, for the " + esc(e.by_side) : esc(S.label(e.by_side))) + ": " + esc(S.label(e.kind)) + (e.amount ? " " + S.money(cur, e.amount) : "") + (e.message ? " · “" + esc(e.message) + "”" : "") + (e.admin_reason ? " <small>Reason: " + esc(e.admin_reason) + "</small>" : "") + "</li>";
         }).join("") + "</ul></section>";
       S.$$("[data-a]", v).forEach(function (b) {
         b.onclick = function () {
@@ -306,6 +330,7 @@
         S.act(cf.querySelector("button"), function () { return S.rpc("deal_action", { p_deal: deal.id, p_action: "counter", p_amount: +f.amount }); }, function (r) { return r && r.message ? r.message : "Counter sent."; });
       };
       var pf = S.$("#pf"); if (pf) pf.onsubmit = function (e) { e.preventDefault(); var f = S.form(pf); S.act(pf.querySelector("button"), function () { return S.rpc("deal_action", { p_deal: deal.id, p_action: "propose", p_amount: +f.amount }); }, "Proposed to both."); };
+      S.wireActFor("afs", forSeller); S.wireActFor("afb", forBuyer);
       var mf = S.$("#mf"); if (mf) mf.onsubmit = function (e) { e.preventDefault(); var f = S.form(mf); S.act(mf.querySelector("button"), function () { return S.rpc("deal_action", { p_deal: deal.id, p_action: "mark_agreed", p_message: f.note }); }, "Marked agreed."); };
     });
   }, "user");

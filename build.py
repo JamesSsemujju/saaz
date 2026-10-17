@@ -14,7 +14,7 @@ How it fits together:
   src/data/modules.json   every service: drives nav, homepage list, footer, module pages
   src/data/images.json    fixed design images (files live in src/assets/img/)
   src/data/cars.json      real listings (empty until inspections run)
-  src/layouts/            base.html wraps every page; app.html wraps the marketplace app; module.html = each service page; car.html = each car page
+  src/layouts/            base.html wraps every page; app.html wraps the marketplace app (built at the site root; /app/ forwards there); module.html = each service page; car.html = each car page
   src/partials/           header, footer, icons, car illustration
   src/pages/              one-off pages. A page named like a service (cars.html) replaces that service's template page.
   src/modules/<slug>.html extra sections for one service page (optional)
@@ -209,9 +209,13 @@ def build_site(out, base, cars, preview):
         extra = {"services_list": "".join(service_row(x) for x in modules),
                  "hero_visual": img_tag("home-hero", "figure hero-photo", eager=True) or partial("car-illustration")}
         extra.update(cars_ctx)
+        # The marketplace app (pages/index.html) is the site root: one address for everything.
+        # The design preview has no database, so its root shows the About page (pages/home.html) instead.
+        if preview and src.stem in ("index", "app"): continue
         page_slugs.add(src.stem)
-        write("index.html" if src.stem == "index" else f"{src.stem}/index.html",
-              page(content, meta, "help" if src.stem == "help" else meta.get("nav", ""), extra))
+        html_out = page(content, meta, "help" if src.stem == "help" else meta.get("nav", ""), extra)
+        write("index.html" if src.stem == "index" else f"{src.stem}/index.html", html_out)
+        if preview and src.stem == "home": write("index.html", html_out)
 
     tmpl = (SRC / "layouts/module.html").read_text(encoding="utf-8")
     for m in modules:

@@ -69,7 +69,11 @@ as_(S, "select submit_listing(%s)", (L,))
 c1 = su("select id, garage_id from conversations where listing_id=%s and status='in_play'", (L,))[0]
 check("nearest garage (Kampala) put in play", c1[1] == g1)
 check("other garage can't see the car", as_(G2, "select count(*) from listings where id=%s", (L,))[0][0] == 0)
-check("in-play garage can see the car", as_(I1, "select count(*) from listings where id=%s", (L,))[0][0] == 1)
+check("inspector can't see a job the owner hasn't given them", as_(I1, "select count(*) from listings where id=%s", (L,))[0][0] == 0)
+check("in-play garage owner can see the car", as_(G1, "select count(*) from listings where id=%s", (L,))[0][0] == 1)
+check("inspector can't give out jobs", "owner can give out jobs" in (err(I1, "select assign_job(%s,%s)", (c1[0], I1)) or ""))
+as_(G1, "select assign_job(%s,%s)", (c1[0], I1))
+check("in-play garage inspector sees the job once given it", as_(I1, "select count(*) from listings where id=%s", (L,))[0][0] == 1)
 check("seller can't agree before garage messages", "once the garage has messaged" in (err(S, "select seller_respond(%s,true)", (c1[0],)) or ""))
 check("seller can't message first", "garage to message first" in (err(S, "select send_message(%s,'hi')", (c1[0],)) or ""))
 as_(I1, "select send_message(%s,%s)", (c1[0], "Hello, call me on +256 772 123 456 or gus@garage.ug"))
@@ -88,13 +92,13 @@ check("admin told line is empty", su("select count(*) from notifications where u
 as_(A, "select admin_restart_line(%s)", (L,))
 c3 = su("select id, garage_id from conversations where listing_id=%s and status='in_play'", (L,))[0]
 check("restart puts Kampala back in play", c3[1] == g1)
-as_(G1, "select send_message(%s,'We can review Tuesday')", (c3[0],)); as_(S, "select seller_respond(%s,true)", (c3[0],))
+as_(G1, "select assign_job(%s,%s)", (c3[0], I1)); as_(G1, "select send_message(%s,'We can review Tuesday')", (c3[0],)); as_(S, "select seller_respond(%s,true)", (c3[0],))
 check("agreed -> review booked", su("select status from listings where id=%s", (L,))[0][0] == "review_booked")
 as_(S, "select send_message(%s,'My number is 0772 999 888')", (c3[0],))
 check("contacts visible after agreement", "999" in as_(G1, "select body from messages where conversation_id=%s order by created_at desc limit 1", (c3[0],))[0][0])
 check("Jinja can't start review", "not booked with your garage" in (err(G2, "select start_review(%s)", (L,)) or ""))
 R = as_(I1, "select start_review(%s)", (L,))[0][0]
-check("draft locked to member", "Ian Inspector is writing this inspection report" in (err(G1, "select start_review(%s)", (L,)) or ""))
+e = err(G1, "select start_review(%s)", (L,)) or ""; check("job and draft locked to the inspector", "given to someone else" in e or "already started this inspection" in e, e)
 keys = ['engine','gearbox','brakes','steering','tyres','electrics','body','chassis','interior','test_drive','odometer','vin']
 as_(I1, "select save_review(%s,%s)", (R, json.dumps({"checks": {k: "pass" for k in keys[:-1]}, "odometer": 84500, "in_person": True})))
 check("issue refuses missing check", "vin is missing" in (err(I1, "select issue_review(%s)", (R,)) or ""))

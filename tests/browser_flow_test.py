@@ -3,7 +3,7 @@ import os, sys, json, psycopg2
 from PIL import Image
 from playwright.sync_api import sync_playwright
 D = os.path.dirname(os.path.abspath(__file__))
-APP = "http://localhost:8777/saaz/app/"
+APP = "http://localhost:8777/saaz/"  # one entry point: the site root
 W = int(sys.argv[1]) if len(sys.argv) > 1 else 390
 photos = []
 for i, c in enumerate([(200, 40, 40), (40, 120, 200), (30, 160, 80), (220, 180, 30)]):
@@ -45,25 +45,32 @@ with sync_playwright() as pw:
     # Admin
     adm = ctx("admin"); signup(adm, "Ann Admin", "admin@saaz.test")
     sql("insert into public.admins (user_id, name) select id, 'Ann Admin' from auth.users where email='admin@saaz.test'")
-    # The normal sign-in has no Admin choice, and Admin looks like a missing page without the authenticator
+    # The normal sign-in has no Admin choice, and Admin looks like a missing page without the extra checks
     go(adm, "#/signin"); check("normal sign-in offers no Admin", adm.locator("input[name=as][value=admin]").count() == 0 and "Admin" not in adm.inner_text("#view"))
     signin(adm, "admin@saaz.test", "buyer")
     go(adm, "#/admin"); check("admin pages hidden after password only", "Page not found" in adm.inner_text("#view"), adm.inner_text("#view")[:200])
-    adm.click("#acct summary"); check("no Admin area in the menu after password only", adm.locator(".acctmenu [data-mode=admin]").count() == 0)
-    adm.click("#signout"); adm.wait_for_timeout(800)
-    # Staff sign-in: password, add the authenticator, approve it from the SQL Editor, sign in again with a code
-    def staff(code_from_key=None):
-        go(adm, "#/ops-7q4k"); adm.fill("input[name=email]", "admin@saaz.test"); adm.fill("input[name=password]", "demo1234"); adm.click("#pf button"); adm.wait_for_timeout(1200)
-    staff()
-    key = adm.inner_text(".key code").strip(); check("staff page shows a QR code and key", adm.locator("img.qr").count() == 1 and len(key) >= 16)
+    adm.click("#acct summary"); check("admin signed in as buyer: no Admin panel in the menu", adm.locator(".acctmenu .adminentry").count() == 0)
+    adm.click("#signout"); adm.wait_for_timeout(1200)
+    # Admin signs in through the seller side; the account menu then has Admin panel
+    signin(adm, "admin@saaz.test", "seller")
+    adm.click("#acct summary"); check("admin signed in as seller: Admin panel in the menu", adm.locator(".acctmenu .adminentry").count() == 1)
+    go(adm, "#/admin"); check("menu entry alone gives no access", "Page not found" in adm.inner_text("#view"))
+    def admin_entry(password="demo1234"):
+        go(adm, "#/my/cars"); adm.click("#acct summary"); adm.click(".acctmenu .adminentry"); adm.wait_for_timeout(700)
+        adm.fill("input[name=password]", password); adm.click("#pf button"); adm.wait_for_timeout(1200)
+    admin_entry("wrong-password")
+    check("wrong password refused and counted", "Wrong password" in adm.inner_text("#perr") and "tries left" in adm.inner_text("#perr"), adm.inner_text("#view")[:200])
+    check("failed password recorded", sql("select count(*) from audit_log where action='admin check failed: password'")[0][0] == 1)
+    adm.fill("input[name=password]", "demo1234"); adm.click("#pf button"); adm.wait_for_timeout(1200)
+    key = adm.inner_text(".key code").strip(); check("first time: QR code and key", adm.locator("img.qr").count() == 1 and len(key) >= 16)
     adm.fill("input[name=code]", "000000" if totp(key) != "000000" else "111111"); adm.click("#cf button"); adm.wait_for_timeout(800)
     check("wrong code refused", "Wrong code" in adm.inner_text("#cerr"), adm.inner_text("#view")[:200])
     adm.fill("input[name=code]", totp(key)); adm.click("#cf button"); adm.wait_for_timeout(1500)
-    check("authenticator added, waiting for approval", "Authenticator added" in adm.inner_text("#view"), adm.inner_text("#view")[:300])
+    check("authenticator added, waiting to be pinned", "Authenticator added" in adm.inner_text("#view"), adm.inner_text("#view")[:300])
+    go(adm, "#/admin"); check("unpinned authenticator gives no access", "Page not found" in adm.inner_text("#view"))
     pin = open(os.path.join(os.environ.get("SAAZ_REPO", os.path.join(D, "..")), "supabase", "marketplace_10b_pin_admin_authenticator.sql")).read().replace("ssemujjujames@saazinvestmentsltd.com", "admin@saaz.test")
     sql(pin)
-    adm.click("#so"); adm.wait_for_timeout(800)
-    staff(); check("second sign-in asks only for the code", adm.locator("img.qr").count() == 0 and adm.locator("input[name=code]").count() == 1)
+    admin_entry(); check("next time: password then only the code", adm.locator("img.qr").count() == 0 and adm.locator("input[name=code]").count() == 1)
     adm.fill("input[name=code]", totp(key)); adm.click("#cf button"); adm.wait_for_timeout(1800)
     check("admin lands on overview", "#/admin" in adm.url and adm.locator("text=Garage applications").count() == 1, adm.url)
     check("admin sign-in in the activity log", sql("select count(*) from audit_log where action='admin signed in with authenticator'")[0][0] == 1)
@@ -94,6 +101,20 @@ with sync_playwright() as pw:
     sel.check("input[name=logbook_name_matches]"); overflow(sel, "list a car")
     sel.click("button[value=submit]"); sel.wait_for_timeout(2000)
     check("submitted: car page shows garage in play", "Kampala Motors" in sel.inner_text("#view") and "Awaiting inspection" in sel.inner_text("#view"), sel.inner_text("#view")[:400])
+    sel.wait_for_timeout(800)
+    insp_id = sql("select doc_no from reviews where scope='general' and status='requested'")[0][0]
+    check("seller gets the inspection ID on submitting", insp_id in sel.inner_text("#insps") and "Requested" in sel.inner_text("#insps"), sel.inner_text("#insps")[:200])
+    # Track an inspection: lookup first, sign-in only after a match, nothing private before that
+    trk = ctx("tracker"); go(trk, "#/track")
+    trk.fill("#tf input", "SZR-2026-999999"); trk.click("#tf button"); trk.wait_for_timeout(900)
+    check("unknown ID: told so, no sign-in prompt, nothing about any car", "No inspection has this ID" in trk.inner_text("#terr") and trk.locator("#lf").count() == 0 and "Harrier" not in trk.inner_text("#view"))
+    trk.fill("#tf input", insp_id.lower()); trk.click("#tf button"); trk.wait_for_timeout(900)
+    check("known ID: sign-in prompt appears, still nothing about the car", trk.locator("#lf").count() == 1 and "Harrier" not in trk.inner_text("#view"))
+    go(trk, "#/inspection/" + insp_id); check("opening the inspection page signed out sends you back to the lookup", "#/track" in trk.url, trk.url)
+    trk.wait_for_timeout(800); trk.fill("#lf input[name=email]", "sam@x.test"); trk.fill("#lf input[name=password]", "demo1234"); trk.click("#lf button"); trk.wait_for_timeout(1800)
+    check("seller signs in from the prompt and sees their inspection", "#/inspection/" + insp_id in trk.url and "General inspection" in trk.inner_text("#view") and "Requested" in trk.inner_text("#view"), trk.inner_text("#view")[:300])
+    check("seller has no start button", trk.locator("#startins").count() == 0)
+    overflow(trk, "inspection page")
     stored = sql("select photos from listings")[0][0]
     fsz = [os.path.getsize(os.path.join(D, "..", "sbtest", "storage", "car-photos", p)) for p in stored]
     check("photos about 30 KB each (under 45 KB)", all(s < 45000 for s in fsz), fsz)
@@ -114,7 +135,16 @@ with sync_playwright() as pw:
     # Garage writes and issues the review
     go(gar, "#/garage"); gar.click(".rows a"); gar.wait_for_timeout(800)
     gar.fill("input[name=date]", "2026-10-20"); gar.click("#df button"); toast(gar)
-    gar.click("#start"); gar.wait_for_timeout(1200)
+    check("job page lists the car's inspections with their IDs", insp_id in gar.inner_text("#view"))
+    gar.click("a:has-text('Open to start')"); gar.wait_for_timeout(1000)
+    check("owner opens the inspection: start button, no sign-in again", gar.locator("#startins").count() == 1 and gar.locator("#lf").count() == 0, gar.inner_text("#view")[:300])
+    sql("update reviews set status='cancelled' where doc_no=%s", (insp_id,))
+    gar.click("#startins"); gar.wait_for_timeout(1200)
+    check("an inspection cancelled after opening is refused at start", "cancelled" in gar.inner_text("#toast").lower() and "#/garage/review/" not in gar.url, gar.inner_text("#toast"))
+    sql("update reviews set status='requested' where doc_no=%s", (insp_id,))
+    gar.reload(); gar.wait_for_timeout(1000); gar.click("#startins"); gar.wait_for_timeout(1500)
+    check("the inspection keeps its ID when it starts", "Inspection ID" in gar.inner_text("#view") and insp_id in gar.inner_text(".lead"), gar.inner_text(".lead"))
+    check("status is in progress", sql("select status from reviews where doc_no=%s", (insp_id,))[0][0] == "draft")
     check("review editor opens", "12-point check" in gar.inner_text("#view"))
     keys = ['engine','gearbox','brakes','steering','tyres','electrics','body','chassis','interior','test_drive','odometer','vin']
     for k in keys: gar.click(f"input[name=c_{k}][value={'advise' if k=='tyres' else 'pass'}] + span")
@@ -125,6 +155,11 @@ with sync_playwright() as pw:
     gar.click("button[value=issue]"); gar.wait_for_timeout(300); gar.click("button[value=issue]"); gar.wait_for_timeout(2000)
     check("issue goes to the report document", "#/report/" in gar.url and "Saaz inspection report" in gar.inner_text("#view"), gar.url)
     code = gar.url.split("#/report/")[1]
+    check("the report keeps the inspection ID", insp_id in gar.inner_text("#view"))
+    go(gar, "#/garage"); check("garage dashboard opens inspections by ID", gar.locator("#oid").count() == 1)
+    gar.fill("#oid input", insp_id.lower()); gar.click("#oid button"); gar.wait_for_timeout(1200)
+    check("opening by ID goes to the inspection, completed, with its report", "#/inspection/" + insp_id in gar.url and "Completed" in gar.inner_text("#view") and gar.locator("a:has-text('Open the report')").count() == 1, gar.url)
+    go(gar, "#/report/" + code); gar.wait_for_timeout(1000)
     check("report shows score, rosette and signature", gar.locator(".rosette path").count() >= 3 and "Gus Owner" in gar.inner_text(".sigs"))
     overflow(gar, "report")
 
@@ -136,7 +171,33 @@ with sync_playwright() as pw:
     # Admin approves
     go(adm, "#/admin"); adm.click("text=Cars waiting for approval >> xpath=.. >> a"); adm.wait_for_timeout(1000)
     overflow(adm, "admin car")
+    check("admin car page: support or object, no void", "Saaz view of this report" in adm.inner_text("#view") and adm.locator("#vf").count() == 0)
+    check("admin car page lists every inspection with its ID", insp_id in adm.inner_text("#insps"), adm.inner_text("#insps")[:200])
+    adm.fill("#opf textarea", "Odometer photo is blurry, please confirm"); adm.click("#opf button[value=object]"); t = toast(adm)
+    check("Saaz objects with a reason", "Objection recorded" in t, t)
+    adm.wait_for_function("!document.querySelector('#toast').classList.contains('show')", timeout=8000)
+    adm.click("button[value=approve]"); t = toast(adm); check("approval blocked while Saaz objects", "Saaz objected" in t, t)
+    go(gar, "#/report/" + code); gar.wait_for_timeout(1000)
+    check("garage sees the objection on the report", "Saaz objected" in gar.inner_text(".opinions"), gar.inner_text("#view")[-300:])
+    gar.fill("#gr textarea", "Odometer read 84,500 km, clear photo sent by WhatsApp"); gar.click("#gr button"); t = toast(gar); check("garage replies to Saaz", "Reply sent" in t, t)
+    adm.reload(); adm.wait_for_timeout(1200)
+    adm.wait_for_function("!document.querySelector('#toast').classList.contains('show')", timeout=8000)
+    adm.fill("#opf textarea", "Clear photo received, report supported"); adm.click("#opf button[value=support]"); toast(adm)
+    adm.wait_for_function("!document.querySelector('#toast').classList.contains('show')", timeout=8000)
     adm.click("button[value=approve]"); t = toast(adm); check("admin approves listing", "seller is told" in t, t)
+    go(pub, "#/verify?code=" + code); pub.wait_for_timeout(1000)
+    check("public check shows what Saaz said", "Saaz supports this report" in pub.inner_text("#out") and "Saaz objected" in pub.inner_text("#out"))
+    # Admin acts for the seller: price change with a reason, and the seller sees it
+    adm.reload(); adm.wait_for_timeout(1200)
+    adm.click("#afs form:has(input[name=price]) button"); t = toast(adm); check("acting needs a reason first", "reason first" in t, t)
+    adm.wait_for_function("!document.querySelector('#toast').classList.contains('show')", timeout=8000)
+    adm.fill("#afs textarea[name=reason]", "Seller phoned, asked us to raise the price")
+    adm.fill("#afs input[name=price]", "96000000"); adm.click("#afs form:has(input[name=price]) button"); t = toast(adm)
+    check("admin changed the price for the seller", "changed the asking price" in t and sql("select price from listings")[0][0] == 96000000, t)
+    go(sel, "#/inbox"); check("seller told, with the reason", "raise the price" in sel.inner_text("#view"), sel.inner_text("#view")[:300])
+    lid = sql("select id from listings")[0][0]; go(sel, "#/my/cars/" + str(lid)); sel.wait_for_timeout(800)
+    check("seller's car history shows the team and the reason", "Our team" in sel.inner_text("#view") and "raise the price" in sel.inner_text("#view"))
+    overflow(adm, "admin act for seller")
 
     # Buyer
     buy = ctx("buyer"); signup(buy, "Bob Buyer", "bob@x.test")
@@ -150,6 +211,9 @@ with sync_playwright() as pw:
     msg = buy.inner_text("#oerr"); check("auto-reject tells rule, never the minimum", "below the seller's minimum" in msg and "90" not in msg and "85" not in msg, msg)
     buy.fill("input[name=amount]", "90000000"); buy.fill("textarea[name=message]", "Can I see it Saturday?"); buy.click("#offer button"); buy.wait_for_timeout(1500)
     check("offer sent, deal page", "#/deals/" in buy.url, buy.url); overflow(buy, "deal page")
+    go(adm, "#/deals/" + buy.url.split("#/deals/")[1]); adm.wait_for_timeout(900)
+    check("admin deal page has act-for-seller and act-for-buyer panels", adm.locator("#afs").count() == 1 and adm.locator("#afb").count() == 1)
+    overflow(adm, "admin deal act for")
     go(sel, "#/my/cars"); check("my cars shows demand counts", "views this week" in sel.inner_text(".rows") and "1 open" in sel.inner_text(".rows"), sel.inner_text(".rows"))
     sel.click(".rows a"); sel.wait_for_timeout(1000)
     check("seller demand panel", "Auto-rejected offers" in sel.inner_text("#view") and sel.locator(".bars .bar").count() == 14)
@@ -184,7 +248,8 @@ with sync_playwright() as pw:
     sys.path.insert(0, os.path.join(D, "..", "sbtest")); import importlib.util
     spec = importlib.util.spec_from_file_location("fk", os.path.join(D, "..", "sbtest", "fakesb_jwt.py")); fk = importlib.util.module_from_spec(spec); spec.loader.exec_module(fk)
     gus = sql("select id from auth.users where email='gus@garage.test'")[0][0]
-    inv = ctx("invite"); inv.goto(APP + "#access_token=" + fk.jwt(gus, "gus@garage.test") + "&refresh_token=r-" + str(gus) + "&expires_in=3600&expires_at=9999999999&token_type=bearer&type=invite"); inv.wait_for_timeout(2500)
+    isid = sql("insert into auth.sessions (user_id, aal) values (%s,'aal1') returning id", (gus,))[0][0]
+    inv = ctx("invite"); inv.goto(APP + "#access_token=" + fk.jwt(gus, "gus@garage.test", isid) + "&refresh_token=r-" + str(isid) + "&expires_in=3600&expires_at=9999999999&token_type=bearer&type=invite"); inv.wait_for_timeout(2500)
     check("invite link opens 'Set your password'", "#/reset?first=1" in inv.url and "Set your password" in inv.inner_text("#view"), inv.url + " " + inv.inner_text("#view")[:200])
     inv.fill("input[name=password]", "demo1234"); inv.click("form button"); inv.wait_for_timeout(1500)
     check("after setting the password, a garage invitee lands on the garage dashboard", "#/garage" in inv.url and "Offered to you" in inv.inner_text("#view"), inv.url)
@@ -212,6 +277,40 @@ with sync_playwright() as pw:
     adm.set_viewport_size({"width": 1280, "height": 860}); go(adm, "#/admin/cars"); adm.wait_for_timeout(800)
     check("admin side menu grouped by work", adm.locator(".adminside .navgroup").count() == 7 and adm.locator(".adminside a[aria-current=page]").inner_text() == "Cars")
     adm.set_viewport_size({"width": W, "height": 860})
+    # Garage invite stages: Invited, then Accepted; separate from the garage's certification
+    go(gar, "#/garage/team"); gar.wait_for_timeout(800)
+    check("team page shows the garage's certification separately", "Certified by Saaz" in gar.inner_text("#view"), gar.inner_text("#view")[:200])
+    gar.fill("#f input[name=name]", "Ivy Inspector"); gar.fill("#f input[name=email]", "ivy@garage.test"); gar.click("#f button"); gar.wait_for_timeout(1500)
+    go(gar, "#/garage/team"); gar.wait_for_timeout(800)
+    row = gar.locator("ul.team li:has-text('ivy@garage.test')").inner_text(); check("new member shows Invited", "Invited" in row and "Accepted" not in row, row)
+    ivy = ctx("ivy"); signup(ivy, "Ivy Inspector", "ivy@garage.test"); signin(ivy, "ivy@garage.test", "garage")
+    go(gar, "#/garage/team"); gar.wait_for_timeout(800)
+    row = gar.locator("ul.team li:has-text('ivy@garage.test')").inner_text(); check("after signing in: Accepted", "Accepted" in row, row)
+    go(ivy, "#/garage"); ivy.wait_for_timeout(900)
+    check("inspector sees only My jobs, no offered cars, no Team tab", "My jobs" in ivy.inner_text("#view") and "Offered to you" not in ivy.inner_text("#view") and ivy.locator(".areabar a[href='#/garage/team']").count() == 0)
+    go(ivy, "#/garage/team"); ivy.wait_for_timeout(700); check("inspector can't open the team list", "Only the garage owner" in ivy.inner_text("#view"), ivy.inner_text("#view")[:200])
+    go(adm, "#/admin/team"); adm.wait_for_timeout(900)
+    check("admin sees the Saaz team page", "Saaz team" in adm.inner_text("#view") and "admin@saaz.test" in adm.inner_text("#view") and adm.locator("#sf").count() == 1)
+    # Ordinary seller and buyer: no Admin panel; admin pages and functions closed to them
+    sel.click("#acct summary"); check("ordinary seller: no Admin panel in the menu", sel.locator(".acctmenu .adminentry").count() == 0); sel.click("#acct summary")
+    go(sel, "#/admin/verify"); check("ordinary seller: admin check page looks missing", "Page not found" in sel.inner_text("#view"))
+    go(sel, "#/admin/cars"); check("ordinary seller: admin pages look missing", "Page not found" in sel.inner_text("#view"))
+    r = sel.evaluate("() => Saaz.rpc('admin_set_setting', {p_key: 'garage_response', p_value: '1 day'}).then(() => 'ok', e => e.message)")
+    check("ordinary seller: admin function refused by the database", r == "Admins only.", r)
+    go(buy, "#/browse"); buy.click("#acct summary"); check("buyer: no Admin panel in the menu", buy.locator(".acctmenu .adminentry").count() == 0); buy.click("#acct summary")
+    # Sign-out, every role: straight to the public listings, session gone, protected pages and functions closed
+    for name_, pg_, email_, protected in [("buyer", buy, "bob@x.test", "#/offers"), ("seller", sel, "sam@x.test", "#/my/cars"), ("garage", gar, "gus@garage.test", "#/garage"), ("admin", adm, "admin@saaz.test", "#/admin")]:
+        go(pg_, protected); pg_.wait_for_timeout(500)
+        tok = pg_.evaluate("() => Saaz.state.session && Saaz.state.session.access_token")
+        pg_.click("#acct summary"); pg_.click("#signout"); pg_.wait_for_timeout(1500)
+        check(f"{name_}: sign-out lands on the public listings", pg_.url.rstrip("/") + "/" == APP or pg_.url.startswith(APP + "#/browse"), pg_.url)
+        check(f"{name_}: no sign-in page after sign-out", "#/signin" not in pg_.url and "Cars with a Saaz inspection" in pg_.inner_text("#view"), pg_.inner_text("#view")[:120])
+        check(f"{name_}: signed out in the header", pg_.locator("#acct").count() == 0 and pg_.locator(".appright a[href='#/signin']").count() == 1)
+        check(f"{name_}: every session of the account ended", sql("select count(*) from auth.sessions s join auth.users u on u.id=s.user_id where u.email=%s", (email_,))[0][0] == 0)
+        pg_.go_back(); pg_.wait_for_timeout(900)
+        txt = pg_.inner_text("#view"); check(f"{name_}: browser Back to a protected page shows no content", "Sign in to see this page" in txt or "Page not found" in txt or "Cars with a Saaz inspection" in txt, txt[:160])
+        r = pg_.evaluate("(t) => fetch('http://127.0.0.1:54321/rest/v1/rpc/update_profile', {method:'POST', headers:{'Content-Type':'application/json', apikey:'LOCALANON', Authorization:'Bearer '+t}, body: JSON.stringify({p_name:'X Y', p_country:'UG', p_mobile:''})}).then(r => r.json()).then(j => j.message || 'ok')", tok)
+        check(f"{name_}: the old token is refused by the database", "session ended" in r, r)
     check("no script errors", not errors, errors[:5])
     br.close()
 print(f"\n{ok} passed, {bad} failed")

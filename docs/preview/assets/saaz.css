@@ -515,7 +515,7 @@ h3{font-size:18px;color:var(--navy)}
 
 /* chips and boxes */
 .chip{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#E6EBF2;color:#33465E;vertical-align:middle;white-space:nowrap}
-.chip.s-live,.chip.s-agreed,.chip.s-certified,.chip.s-issued,.chip.s-active,.chip.s-pass,.chip.s-completed{background:#DDF3E5;color:#14532D}
+.chip.s-accepted,.chip.s-live,.chip.s-agreed,.chip.s-certified,.chip.s-issued,.chip.s-active,.chip.s-pass,.chip.s-completed{background:#DDF3E5;color:#14532D}
 .chip.s-conditional,.chip.s-awaiting_approval,.chip.s-in_play,.chip.s-review_booked,.chip.s-awaiting_review,.chip.s-reserved,.chip.s-negotiating,.chip.s-applied,.chip.s-invited,.chip.s-re_review_due{background:#FFF1D6;color:#7A4500}
 .chip.s-fail,.chip.s-rejected,.chip.s-suspended,.chip.s-void,.chip.s-auto_rejected,.chip.s-cancelled,.chip.s-flag,.chip.s-changes_requested,.chip.s-more_info,.chip.s-timed_out{background:#FDE2E0;color:#8A1C12}
 .appbody .box{background:#EEF3FA;border-radius:12px;padding:12px 14px;margin:var(--s-3) 0 0}
@@ -704,3 +704,9 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 /* staff sign-in */
 .appbody .staff .qr{display:block;width:200px;height:200px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;margin:8px 0}
 .appbody .staff .key code{font-family:var(--mono);overflow-wrap:anywhere;font-size:14px}
+/* admin acting for a seller or buyer */
+.appbody .actfor{border-color:#C4C7CC;background:#FAFAFB}
+.appbody .actfor .actitems{display:grid;gap:10px;margin-top:12px}
+.appbody .actfor .actitems form{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:10px}
+.acctmenu a.adminentry{flex-direction:column;align-items:flex-start;gap:2px}
+.acctmenu a.adminentry small{color:var(--mut);font-size:12px}

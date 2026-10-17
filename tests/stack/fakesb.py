@@ -74,7 +74,12 @@ class H(BaseHTTPRequestHandler):
         if p.startswith("/auth/v1/token"):
             if "refresh_token" in p:
                 uid, sid = SESS.get(data.get("refresh_token", ""), (None, None))
-                if not uid: return self.send(400, {"code": 400, "error_code": "refresh_token_not_found", "msg": "Invalid Refresh Token"})
+                if not uid:  # a session made outside this server (tests), still alive in auth.sessions
+                    row = db("select user_id, id from auth.sessions where id::text=%s", (data.get("refresh_token", "")[2:],)) if len(data.get("refresh_token", "")) == 38 else None
+                    if row: uid, sid = str(row[0][0]), str(row[0][1])
+                if not uid or not db("select 1 from auth.sessions where id=%s", (sid,)):  # session ended (signed out, revoked)
+                    SESS.pop(data.get("refresh_token", ""), None)
+                    return self.send(400, {"code": 400, "error_code": "refresh_token_not_found", "msg": "Invalid Refresh Token: Refresh Token Not Found"})
                 r = db("select email, raw_user_meta_data from auth.users where id=%s", (uid,))
                 return self.send(200, session(uid, r[0][0], r[0][1], sid))
             email = data.get("email", "").lower(); r = db("select id, raw_user_meta_data from auth.users where email=%s", (email,))
@@ -87,7 +92,15 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, session(uid, r[0][0], r[0][1], self.claims().get("session_id"))["user"])
         if p.startswith("/auth/v1/factors"):
             return self.mfa(method, p, data)
-        if p.startswith("/auth/v1/logout") or p.startswith("/auth/v1/recover"): return self.send(204, b"")
+        if p.startswith("/auth/v1/logout"):
+            # Like Supabase: scope=global ends every session of this user, local only this one
+            c = self.claims()
+            if c.get("sub"):
+                if "scope=local" in p: db("delete from auth.sessions where id=%s", (c.get("session_id"),))
+                else: db("delete from auth.sessions where user_id=%s", (c["sub"],))
+                for k in [k for k, v in SESS.items() if v[0] == c["sub"]]: SESS.pop(k, None)
+            return self.send(204, b"")
+        if p.startswith("/auth/v1/recover"): return self.send(204, b"")
         self.send(404, {"msg": "not found"})
     def mfa(self, method, p, data):
         c = self.claims(); uid, sid = c.get("sub"), c.get("session_id")

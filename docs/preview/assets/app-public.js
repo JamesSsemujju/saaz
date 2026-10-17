@@ -126,9 +126,10 @@
         if (!r.genuine) { out.innerHTML = "<div class='verdict bad'><b>Not genuine</b><span>" + esc(r.message) + "</span></div>"; return; }
         out.innerHTML = "<div class='verdict " + (r.intact ? "good" : "bad") + "'><b>" + (r.intact ? "Genuine Saaz inspection" : "Warning: this record was changed after it was issued") + "</b>" +
           "<span>Status: " + esc(S.label(r.status)) + "</span></div><p>This is what the report should say:</p><dl class='specs'>" +
-          [["Document", r.doc_no + " v" + r.version], ["Car", r.year + " " + r.make + " " + r.model], ["VIN", r.vin], ["Plate", r.plate], ["Verdict", S.label(r.verdict) + ", " + r.score + "/100"],
+          [["Inspection ID", r.doc_no + " v" + r.version], ["Car", r.year + " " + r.make + " " + r.model], ["VIN", r.vin], ["Plate", r.plate], ["Verdict", S.label(r.verdict) + ", " + r.score + "/100"],
            ["Odometer", S.km(r.odometer)], ["Issued", S.when(r.issued_at)], ["Valid until", S.day(r.valid_until)], ["Garage", r.garage], ["Inspected by", r.member]]
-            .map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl><a class='btn' href='#/report/" + esc(code.toUpperCase()) + "'>Open the report</a>";
+            .map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl>" +
+            (r.opinions && r.opinions.length ? "<h2>What Saaz said about this report</h2>" + S.opinionsHtml(r.opinions) : "") + "<a class='btn' href='#/report/" + esc(code.toUpperCase()) + "'>Open the report</a>";
       }).catch(function (e) { S.$("#out").innerHTML = "<p class='err'>" + esc(S.friendly(e)) + "</p>"; });
     }
     S.$("#f").onsubmit = function (e) { e.preventDefault(); run(S.form(e.target).code); };
@@ -196,26 +197,100 @@
       v.innerHTML = "<div class='docbar noprint'><a href='#/verify?code=" + esc(r.verify_code) + "'>Verify this report</a><button class='btn small' onclick='print()'>Print or save as PDF</button></div>" +
         "<article class='report st-" + esc(d.status) + "'>" + (d.status !== "issued" ? "<div class='watermark' aria-hidden='true'>" + esc(ribbon.toUpperCase()) + "</div>" : "") +
         "<div class='ribbon r-" + esc(d.status) + "'>" + esc(ribbon) + "</div>" + waves(fp) +
-        "<header class='rhead'><div><img class='replogo' src='" + S.site + "assets/img/brand/saaz-wordmark-black-240.webp' width='120' height='34' alt='Saaz'><h1>Saaz inspection report</h1><p>" + esc(r.doc_no) + " · version " + r.version + "</p></div>" +
+        "<header class='rhead'><div><img class='replogo' src='" + S.site + "assets/img/brand/saaz-wordmark-black-240.webp' width='120' height='34' alt='Saaz'><h1>Saaz " + (d.scope && d.scope.key !== "general" ? esc(d.scope.name.toLowerCase()) + " " : "") + "inspection report</h1><p>Inspection ID " + esc(r.doc_no) + " · version " + r.version + "</p></div>" +
         "<div class='score'>" + rosette(fp) + "<b>" + r.score + "</b><small>/100</small><span class='stamp v-" + esc(r.verdict) + "'>" + esc(S.label(r.verdict)) + "</span></div></header>" +
         (d.intact ? "" : "<p class='verdict bad'><b>This record no longer matches its fingerprint.</b></p>") +
         "<section><h2>Vehicle and provenance</h2><dl class='specs four'>" + [["VIN", veh.vin], ["Make", l.make], ["Model", l.model], ["Year", l.year], ["Plate", l.plate], ["Colour", l.colour], ["Engine", l.engine], ["Fuel", l.fuel],
           ["Provenance", veh.source === "saaz_import" ? "Saaz import" : "Local, importer unknown"], ["First Saaz record", S.day(veh.first_record_date)], ["Odometer at inspection", S.km(r.odometer)], ["Saaz ref", l.ref]]
           .map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1] || "–") + "</dd></div>"; }).join("") + "</dl></section>" +
-        "<section class='rgrid'><div><h2>12-point check</h2><ul class='checks'>" + CHECKS.map(function (c) {
+        "<section class='rgrid'><div><h2>" + (d.scope && d.scope.key !== "general" ? esc(d.scope.name) + ": " + d.scope.checks.length + " checks" : "12-point check") + "</h2><ul class='checks'>" + CHECKS.filter(function (c) { return !d.scope || d.scope.checks.indexOf(c[0]) >= 0; }).map(function (c) {
           var val = (r.checks || {})[c[0]] || "–";
           return "<li><span>" + esc(c[1]) + (c[2] ? " <small>safety</small>" : "") + "</span><b class='m-" + esc(val) + "'>" + esc(S.label(val)) + "</b></li>";
-        }).join("") + "</ul></div><div><h2>Body, top view</h2>" + S.bodyMap(r.panels) +
-        "<p class='legend'>" + MARKS.map(function (k) { return "<span><i style='background:" + S.markColour[k] + "'></i>" + S.label(k === "none" ? "no marks" : k) + "</span>"; }).join("") + "</p></div></section>" +
+        }).join("") + "</ul></div>" + (d.scope && !d.scope.panels ? "<div><h2>Scope</h2><p>This report covers " + esc(d.scope.name.toLowerCase()) + " only. It is not a full Saaz inspection.</p></div>" : "<div><h2>Body, top view</h2>" + S.bodyMap(r.panels) +
+        "<p class='legend'>" + MARKS.map(function (k) { return "<span><i style='background:" + S.markColour[k] + "'></i>" + S.label(k === "none" ? "no marks" : k) + "</span>"; }).join("") + "</p></div>") + "</section>" +
         (r.notes ? "<section><h2>Notes</h2><p class='pre'>" + esc(r.notes) + "</p></section>" : "") +
         "<section><h2>Odometer history</h2><table class='tbl'><thead><tr><th>Date</th><th>Reading</th><th>Source</th><th>Flag</th></tr></thead><tbody>" +
         (d.odometer || []).map(function (o) { return "<tr><td>" + S.day(o.at) + "</td><td>" + S.km(o.km) + "</td><td>" + esc(S.label(o.source)) + "</td><td>" + esc(o.flagged || "") + "</td></tr>"; }).join("") + "</tbody></table></section>" +
         "<section class='sigs'><div><h2>Signed</h2><p><b>" + esc(r.member_name) + "</b>, " + esc(S.label(r.member_role)) + "<br>Member id " + esc(String(r.member_id).slice(0, 8)) + "<br>" + esc(r.garage_name) +
         ", certified " + S.day(r.garage_certified_at) + "<br>Issued while signed in, " + S.when(r.issued_at) + "</p></div>" +
         "<div class='verify'><div id='qr'></div><p>Verification code<br><b class='mono'>" + esc(r.verify_code) + "</b><br><small>Check it at Saaz, Verify.</small></p></div></section>" +
+        "<section class='opinions'><h2>What Saaz said about this report</h2><p class='small'>Saaz never changes a garage's report. It can support it or object to it, with a reason; the garage can reply.</p>" + S.opinionsHtml(d.opinions) +
+          (d.saaz_stance && (S.state.roles || {}).garage ? "<form id='gr' class='stack noprint'><label>Reply as the garage<textarea name='t' rows='2' minlength='10' required></textarea></label><button class='btn small'>Send reply to Saaz</button></form>" : "") + "</section>" +
         "<footer><p class='mono fp'>Fingerprint " + esc(fp) + "</p><p class='micro' aria-hidden='true'>" + esc(micro) + "</p>" +
         "<p class='small'>A Saaz inspection is made inside the Saaz portal by a signed-in member of a certified garage, on a job arranged through Saaz. The fingerprint is a check value, not a cryptographic signature.</p></footer>" + waves(fp.split("").reverse().join("")) + "</article>";
       qr(S.$("#qr"), verifyUrl);
+      var gr = S.$("#gr"); if (gr) gr.onsubmit = function (e) { e.preventDefault(); S.act(gr.querySelector("button"), function () { return S.rpc("garage_reply_opinion", { p_review: r.id, p_text: S.form(gr).t }); }, "Reply sent to Saaz."); };
+    });
+  });
+
+  // ---------- Track an inspection: lookup, then sign in, then the database decides what this person may see ----------
+  // Lookup says only "found" or "not found". Everything about the inspection comes from inspection_access, after sign-in.
+  var ID_RE = /^SZR-\d{4}-\d{6}$/i;
+  S.route("/track", function (v, m, q) {
+    var pre = (q.get("id") || "").toUpperCase();
+    v.innerHTML = "<div class='narrow'><h1>Track an inspection</h1><p class='lead'>Enter the inspection ID you were given, for example SZR-2026-000123.</p>" +
+      "<form id='tf' class='stack'><label>Inspection ID<input name='id' value='" + esc(pre) + "' autocomplete='off' autocapitalize='characters' required></label><p class='err' id='terr' role='alert'></p><button class='btn wide'>Find the inspection</button></form><div id='tnext'></div></div>";
+    var tf = S.$("#tf");
+    tf.onsubmit = function (e) {
+      e.preventDefault(); var id = S.form(tf).id.toUpperCase().replace(/\s+/g, ""), b = tf.querySelector("button"), err = S.$("#terr"); err.textContent = ""; S.$("#tnext").innerHTML = "";
+      if (!ID_RE.test(id)) { err.textContent = "That doesn't look like an inspection ID. It looks like SZR-2026-000123."; return; }
+      b.disabled = true;
+      S.rpc("lookup_inspection", { p_id: id }).then(function (r) {
+        b.disabled = false;
+        if (!r || !r.found) { err.textContent = "No inspection has this ID. Check it and try again."; return; }
+        if (S.signedIn()) return S.go("#/inspection/" + id);
+        // Found: sign in as the seller or the garage member it belongs to
+        S.$("#tnext").innerHTML = "<section><h2>Inspection found. Sign in to see it.</h2><p class='note'>Only the seller of the car, the garage doing it and Saaz can see an inspection.</p>" +
+          "<form id='lf' class='stack'><fieldset class='seg'><legend>I'm the</legend><label><input type='radio' name='as' value='seller' checked><span>Seller</span></label><label><input type='radio' name='as' value='garage'><span>Garage team</span></label></fieldset>" +
+          "<label>Email<input name='email' type='email' autocomplete='email' required></label><label>Password<input name='password' type='password' autocomplete='current-password' required></label>" +
+          "<p class='err' id='lerr' role='alert'></p><button class='btn wide'>Sign in and open</button></form><p class='note'><a href='#/forgot'>Forgot your password?</a></p></section>";
+        var lf = S.$("#lf");
+        lf.onsubmit = function (e2) {
+          e2.preventDefault(); var f = S.form(lf), lb = lf.querySelector("button"), le = S.$("#lerr"); lb.disabled = true; le.textContent = "";
+          S.db.auth.signInWithPassword({ email: f.email, password: f.password }).then(function (x) {
+            if (x.error) throw x.error;
+            return S.loadRoles();
+          }).then(function () {
+            if (f.as === "garage") return S.rpc("garage_sign_in").then(function (g) { if (g.ok) S.mode("garage"); });
+            S.mode("seller");
+          }).then(function () { S.go("#/inspection/" + id); })
+            .catch(function (e3) { lb.disabled = false; le.textContent = S.friendly(e3); });
+        };
+        S.$("#lf input[name=email]").focus();
+      }).catch(function (e2) { b.disabled = false; err.textContent = S.friendly(e2); });
+    };
+    if (pre) tf.requestSubmit ? tf.requestSubmit() : tf.onsubmit(new Event("submit"));
+  });
+
+  S.route("/inspection/([A-Za-z0-9-]+)", function (v, m) {
+    var id = m[0].toUpperCase();
+    if (!S.signedIn()) return S.go("#/track?id=" + encodeURIComponent(id));
+    return S.rpc("inspection_access", { p_id: id }).then(function (a) {
+      var steps = [["requested", "Requested"], ["booked", "Garage booked"], ["draft", "In progress"], ["issued", "Completed"]];
+      var at = a.status === "requested" ? (a.booking === "agreed" ? 1 : 0) : a.status === "draft" ? 2 : ["issued", "superseded"].indexOf(a.status) >= 0 ? 3 : -1;
+      var acts = [];
+      if (a.can_continue) acts.push("<a class='btn' href='#/garage/review/" + a.id + "'>Continue the inspection</a>");
+      else if (a.can_start) acts.push("<button class='btn' id='startins'>Start this inspection</button>");
+      else if (a.start_block && (a.relation === "inspector" || a.relation === "garage_owner")) acts.push("<p class='box warn'>" + esc(a.start_block) + "</p>");
+      if (a.verify_code) acts.push("<a class='btn ghost dark' href='#/report/" + esc(a.verify_code) + "'>Open the report</a>");
+      if (a.relation === "seller") acts.push("<a class='btn ghost dark' href='#/my/cars/" + esc(a.car.listing_id) + "'>Open my car</a>");
+      v.innerHTML = "<p class='crumbs'><a href='#/track'>Track an inspection</a> / " + esc(a.inspection_id) + "</p>" +
+        "<div class='pagehead'><h1>" + esc(a.scope_name) + "</h1>" + S.inspChip(a.status) + "</div>" +
+        "<p class='lead'>Inspection ID <b class='mono'>" + esc(a.inspection_id) + "</b> · " + esc(a.car.year + " " + a.car.make + " " + a.car.model) + " · " + esc(a.car.ref) + "</p>" +
+        (at >= 0 ? "<ol class='progress'>" + steps.map(function (s0, i) { return "<li class='" + (i < at ? "done" : i === at ? "now" : "") + "'>" + s0[1] + "</li>"; }).join("") + "</ol>" : "") +
+        (a.status === "cancelled" ? "<p class='box warn'>Cancelled " + S.when(a.cancelled_at) + (a.cancel_reason ? ": " + esc(a.cancel_reason) : "") + "</p>" : "") +
+        "<dl class='specs'>" + [["Requested", S.when(a.requested_at)], ["Garage", a.garage || "Saaz is finding a garage"], ["Inspection date", a.inspection_date ? S.day(a.inspection_date) : ""],
+          ["Inspector", a.inspector || ""], ["Started", S.when(a.started_at)], ["Completed", S.when(a.issued_at)]]
+          .filter(function (x) { return x[1]; }).map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl>" +
+        "<div class='row'>" + acts.join("") + "</div>";
+      var sb = S.$("#startins"); if (sb) sb.onclick = function () {
+        sb.disabled = true;
+        // The database checks everything again at this moment, and only one person can start it
+        S.rpc("start_inspection", { p_id: id }).then(function (rid) { S.toast("Inspection " + id + " started."); S.go("#/garage/review/" + rid); })
+          .catch(function (e) { S.toast(S.friendly(e), true); S.render(); });
+      };
+    }).catch(function (e) {
+      v.innerHTML = "<div class='empty'><b>" + esc(S.friendly(e)) + "</b><span>Signed in as " + esc(S.me().email) + ". <a href='#/track'>Try another ID</a></span></div>";
     });
   });
 

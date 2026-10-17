@@ -5,7 +5,7 @@
   var C = window.SAAZ || {};
   var base = C.base || "/";
   var idx = C.fileLinks ? "index.html" : "";
-  var app = base + "app/" + idx;
+  var app = base + idx;  // the marketplace app is the site root (one entry point)
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function money(cur, n) { return cur + " " + Number(n).toLocaleString("en-US"); }
 

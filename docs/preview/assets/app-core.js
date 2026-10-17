@@ -108,9 +108,19 @@
     });
   };
   // Team rows (garage Team page and admin garage page): invite state, and the buttons an owner or admin gets
+  // Invite stage of a team member: Invited until they set their password, then Accepted. Separate from the garage's certification.
+  S.inviteStage = function (t) {
+    if (t.status === "removed") return S.chip("removed");
+    if (t.kind === "invite" || !t.accepted_at) return "<span class='chip s-invited'>Invited</span>";
+    return "<span class='chip s-accepted'>Accepted</span>" + (t.garage_status && t.garage_status !== "certified" ? " <small>can work once Saaz certifies the garage</small>" : "");
+  };
+  S.garageStage = function (status) {
+    return { certified: "Certified by Saaz", applied: "Application with Saaz, not certified yet", more_info: "Saaz asked for more information, not certified yet",
+      rejected: "Application not approved", suspended: "Suspended by Saaz" }[status] || S.label(status);
+  };
   S.inviteInfo = function (t) {
     if (t.kind === "invite") return "Invite not sent yet";
-    if (t.status !== "invited" || !t.invited_at) return "";
+    if (t.status !== "invited" || !t.invited_at || t.accepted_at) return "";
     var expired = t.link_expires_at && new Date(t.link_expires_at) < new Date();
     return "Invite sent " + S.when(t.invited_at) + " · " + (expired ? "<b class='bad'>link expired " + S.when(t.link_expires_at) + "</b>" : "link expires " + S.when(t.link_expires_at));
   };
@@ -118,7 +128,7 @@
     if (!manage || t.status === "removed" || (t.user_id && t.user_id === S.me().id)) return "";
     var e = S.esc(t.email);
     if (t.kind === "invite") return "<button class='btn small ghost dark' data-inv='" + e + "'>Send invite</button> <button class='btn small ghost dark' data-rv='" + t.id + "'>Revoke</button>";
-    if (t.status === "invited") return "<button class='btn small ghost dark' data-inv='" + e + "'>Resend invite</button> <button class='btn small ghost dark' data-rm='" + t.id + "' data-what='revoke'>Revoke</button>";
+    if (t.status === "invited" && !t.accepted_at) return "<button class='btn small ghost dark' data-inv='" + e + "'>Resend invite</button> <button class='btn small ghost dark' data-rm='" + t.id + "' data-what='revoke'>Revoke</button>";
     return "<button class='btn small ghost dark' data-rm='" + t.id + "'>Remove</button>";
   };
   S.wireTeam = function (root) {
@@ -131,6 +141,57 @@
       b.onclick = function () { b.disabled = true; S.sendInvite(b.dataset.inv).then(function (m) { S.toast(m); setTimeout(S.render, 1200); }).catch(function (e) { S.toast(S.friendly(e), true); b.disabled = false; }); };
     });
   };
+  // Admin acting for a seller or buyer (part 11). One reason box per section; every button sends it with admin_act.
+  // items: [{kind, target, label, fields (html, optional), p(form) -> jsonb, confirm (bool)}]
+  S.actFor = function (id, title, intro, items) {
+    return "<section class='actfor' id='" + id + "'><h2>" + S.esc(title) + "</h2><p class='note'>" + intro + "</p>" +
+      "<label>Reason (they see it, and it goes in the history)<textarea name='reason' rows='2' minlength='10' placeholder='For example: seller phoned, can not upload from their phone'></textarea></label>" +
+      "<div class='actitems'>" + items.map(function (it, i) {
+        return "<form class='inlineform' data-i='" + i + "'>" + (it.fields || "") + "<button class='btn small ghost dark'>" + S.esc(it.label) + "</button></form>";
+      }).join("") + "</div></section>";
+  };
+  S.wireActFor = function (id, items) {
+    var box = S.$("#" + id); if (!box) return;
+    S.$$("form[data-i]", box).forEach(function (f) {
+      var it = items[+f.dataset.i];
+      f.onsubmit = function (e) {
+        e.preventDefault(); var b = f.querySelector("button"), why = box.querySelector("textarea[name=reason]").value.trim();
+        if (why.length < 10) { S.toast("Write the reason first (10 characters or more).", true); box.querySelector("textarea").focus(); return; }
+        var run = function () { S.act(b, function () { return S.rpc("admin_act", { p_kind: it.kind, p_target: it.target, p_reason: why, p: it.p ? it.p(S.form(f)) : {} }); }, function (r) { return "Done: " + (r && r.done ? r.done : "saved") + ". They're told, with your reason."; }); };
+        if (it.confirm) S.confirmBtn(b, run); else run();
+      };
+    });
+  };
+  // Every inspection of a car, each with its own inspection ID (car_inspections, part 13)
+  S.loadInspections = function (id, listingId) {
+    return S.rpc("car_inspections", { p_listing: listingId }).then(function (rows) {
+      var el = S.$("#" + id); if (!el) return;
+      el.innerHTML = rows.length ? "<div class='tablewrap'><table class='tbl'><thead><tr><th>Inspection ID</th><th>Type</th><th>Garage</th><th>Inspector</th><th>Status</th><th>Result</th><th>Saaz</th></tr></thead><tbody>" + rows.map(function (r0) {
+        var x = r0;
+        return "<tr><td><a href='#/inspection/" + S.esc(x.doc_no) + "'>" + S.esc(x.doc_no || "") + "</a>" + (x.verify_code ? " · <a href='#/report/" + S.esc(x.verify_code) + "'>report</a>" : "") + "</td><td>" + S.esc(x.scope_name || "") + "</td><td>" + S.esc(x.garage || "") + "</td><td>" + S.esc(x.inspector || "") + "</td><td>" + S.inspChip(x.status) +
+          "<small> " + S.day(x.issued_at || x.started_at) + "</small></td><td>" + (x.verdict ? S.esc(S.label(x.verdict)) + " " + x.score : "") + "</td><td>" + (x.saaz_stance === "object" ? "<span class='chip s-flag'>Objected</span>" : x.saaz_stance === "support" ? "<span class='chip s-pass'>Supported</span>" : "") + "</td></tr>";
+      }).join("") + "</tbody></table></div><p class='note'>" + rows.length + " inspection" + (rows.length === 1 ? "" : "s") + " of this car, each with its own ID.</p>" : "<p class='note'>No inspections yet.</p>";
+    }).catch(function (e) { var el = S.$("#" + id); if (el) el.innerHTML = "<p class='note'>" + S.esc(S.friendly(e)) + "</p>"; });
+  };
+  // What Saaz said about a report, and the garage's replies (opinions, part 13)
+  S.opinionsHtml = function (ops) {
+    if (!ops || !ops.length) return "<p class='note'>Saaz has not commented on this report.</p>";
+    return "<ul class='timeline'>" + ops.map(function (o) {
+      var what = o.stance === "object" ? "<b class='bad'>Saaz objected</b>" : o.stance === "support" ? "<b>Saaz supports this report</b>" : "<b>Garage replied</b>";
+      return "<li><small>" + S.when(o.at) + "</small> " + what + ": " + S.esc(o.reason) + "</li>";
+    }).join("") + "</ul>";
+  };
+  S.showOpinions = function (id, code) {
+    return S.rpc("review_document", { p_code: code }).then(function (d) { var el = S.$("#" + id); if (el) el.innerHTML = S.opinionsHtml(d && d.opinions); });
+  };
+  // Inspection types (General and scoped), from the database table inspection_scopes. Cached for the visit.
+  S.scopes = function () {
+    if (S._scopes) return Promise.resolve(S._scopes);
+    return S.q(S.db.from("inspection_scopes").select("*").order("sort")).then(function (rows) { var m = {}; rows.forEach(function (x) { m[x.key] = x; }); S._scopes = { list: rows, by: m }; return S._scopes; });
+  };
+  // Inspection status words for people (the database says draft for "in progress")
+  S.inspStatus = function (st) { return { requested: "Requested", draft: "In progress", issued: "Completed", superseded: "Completed, replaced by a newer report", cancelled: "Cancelled", void: "Void" }[st] || S.label(st); };
+  S.inspChip = function (st) { var cls = { requested: "awaiting_review", draft: "in_play", issued: "issued", superseded: "issued", cancelled: "cancelled", void: "void" }[st] || st; return "<span class='chip s-" + cls + "'>" + S.esc(S.inspStatus(st)) + "</span>"; };
   S.bars = function (rows) { // tiny bar chart: [{label, value}]
     var max = Math.max.apply(null, rows.map(function (r) { return r.value; }).concat([1]));
     return "<div class='bars' role='img' aria-label='" + S.esc(rows.map(function (r) { return r.label + ": " + r.value; }).join(", ")) + "'>" +
@@ -150,6 +211,19 @@
     try { if (m) localStorage.setItem("saaz-mode", m); return m || localStorage.getItem("saaz-mode") || "buyer"; } catch (e) { return m || "buyer"; }
   };
   S.home = function () { var m = S.mode(); if (m === "admin" && !S.isAdmin()) m = "buyer"; return { seller: "#/my/cars", garage: "#/garage", admin: "#/admin" }[m] || "#/browse"; };
+  // One sign-out for every role and page: end the session on Supabase (all devices, so admin elevation is gone too),
+  // forget everything this browser kept, and land on the public listings at the site root. Never the sign-in page.
+  S.signOut = function (notice) {
+    if (S._signingOut) return; S._signingOut = true;
+    var done = function () {
+      S.state.roles = null; S.state.session = null; S.after = null;
+      try { localStorage.removeItem("saaz-mode"); Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
+      try { if (notice) sessionStorage.setItem("saaz-bye", notice); } catch (e) {}
+      location.replace(location.origin + S.site);
+    };
+    var p = S.db ? S.db.auth.signOut({ scope: "global" }) : Promise.resolve();
+    Promise.resolve(p).then(done, done);
+  };
   S.signedIn = function () { return !!(S.state.roles && S.state.roles.signed_in); };
   S.isAdmin = function () { return !!(S.state.roles && S.state.roles.admin); };
   S.me = function () { return (S.state.roles && S.state.roles.profile) || {}; };
@@ -163,7 +237,7 @@
   function areaOf(path) {
     if (/^\/(my\/|sell\/)/.test(path)) return "seller";
     if (/^\/garage(\/|$)/.test(path) && path !== "/garage/apply") return "garage";
-    if (/^\/admin(\/|$)/.test(path)) return "admin";
+    if (/^\/admin(\/|$)/.test(path) && path !== "/admin/verify") return "admin";
     return "";
   }
   S.areaOf = areaOf;
@@ -174,13 +248,13 @@
   function areas(r) {
     var a = [["buyer", "Buying", "#/browse"], ["seller", "Selling", "#/my/cars"]];
     if (r.garage) a.push(["garage", "Garage: " + (r.garage.name || "my garage"), "#/garage"]);
-    if (r.admin) a.push(["admin", "Admin", "#/admin"]);
     return a;
   }
   function header(path, area) {
     var r = S.state.roles, on = function (test) { return test ? " aria-current='page'" : ""; };
     var links = "<a href='#/browse'" + on(path === "/browse" && !/saved=1/.test(location.hash) || /^\/car\//.test(path)) + ">Buy cars</a>" +
-      "<a href='#/selling'" + on(path === "/selling") + ">What's selling</a><a href='#/verify'" + on(path === "/verify" || /^\/report\//.test(path)) + ">Verify a report</a>";
+      "<a href='#/selling'" + on(path === "/selling") + ">What's selling</a><a href='#/verify'" + on(path === "/verify" || /^\/report\//.test(path)) + ">Verify a report</a>" +
+      "<a href='#/track'" + on(path === "/track" || /^\/inspection\//.test(path)) + ">Track an inspection</a>";
     var right;
     if (r && r.signed_in) {
       var p = S.me(), cur = area || "buyer";
@@ -193,6 +267,7 @@
         "<b class='mh'>Switch area</b>" + areas(r).map(function (x) {
           return "<a href='" + x[2] + "' data-mode='" + x[0] + "'" + (x[0] === cur ? " aria-current='true'" : "") + ">" + S.esc(x[1]) + (x[0] === cur ? " <small>you're here</small>" : "") + "</a>";
         }).join("") +
+        (r.admin_account && (area === "admin" || (area !== "garage" && S.mode() === "seller")) ? "<hr><a href='#/admin/verify' class='adminentry'>Admin panel <small>password and authenticator</small></a>" : "") +
         "<hr><a class='show-s' href='#/browse?saved=1'>Saved</a><a class='show-s' href='#/offers'>My offers</a>" +
         "<a href='#/account'>My account</a><button type='button' id='signout'>Sign out</button></div></details>";
     } else {
@@ -206,7 +281,8 @@
     if (!area || !S.signedIn()) return "";
     var r = S.state.roles, tabs = [], title = "";
     if (area === "seller") { title = "Selling"; tabs = [["#/my/cars", "My cars", /^\/my\//.test(path)], ["#/sell/new", "List a car", /^\/sell\//.test(path)]]; }
-    if (area === "garage") { title = "Garage" + (r.garage && r.garage.name ? ": " + r.garage.name : ""); tabs = [["#/garage", "Jobs", path !== "/garage/team"], ["#/garage/team", "Team", path === "/garage/team"]]; }
+    if (area === "garage") { title = "Garage" + (r.garage && r.garage.name ? ": " + r.garage.name : ""); tabs = [["#/garage", r.garage && r.garage.member_role === "owner" ? "Jobs" : "My jobs", path !== "/garage/team"]];
+      if (r.garage && r.garage.member_role === "owner") tabs.push(["#/garage/team", "Team", path === "/garage/team"]); }
     if (area === "admin") title = "Admin";
     return "<div class='areabar'><div class='wrap'><a class='back' href='#/browse'>‹ Back to marketplace</a><b>" + S.esc(title) + "</b>" +
       (tabs.length ? "<nav aria-label='" + S.esc(title) + "'>" + tabs.map(function (t) { return "<a href='" + t[0] + "'" + (t[2] ? " aria-current='page'" : "") + ">" + t[1] + "</a>"; }).join("") + "</nav>" : "") + "</div></div>";
@@ -218,7 +294,7 @@
       document.onclick = function (e) { if (acct.open && !acct.contains(e.target)) acct.open = false; };
       acct.onkeydown = function (e) { if (e.key === "Escape") { acct.open = false; acct.querySelector("summary").focus(); } };
     }
-    var so = S.$("#signout"); if (so) so.onclick = function () { S.db.auth.signOut().then(function () { S.state.roles = null; S.mode("buyer"); S.go("#/browse"); }); };
+    var so = S.$("#signout"); if (so) so.onclick = function () { so.disabled = true; S.signOut(); };
     if (S.signedIn()) S.q(S.db.from("notifications").select("id", { count: "exact", head: false }).eq("read", false).eq("user_id", S.me().id)).then(function (rows) {
       var b = S.$("#unread"); if (b && rows.length) { b.hidden = false; b.textContent = rows.length; }
     }).catch(function () {});
@@ -251,6 +327,7 @@
       var match = null, m;
       for (var i = 0; i < S.routes.length; i++) { m = S.routes[i].re.exec(path); if (m) { match = S.routes[i]; break; } }
       var area = S.signedIn() ? areaOf(path) : "";
+      if (area === "admin" && !S.isAdmin()) area = "";  // no Admin bar on the "Page not found" a non-admin sees
       if (area && (area !== "garage" || S.state.roles.garage) && (area !== "admin" || S.isAdmin())) S.mode(area);
       root.innerHTML = header(path, area) + "<main id='view' class='wrap pad" + (area ? " inarea" : "") + "'><p class='loading'>Loading…</p></main>";
       wireHeader();
@@ -259,7 +336,12 @@
       if (!match) { view.innerHTML = notFound; return; }
       // Admin pages look like any missing page unless this session passed the admin's authenticator (checked by the database)
       if (match.need === "admin" && !S.isAdmin()) { view.innerHTML = notFound; return; }
-      if (match.need && !S.signedIn()) { S.after = location.hash; S.go("#/signin"); return; }
+      // Signed out (or the session ended) on a page that needs an account: a public page with a sign-in option, never the page itself
+      if (match.need && !S.signedIn()) {
+        view.innerHTML = "<div class='empty'><b>Sign in to see this page</b><span><a class='btn small' href='#/signin' id='needsignin'>Sign in</a> or <a href='#/browse'>browse cars</a></span></div>";
+        var ns = S.$("#needsignin"), here = location.hash; if (ns) ns.onclick = function () { S.after = here; };
+        return;
+      }
       window.scrollTo(0, 0);
       Promise.resolve(match.handler(view, m.slice(1), query)).catch(function (e) {
         view.innerHTML = "<div class='empty'><b>Couldn't load this page</b><span>" + S.esc(S.friendly(e)) + "</span></div>";
@@ -372,6 +454,9 @@
         if (r.error) { EMAIL_CODE = null; used(/expired|invalid/i.test(r.error.message) ? "This link has expired or was already used." : S.friendly(r.error)); throw null; }
         EMAIL_CODE = null;
         return pw ? S.db.auth.updateUser({ password: f.password }).then(function (u) { if (u.error) throw u.error; }) : null;
+      }).then(function () {
+        // Setting a password from an invite (or set-password) email = the garage invite is Accepted. Certification is separate.
+        return pw ? S.rpc("accept_garage_invite").catch(function () {}) : null;
       }).then(function () { return S.loadRoles(); }).then(function (roles) {
         var meta = ((S.state.session || {}).user || {}).user_metadata || {};
         if (roles && roles.garage && (ty === "invite" || ty === "recovery")) {
@@ -396,7 +481,7 @@
     S.$("#f").onsubmit = function (e) {
       e.preventDefault(); var f = S.form(e.target);
       S.db.auth.updateUser({ password: f.password }).then(function (r) {
-        if (r.error) throw r.error; S.toast("Password saved.");
+        if (r.error) throw r.error; S.toast("Password saved."); S.rpc("accept_garage_invite").catch(function () {});
         S.go(first && S.state.roles && S.state.roles.garage ? (S.mode("garage"), "#/garage") : S.home());
       })
         .catch(function (e2) { S.$("#err").textContent = S.friendly(e2) + " Open the link from your email again."; });
@@ -459,7 +544,13 @@
 
   window.addEventListener("hashchange", S.render);
   document.addEventListener("DOMContentLoaded", function () {
-    if (S.db) S.db.auth.onAuthStateChange(function (ev) { if (ev === "PASSWORD_RECOVERY") S.go("#/reset"); });
+    if (S.db) S.db.auth.onAuthStateChange(function (ev, session) {
+      if (ev === "PASSWORD_RECOVERY") S.go("#/reset");
+      // Session ended without the Sign out button (expired, revoked, or signed out in another tab): same safe landing
+      if (ev === "SIGNED_OUT" && !S._signingOut && S._wasSignedIn) S.signOut("Your session ended. Sign in again to continue.");
+      if (session) S._wasSignedIn = true;
+    });
+    try { var bye = sessionStorage.getItem("saaz-bye"); if (bye) { sessionStorage.removeItem("saaz-bye"); setTimeout(function () { S.toast(bye); }, 400); } } catch (e) {}
     S.render();
   });
 })();

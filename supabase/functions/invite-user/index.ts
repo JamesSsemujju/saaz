@@ -41,9 +41,12 @@ Deno.serve(async (req: Request) => {
   // Admin only counts when this session passed the admin's pinned authenticator: the database decides (is_admin, part 10)
   const { data: isAdmin } = await asCaller.rpc("is_admin");
   const admin = isAdmin === true;
-  const { data: owner } = await server.from("garage_members").select("id").eq("user_id", who.user.id)
+  // Owners can send invites only once Saaz has certified their garage (same rule as add_garage_member, part 12)
+  const { data: garage } = await server.from("garages").select("status").eq("id", garageId).maybeSingle();
+  const { data: ownerRow } = await server.from("garage_members").select("id").eq("user_id", who.user.id)
     .eq("garage_id", garageId).eq("role", "owner").eq("status", "active").maybeSingle();
-  if (!admin && !owner) return reply(403, { error: "Only an admin or this garage's owner can send this invite." });
+  const owner = ownerRow && garage?.status === "certified";
+  if (!admin && !owner) return reply(403, { error: "Only an admin, or the owner of a certified garage, can send this invite." });
 
   const redirectTo = typeof body.redirectTo === "string" ? body.redirectTo : undefined;
   let kind = "invite";

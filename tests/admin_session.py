@@ -1,5 +1,5 @@
 """Test helper: the token a signed-in person has. Admins get a session that passed their pinned authenticator (aal2),
-like the real staff sign-in, so admin tests keep working with part 10. Everyone else gets a plain password session."""
+like the real staff sign-in, so admin tests keep working with part 10. Everyone else gets a plain password session. Every token carries a live session id (part 12)."""
 import json, time
 def claims(cur, uid):
     if not uid: return ""
@@ -14,4 +14,8 @@ def claims(cur, uid):
         cur.execute("select id from auth.sessions where user_id=%s and factor_id=%s limit 1", (str(uid), f)); s = cur.fetchone()
         if not s: cur.execute("insert into auth.sessions (user_id, aal, factor_id) values (%s,'aal2',%s) returning id", (str(uid), f)); s = cur.fetchone()
         c.update(session_id=str(s[0]), aal="aal2", amr=[{"method": "totp", "timestamp": int(time.time())}, c["amr"][0]])
+    else:
+        cur.execute("select id from auth.sessions where user_id=%s and factor_id is null limit 1", (str(uid),)); s = cur.fetchone()
+        if not s: cur.execute("insert into auth.sessions (user_id, aal) values (%s,'aal1') returning id", (str(uid),)); s = cur.fetchone()
+        c.update(session_id=str(s[0]))
     return json.dumps(c)
