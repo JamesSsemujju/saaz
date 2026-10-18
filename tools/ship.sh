@@ -1,5 +1,5 @@
 #!/bin/bash
-# ship.sh: put the newest Saaz zip from Downloads into the repo, build, check, and push.
+# ship.sh: put the newest Saaz zip into the repo (folders mirrored: removed files go too), build, check, and push.
 # Working folder: /Users/james/Desktop/Saaz (zips go here, the repo is saaz/ inside it).
 # Usage (from anywhere):  bash ~/Desktop/Saaz/saaz/tools/ship.sh
 # Optional: SAAZ_REPO=/path/to/saaz  SAAZ_ZIP=/path/to/file.zip
@@ -17,9 +17,16 @@ ZIP="${SAAZ_ZIP:-$(ls -t "$WORK"/Saaz_Platform_*.zip "$HOME"/Downloads/Saaz_Plat
 cd "$REPO"
 echo "Zip:  $(basename "$ZIP")"
 git pull --ff-only origin main
-unzip -oq "$ZIP" -d .
+# The zip holds the whole project. Mirror its folders, so files removed in the zip are removed here too
+# (unzipping on top kept old files, e.g. src/pages/admin.html, which then broke the build).
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+unzip -oq "$ZIP" -d "$TMP"
+for d in src supabase tools tests project-docs brand; do
+  if [ -d "$TMP/$d" ]; then rm -rf "${REPO:?}/$d"; cp -R "$TMP/$d" "$REPO/$d"; fi
+done
+for f in build.py README.md; do if [ -f "$TMP/$f" ]; then cp "$TMP/$f" "$REPO/$f"; fi; done
 python3 build.py
-git add docs src supabase tools tests project-docs build.py README.md
+git add -A docs src supabase tools tests project-docs brand build.py README.md
 
 if git diff --cached --quiet; then
   ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)

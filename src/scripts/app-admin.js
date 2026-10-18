@@ -174,6 +174,7 @@
       });
       page(v, "cars", "<p class='crumbs'><a href='#/admin/cars'>Cars</a> / " + esc(l.ref) + "</p><div class='pagehead'><h2>" + esc(S.name(l)) + "</h2>" + S.chip(l.status) + "</div>" +
         "<p class='lead'>" + S.money(l.currency, l.price) + " · " + S.km(l.mileage) + " · " + esc(l.plate) + " · VIN " + esc(l.vehicles.vin) + " · " + esc(l.region) + (l.saaz_owned ? " · Saaz-owned" : "") + "</p>" +
+        "<p id='topids' class='note'></p>" +
         "<div class='thumbs'>" + (l.photos || []).map(function (p) { return "<figure><img src='" + esc(S.photo(p)) + "' alt=''></figure>"; }).join("") + "</div><p class='pre'>" + esc(l.description) + "</p>" +
         (l.logbook_name_matches ? "<p class='note'>Seller says the logbook is in their name.</p>" : l.owner_authorised ? "<p class='note'>Seller says the owner authorised the sale.</p>" : "") +
         (cur ? "<section><h2>Current Saaz inspection</h2><div class='insp-card'><div class='insp-head'>" + S.chip(cur.verdict) + "<span>" + cur.score + "/100 · " + esc(cur.doc_no) + "</span></div>" +
@@ -205,6 +206,11 @@
       var asg = S.$("#asg"); if (asg) asg.onsubmit = function (e) { e.preventDefault(); S.act(asg.querySelector("button"), function () { return S.rpc("admin_assign_garage", { p_listing: id, p_garage: S.form(asg).g }); }, "Garage assigned."); };
       var rs = S.$("#restart"); if (rs) rs.onclick = function () { S.confirmBtn(rs, function () { S.act(rs, function () { return S.rpc("admin_restart_line", { p_listing: id }); }, "Line restarted."); }); };
       S.loadInspections("insps", l.id);
+      S.rpc("car_inspections", { p_listing: l.id }).then(function (rows) {
+        var open = rows.filter(function (x) { return ["requested", "draft"].indexOf(x.status) >= 0; });
+        S.$("#topids").innerHTML = open.length ? "Inspection ID" + (open.length > 1 ? "s" : "") + ": " + open.map(function (x) { return "<a class='mono' href='#/inspection/" + esc(x.doc_no) + "'><b>" + esc(x.doc_no) + "</b></a> " + esc(x.scope_name) + ", " + esc(S.inspStatus(x.status).toLowerCase()); }).join(" · ")
+          : "No open inspection ID" + (["awaiting_review", "review_booked"].indexOf(l.status) >= 0 ? ": this car was sent before inspection IDs existed." : ".");
+      });
       if (cur) { S.showOpinions("ops", cur.verify_code); var opf = S.$("#opf"); opf.onsubmit = function (e) { e.preventDefault(); var b = e.submitter, why = S.form(opf).reason;
         S.act(b, function () { return S.rpc("review_opinion", { p_review: cur.id, p_stance: b.value, p_reason: why }); }, b.value === "object" ? "Objection recorded. The garage and the seller are told." : "Support recorded."); }; }
     });
@@ -320,9 +326,11 @@
   });
 
   A("/conversations", function (v) {
-    return S.rpc("admin_conversation_counts").then(function (rows) {
+    return Promise.all([S.rpc("admin_conversation_counts"), S.q(S.db.from("reviews").select("doc_no,scope,status, listings!reviews_listing_id_fkey(ref)").in("status", ["requested", "draft"]))]).then(function (res) {
+      var rows = res[0], ids = {};
+      res[1].forEach(function (r) { var k = r.listings && r.listings.ref; (ids[k] = ids[k] || []).push("<a class='mono' href='#/inspection/" + esc(r.doc_no) + "'>" + esc(r.doc_no) + "</a>" + (r.scope !== "general" ? " <small>" + esc(r.scope) + "</small>" : "")); });
       page(v, "conversations", "<p class='note'>Counts only. Saaz doesn't read garage conversations, except on Saaz-owned cars.</p>" +
-        table(["Car", "Garage", "Status", "Messages", "Opened"], rows.map(function (c) { return "<tr><td>" + esc(c.listing_ref) + "</td><td>" + esc(c.garage) + "</td><td>" + S.chip(c.status) + "</td><td>" + c.messages + "</td><td>" + S.when(c.opened_at) + "</td></tr>"; })));
+        table(["Car", "Open inspection IDs", "Garage", "Status", "Messages", "Opened"], rows.map(function (c) { return "<tr><td>" + esc(c.listing_ref) + "</td><td>" + ((ids[c.listing_ref] || []).join("<br>") || "<small>none</small>") + "</td><td>" + esc(c.garage) + "</td><td>" + S.chip(c.status) + "</td><td>" + c.messages + "</td><td>" + S.when(c.opened_at) + "</td></tr>"; })));
     });
   });
 

@@ -1,6 +1,6 @@
 // invite-user: sends a Saaz invite email ("set your password") to someone added as a garage owner or member.
 // Called from the Saaz app. Runs on Supabase's servers; the service key never leaves them.
-// Allowed callers: an admin signed in with their authenticator, or the active owner of the garage the invite belongs to.
+// Allowed callers: an admin signed in with their authenticator, or the active owner of a certified garage the invite belongs to.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const cors = {
