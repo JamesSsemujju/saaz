@@ -50,7 +50,6 @@ create or replace function public.report_glossary() returns jsonb language sql i
     'removed',             jsonb_build_object('label','Removed','def','Listings withdrawn by the seller, unlisted or rejected by Saaz in the period (date of that action).'),
     'stale',               jsonb_build_object('label','Not updated in 30 days','def','Live, pending or expired listings whose record has not changed for more than 30 days.'),
     'no_photos',           jsonb_build_object('label','No photos','def','Listings in any status other than removed or sold with no photo.'),
-    'no_price',            jsonb_build_object('label','No price','def','Listings with no price. Saaz requires a price above zero on every listing, so this is always 0; it is shown so a change to that rule would be seen.'),
     'make',                jsonb_build_object('label','Make','def','The make on the listing.'),
     'price_band',          jsonb_build_object('label','Price band','def','Asking price in UGX: under 20m, 20m to 40m, 40m to 70m, 70m to 100m, over 100m. Same bands as the marketplace filters.'),
     'age_days',            jsonb_build_object('label','Days on site','def','Whole days from the first time the listing went live to today (or to when it sold or was removed). For listings never live: days since it was created.'),
@@ -136,9 +135,22 @@ language sql stable security definer set search_path = public set "TimeZone" to 
 $$;
 revoke execute on function public.rpt_listing_facts(date, date) from public, anon, authenticated;
 
+-- the row type of rpt_listing_facts, so a report can hold its rows in a variable (no work tables)
+do $t$ begin
+  if not exists (select 1 from pg_type where typname = 'rpt_listing' and typnamespace = 'public'::regnamespace) then
+    create type public.rpt_listing as (
+      id uuid, ref text, car text, make text, model text, year int, price bigint, currency text, status text, status_group text,
+      seller_id uuid, seller text, saaz_owned boolean, photos int, desc_len int, created_at timestamptz, updated_at timestamptz,
+      first_live_at timestamptz, sold_at timestamptz, removed_at timestamptz, age_days int, age_band text, price_band text,
+      stale boolean, added_in_period boolean, sold_in_period boolean, removed_in_period boolean,
+      views int, saves int, enquiries int, enquiry_rate numeric, first_enquiry_at timestamptz,
+      days_to_first_enquiry numeric, days_to_close numeric, similar_count int, similar_median numeric, price_vs_similar numeric, reason text);
+  end if;
+end $t$;
+
 -- ---------- the report function: key numbers, groups, trend, rows. Admin only. ----------
 -- p_filters: make, price_band, status_group, seller_type (private|saaz), age_band, flag, q (ref or car text)
---   flag: added | sold | removed | stale | no_photos | no_price | live_now | pending_now | draft_now | expired_now | has_views | has_enquiries
+--   flag: added | sold | removed | stale | no_photos | live_now | pending_now | draft_now | expired_now | has_views | has_enquiries
 -- p_group: status_group | make | price_band | age_band (Inventory) to return grouped counts instead of rows
 -- p_export: true returns up to 10,000 rows and records who exported what
 create or replace function public.admin_report(p_report text, p_from date, p_to date, p_compare boolean default false,
@@ -148,6 +160,7 @@ returns jsonb language plpgsql volatile security definer set search_path = publi
 declare
   me uuid := public.require_admin();
   f jsonb := coalesce(p_filters, '{}'::jsonb);
+  rfa public.rpt_listing[]; rva public.rpt_listing[];
   len int; pf date; pt date; res jsonb; kpis jsonb; trend jsonb := null; groups jsonb := null; rows jsonb; total int;
   cols text[]; sortcol text; lim int; off int; started timestamptz := clock_timestamp();
 begin
@@ -158,29 +171,25 @@ begin
   lim := case when p_export then 10000 else least(greatest(coalesce(p_size, 25), 1), 200) end;
   off := case when p_export then 0 else (greatest(coalesce(p_page, 1), 1) - 1) * lim end;
 
-  create temp table if not exists _rf on commit drop as select * from public.rpt_listing_facts(p_from, p_to) limit 0;
-  truncate _rf;
-  insert into _rf select * from public.rpt_listing_facts(p_from, p_to) r
+  -- the rows this report covers, held in a variable: rfa (filters applied), then rva (drill-down applied)
+  select coalesce(array_agg(row(r.*)::public.rpt_listing), '{}') into rfa from public.rpt_listing_facts(p_from, p_to) r
   where (f->>'make' is null or r.make = f->>'make')
     and (f->>'price_band' is null or r.price_band = f->>'price_band')
     and (f->>'status_group' is null or r.status_group = f->>'status_group')
     and (f->>'age_band' is null or r.age_band = f->>'age_band')
     and (f->>'seller_type' is null or (f->>'seller_type' = 'saaz') = r.saaz_owned)
+    and (p_report <> 'funnel' or r.first_live_at is not null)  -- the funnel is about listings that have been live
     and (f->>'q' is null or r.ref ilike '%' || (f->>'q') || '%' or r.car ilike '%' || (f->>'q') || '%' or coalesce(r.seller,'') ilike '%' || (f->>'q') || '%');
-
-  -- base rows for this report, before the drill-down flag
-  if p_report = 'funnel' then delete from _rf where first_live_at is null; end if;  -- the funnel is about listings that have been live
 
   if p_report = 'inventory' then
     kpis := jsonb_build_array(
-      jsonb_build_object('key','live_now','value',(select count(*) from _rf where status_group = 'live'),'flag','live_now'),
-      jsonb_build_object('key','pending_now','value',(select count(*) from _rf where status_group = 'pending'),'flag','pending_now'),
-      jsonb_build_object('key','added','value',(select count(*) from _rf where added_in_period),'flag','added'),
-      jsonb_build_object('key','sold','value',(select count(*) from _rf where sold_in_period),'flag','sold'),
-      jsonb_build_object('key','removed','value',(select count(*) from _rf where removed_in_period),'flag','removed'),
-      jsonb_build_object('key','stale','value',(select count(*) from _rf where stale),'flag','stale'),
-      jsonb_build_object('key','no_photos','value',(select count(*) from _rf where photos = 0 and status_group not in ('removed','sold')),'flag','no_photos'),
-      jsonb_build_object('key','no_price','value',(select count(*) from _rf where price is null),'flag','no_price'));
+      jsonb_build_object('key','live_now','value',(select count(*) from unnest(rfa) _rf where status_group = 'live'),'flag','live_now'),
+      jsonb_build_object('key','pending_now','value',(select count(*) from unnest(rfa) _rf where status_group = 'pending'),'flag','pending_now'),
+      jsonb_build_object('key','added','value',(select count(*) from unnest(rfa) _rf where added_in_period),'flag','added'),
+      jsonb_build_object('key','sold','value',(select count(*) from unnest(rfa) _rf where sold_in_period),'flag','sold'),
+      jsonb_build_object('key','removed','value',(select count(*) from unnest(rfa) _rf where removed_in_period),'flag','removed'),
+      jsonb_build_object('key','stale','value',(select count(*) from unnest(rfa) _rf where stale),'flag','stale'),
+      jsonb_build_object('key','no_photos','value',(select count(*) from unnest(rfa) _rf where photos = 0 and status_group not in ('removed','sold')),'flag','no_photos'));
     if p_compare then
       -- the period-based numbers again for the previous period of the same length (snapshot numbers have no previous value)
       kpis := (select jsonb_agg(case when k->>'key' in ('added','sold','removed') then k || jsonb_build_object('prev',
@@ -193,12 +202,12 @@ begin
     end if;
   else
     kpis := jsonb_build_array(
-      jsonb_build_object('key','views','value',(select coalesce(sum(views),0) from _rf),'flag','has_views'),
-      jsonb_build_object('key','saves','value',(select coalesce(sum(saves),0) from _rf),'flag','has_saves'),
-      jsonb_build_object('key','enquiries','value',(select coalesce(sum(enquiries),0) from _rf),'flag','has_enquiries'),
-      jsonb_build_object('key','enquiry_rate','value',(select case when sum(views) > 0 then round(sum(enquiries) * 100.0 / sum(views), 1) end from _rf),'flag','has_views'),
-      jsonb_build_object('key','median_days_to_first_enquiry','value',(select round((percentile_cont(0.5) within group (order by days_to_first_enquiry))::numeric, 1) from _rf where first_enquiry_at::date between p_from and p_to),'flag','first_enquiry'),
-      jsonb_build_object('key','median_days_to_sold','value',(select round((percentile_cont(0.5) within group (order by days_to_close))::numeric, 1) from _rf where sold_in_period),'flag','sold'));
+      jsonb_build_object('key','views','value',(select coalesce(sum(views),0) from unnest(rfa) _rf),'flag','has_views'),
+      jsonb_build_object('key','saves','value',(select coalesce(sum(saves),0) from unnest(rfa) _rf),'flag','has_saves'),
+      jsonb_build_object('key','enquiries','value',(select coalesce(sum(enquiries),0) from unnest(rfa) _rf),'flag','has_enquiries'),
+      jsonb_build_object('key','enquiry_rate','value',(select case when sum(views) > 0 then round(sum(enquiries) * 100.0 / sum(views), 1) end from unnest(rfa) _rf),'flag','has_views'),
+      jsonb_build_object('key','median_days_to_first_enquiry','value',(select round((percentile_cont(0.5) within group (order by days_to_first_enquiry))::numeric, 1) from unnest(rfa) _rf where first_enquiry_at::date between p_from and p_to),'flag','first_enquiry'),
+      jsonb_build_object('key','median_days_to_sold','value',(select round((percentile_cont(0.5) within group (order by days_to_close))::numeric, 1) from unnest(rfa) _rf where sold_in_period),'flag','sold'));
     if p_compare then
       kpis := (select jsonb_agg(k || jsonb_build_object('prev', (
           select case k->>'key' when 'views' then coalesce(sum(views),0) when 'saves' then coalesce(sum(saves),0) when 'enquiries' then coalesce(sum(enquiries),0)
@@ -216,26 +225,26 @@ begin
                 || case when p_compare then jsonb_build_object('prev_day', (d - make_interval(days => len))::date,
                      'prev_views', coalesce(pv.n, 0), 'prev_enquiries', coalesce(pe.n, 0)) else '{}'::jsonb end order by d)
       from generate_series(p_from::timestamp, p_to::timestamp, interval '1 day') d
-      left join (select x.day, count(*) n from public.listing_views x join _rf on _rf.id = x.listing_id where x.day between p_from and p_to group by x.day) v on v.day = d::date
-      left join (select x.created_at::date dd, count(*) n from public.deals x join _rf on _rf.id = x.listing_id where x.created_at::date between p_from and p_to group by 1) e on e.dd = d::date
-      left join (select x.day, count(*) n from public.listing_views x join _rf on _rf.id = x.listing_id where p_compare and x.day between pf and pt group by x.day) pv on pv.day = (d - make_interval(days => len))::date
-      left join (select x.created_at::date dd, count(*) n from public.deals x join _rf on _rf.id = x.listing_id where p_compare and x.created_at::date between pf and pt group by 1) pe on pe.dd = (d - make_interval(days => len))::date);
+      left join (select x.day, count(*) n from public.listing_views x join unnest(rfa) _rf on _rf.id = x.listing_id where x.day between p_from and p_to group by x.day) v on v.day = d::date
+      left join (select x.created_at::date dd, count(*) n from public.deals x join unnest(rfa) _rf on _rf.id = x.listing_id where x.created_at::date between p_from and p_to group by 1) e on e.dd = d::date
+      left join (select x.day, count(*) n from public.listing_views x join unnest(rfa) _rf on _rf.id = x.listing_id where p_compare and x.day between pf and pt group by x.day) pv on pv.day = (d - make_interval(days => len))::date
+      left join (select x.created_at::date dd, count(*) n from public.deals x join unnest(rfa) _rf on _rf.id = x.listing_id where p_compare and x.created_at::date between pf and pt group by 1) pe on pe.dd = (d - make_interval(days => len))::date);
   end if;
 
   -- drill-down: the flag behind a key number
-  delete from _rf where not case coalesce(f->>'flag','')
+  select coalesce(array_agg(_rf), '{}') into rva from unnest(rfa) _rf where case coalesce(f->>'flag','')
     when '' then true
     when 'live_now' then status_group = 'live' when 'pending_now' then status_group = 'pending'
     when 'draft_now' then status_group = 'draft' when 'expired_now' then status_group = 'expired'
     when 'added' then added_in_period when 'sold' then sold_in_period when 'removed' then removed_in_period
-    when 'stale' then stale when 'no_photos' then photos = 0 and status_group not in ('removed','sold') when 'no_price' then price is null
+    when 'stale' then stale when 'no_photos' then photos = 0 and status_group not in ('removed','sold')
     when 'has_views' then views > 0 when 'has_saves' then saves > 0 when 'has_enquiries' then enquiries > 0
     when 'first_enquiry' then first_enquiry_at::date between p_from and p_to
     else false end;
 
   if p_group is not null and p_report = 'inventory' then
     if p_group not in ('status_group','make','price_band','age_band') then raise exception 'Unknown grouping.'; end if;
-    execute format('select coalesce(jsonb_agg(jsonb_build_object(''value'', g, ''count'', n) order by n desc, g), ''[]''::jsonb) from (select %I g, count(*) n from _rf group by 1) s', p_group) into groups;
+    execute format('select coalesce(jsonb_agg(jsonb_build_object(''value'', g, ''count'', n) order by n desc, g), ''[]''::jsonb) from (select %I g, count(*) n from unnest($1) _rv group by 1) s', p_group) into groups using rva;
   end if;
 
   cols := case when p_report = 'inventory'
@@ -243,9 +252,9 @@ begin
     else array['ref','car','price','price_vs_similar','similar_median','photos','desc_len','views','saves','enquiries','enquiry_rate','days_to_first_enquiry','days_to_close','reason'] end;
   sortcol := coalesce(nullif(p_sort, ''), case when p_report = 'inventory' then 'updated_at' else 'views' end);
   if not (sortcol = any(cols || array['created_at','age_days'])) then raise exception 'Unknown sort column.'; end if;
-  select count(*) into total from _rf;
-  execute format('select coalesce(jsonb_agg(to_jsonb(r) order by rn), ''[]''::jsonb) from (select _rf.*, row_number() over (order by %I %s nulls last, ref) rn from _rf order by %I %s nulls last, ref limit %s offset %s) r',
-    sortcol, case when p_desc then 'desc' else 'asc' end, sortcol, case when p_desc then 'desc' else 'asc' end, lim, off) into rows;
+  total := cardinality(rva);
+  execute format('select coalesce(jsonb_agg(to_jsonb(r) order by rn), ''[]''::jsonb) from (select _rv.*, row_number() over (order by %I %s nulls last, ref) rn from unnest($1) _rv order by %I %s nulls last, ref limit %s offset %s) r',
+    sortcol, case when p_desc then 'desc' else 'asc' end, sortcol, case when p_desc then 'desc' else 'asc' end, lim, off) into rows using rva;
 
   if p_export then
     perform public.audit('admin', 'report', p_report, 'report exported',

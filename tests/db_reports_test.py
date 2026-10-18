@@ -80,7 +80,6 @@ check("sold in period = hand count (L3 only; L9 sold before the period)", kpi(in
 check("removed in period = withdrawn L7", kpi(inv, "removed")["value"] == 1)
 check("stale = L2 and L8 (not updated in 30 days, live/pending/expired)", kpi(inv, "stale")["value"] == hand("select count(*) from listings where status not in ('draft','sold','withdrawn','rejected') and updated_at < now() - interval '30 days'") == 2)
 check("no photos = the draft L6", kpi(inv, "no_photos")["value"] == 1)
-check("no price is 0 (price is required)", kpi(inv, "no_price")["value"] == 0)
 check("every key number opens its rows: live", refs(rep("inventory", {"flag": "live_now"})) == sorted([ref[L1], ref[L2], ref[L4]]))
 check("drill: stale", refs(rep("inventory", {"flag": "stale"})) == sorted([ref[L2], ref[L8]]))
 check("drill: sold", refs(rep("inventory", {"flag": "sold"})) == [ref[L3]])

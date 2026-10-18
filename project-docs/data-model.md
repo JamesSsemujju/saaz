@@ -33,7 +33,8 @@ Indexes: unique partial indexes for one active listing, one open conversation, o
 | Change | Why | Status |
 |---|---|---|
 | Part 6: Uganda-only guard, garage needs an Active member, one notice per admin, automatic re-queue, East Africa Time, photo bucket limits | Findings F-03 to F-07, F-16 | Live 17 Oct 2026 |
-| Part 16: report indexes, `report_glossary`, `rpt_listing_facts`, `admin_report`, `admin_report_options` (reads only, no table changes) | Admin reports slice 1 | Written and tested 18 Oct 2026, needs approval to run live |
+| Part 16: report indexes, `report_glossary`, `rpt_listing_facts`, `admin_report`, `admin_report_options` (reads only, no table changes) | Admin reports slice 1 | Live 19 Oct 2026 |
+| Part 17: inspection, garage line and deal report engines, the learned agreement gap, `admin_report` routes every report (reads only, no table changes) | Admin reports: Inspections and garages, Deals and sales | Written and tested 19 Oct 2026, needs approval to run live |
 | Enable `pg_cron`, run `tick()` every 15 minutes | F-10 | Proposal |
 | `email_outbox` table: one row per email, status queued, sent, failed, attempts, last error (no message secrets) | F-14 | After SMTP is chosen |
 | `enquiries` and `enquiry_messages` | F-13 | Proposal, needs approval |

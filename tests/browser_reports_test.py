@@ -42,7 +42,7 @@ with sync_playwright() as p:
     check("the heading is the question", adm.inner_text("main h1") == "What is on the site right now, and is it healthy?", adm.inner_text("main h1"))
     check("the time zone is stated on screen", "East Africa Time" in adm.inner_text(".sechead"))
     if W >= 1024:
-        check("the left rail lists the reports in order, then the glossary", [x.strip() for x in adm.locator(".adminside a").all_inner_texts()] == ["‹ Admin", "Inventory", "Listing funnel", "Glossary"], adm.locator(".adminside a").all_inner_texts())
+        check("the left rail lists the reports in order, then the glossary", [x.strip() for x in adm.locator(".adminside a").all_inner_texts()] == ["‹ Admin", "Inventory", "Listing funnel", "Inspections and garages", "Deals and sales", "Glossary"], adm.locator(".adminside a").all_inner_texts())
     tiles = {t.split("\n")[1]: t.split("\n")[0] for t in adm.locator(".rkpis a").all_inner_texts()}
     check("key numbers: live now 3, pending 1, stale 2, no photos 1", tiles.get("Live now") == "3" and tiles.get("Pending now") == "1" and tiles.get("Not updated in 30 days") == "2" and tiles.get("No photos") == "1", tiles)
     check("each key number shows its definition", "buyers can see right now" in (adm.locator(".rkpis a", has_text="Live now").get_attribute("title") or ""))
