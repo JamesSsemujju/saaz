@@ -67,6 +67,7 @@
   function link(report, p) { return "#/admin/reports/" + report + "?" + p.toString(); }
 
   // ---------- the page shell: report rail on the left, the report on the right ----------
+  S.reportShell = function (v, at, q, html) { shell(v, at, q, html); };  // the core shows a failing report inside the reports layout
   function shell(v, at, q, html) {
     var qs = keepQuery(q);
     var rail = "<nav class='adminside' aria-label='Reports'><div class='navgroup'><a href='#/admin'>‹ Admin</a></div><div class='navgroup'><b>Reports</b>" +

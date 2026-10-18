@@ -70,6 +70,10 @@ with sync_playwright() as pw:
     go(adm, "#/admin"); check("unpinned authenticator gives no access", "Page not found" in adm.inner_text("#view"))
     pin = open(os.path.join(os.environ.get("SAAZ_REPO", os.path.join(D, "..")), "supabase", "marketplace_10b_pin_admin_authenticator.sql")).read().replace("ssemujjujames@saazinvestmentsltd.com", "admin@saaz.test")
     sql(pin)
+    # The session that just proved the pinned authenticator is an admin session: the menu takes it straight to Admin
+    go(adm, "#/my/cars"); adm.click("#acct summary")
+    check("while the admin session lasts, Admin is an area in the menu (no second check)", adm.locator(".acctmenu a[data-mode=admin]").count() == 1 and adm.locator(".acctmenu .adminentry").count() == 0)
+    adm.click("#signout"); adm.wait_for_timeout(1200); signin(adm, "admin@saaz.test", "seller")
     admin_entry(); check("next time: password then only the code", adm.locator("img.qr").count() == 0 and adm.locator("input[name=code]").count() == 1)
     adm.fill("input[name=code]", totp(key)); adm.click("#cf button"); adm.wait_for_timeout(1800)
     check("admin lands on overview", "#/admin" in adm.url and adm.locator("text=Garage applications").count() == 1, adm.url)
@@ -320,6 +324,31 @@ with sync_playwright() as pw:
     r = sel.evaluate("() => Saaz.rpc('admin_set_setting', {p_key: 'garage_response', p_value: '1 day'}).then(() => 'ok', e => e.message)")
     check("ordinary seller: admin function refused by the database", r == "Admins only.", r)
     go(buy, "#/browse"); buy.click("#acct summary"); check("buyer: no Admin panel in the menu", buy.locator(".acctmenu .adminentry").count() == 0); buy.click("#acct summary")
+    # Staying in Admin: the admin decides when to leave; the marketplace can be viewed without leaving
+    go(adm, "#/admin")
+    check("Admin bar: view the marketplace, or leave Admin", adm.locator(".areabar a", has_text="View marketplace as admin").count() == 1 and adm.locator("#leaveadmin2").count() == 1)
+    adm.locator(".areabar a", has_text="View marketplace as admin").click(); adm.wait_for_timeout(1300)
+    check("viewing the marketplace keeps Admin: a bar back to Admin", "#/browse" in adm.url and "Viewing the marketplace as admin" in adm.inner_text(".areabar") and adm.locator(".areabar a[href='#/admin']").count() == 1)
+    adm.click("#acct summary"); check("the menu still shows Admin as the current area", "you're here" in adm.locator(".acctmenu a[data-mode=admin]").inner_text()); adm.click("#acct summary")
+    views_before = sql("select count(*) from listing_views")[0][0]
+    car_ref, car_status = sql("select ref, status from listings order by created_at limit 1")[0]
+    sql("update listings set status='live' where ref=%s", (car_ref,))  # live for this check, so a buyer's look would count
+    adm.evaluate("(h) => { location.hash = h; }", "#/car/" + car_ref); adm.wait_for_timeout(1500)  # inside the app, as a click would
+    check("a car viewed as admin: a link to manage it, offers and saves off", adm.locator(".areabar a", has_text="Manage this car").count() == 1 and "offers and saves are off" in adm.inner_text("#view")
+          and adm.locator("#offer").count() == 0 and adm.locator("#save").count() == 0)
+    check("Saaz staff looking at a car is not counted as demand", sql("select count(*) from listing_views")[0][0] == views_before)
+    sql("update listings set status=%s where ref=%s", (car_status, car_ref))
+    adm.locator(".areabar a", has_text="Back to Admin").click(); adm.wait_for_timeout(1300)
+    check("Back to Admin returns to the overview", adm.url.endswith("#/admin") and adm.locator(".adminside").count() == 1)
+    go(adm, "#/admin/no-such-page")
+    check("a missing Admin page keeps the Admin menu", "Page not found" in adm.inner_text("#view") and adm.locator(".adminside, .adminjump").count() >= 1)
+    go(adm, "#/admin/reports/inventory?range=custom&from=2026-10-10&to=2026-10-01")
+    check("a report that fails keeps the reports menu and the way back to Admin", "Couldn't load this page" in adm.inner_text("#view") and adm.locator(".adminside a[href='#/admin'], .adminjump option[value='#/admin']").count() >= 1, adm.inner_text("#view")[:200])
+    go(adm, "#/admin"); adm.click("#leaveadmin2"); adm.wait_for_timeout(1300)
+    check("Leave Admin goes to the marketplace with no Admin bar", "#/browse" in adm.url and adm.locator(".areabar").count() == 0)
+    adm.click("#acct summary"); adm.locator(".acctmenu a[data-mode=admin]").click(); adm.wait_for_timeout(1300)
+    check("back into Admin from the menu while the admin session lasts", adm.url.endswith("#/admin") and adm.locator(".adminside").count() == 1)
+
     # Sign-out, every role: straight to the public listings, session gone, protected pages and functions closed
     for name_, pg_, email_, protected in [("buyer", buy, "bob@x.test", "#/offers"), ("seller", sel, "sam@x.test", "#/my/cars"), ("garage", gar, "gus@garage.test", "#/garage"), ("admin", adm, "admin@saaz.test", "#/admin")]:
         go(pg_, "#/account"); pg_.evaluate("(h) => { location.hash = h; }", protected); pg_.wait_for_timeout(900)  # two signed-in pages in this tab's history

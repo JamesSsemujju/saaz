@@ -18,7 +18,19 @@ Wide screens: fixed side menu. Phones: a "Go to" menu at the top.
 
 Not added until the modules exist: Enquiries, Import estimates, Finance referrals, Email failures.
 
-## Record pages and the next action
+## Staying in Admin (19 Oct 2026)
+
+You are in Admin while two things hold: this session passed the password and the pinned authenticator (the database decides), and Admin is the chosen area. It ends only when you choose: Leave Admin, switch to Buying or Selling in the account menu, or sign out (or the admin session runs out).
+
+| Where | What you see |
+|---|---|
+| Any Admin page | Bar: View marketplace as admin, Admin, Leave Admin. The Admin menu is always there, also on a missing or failing page. |
+| Reports | The reports menu with "‹ Admin", also when a report fails to load. |
+| Marketplace while in Admin | Bar: ‹ Back to Admin, Viewing the marketplace as admin, Leave Admin. On a car: Manage this car. Offers and saves are off; your views are not counted as demand. |
+| Account menu, admin session active | Admin is one of the areas (Buying, Selling, Admin). Going back needs no password or code until the admin session ends. |
+| Account menu, no admin session | Unchanged: Admin panel (password and authenticator) only in Selling. |
+
+
 
 | Page | Shows | Actions where you need them |
 |---|---|---|

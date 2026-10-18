@@ -29,7 +29,7 @@ New recording needed later (smallest change, history starts on the day it ships,
 
 ## 2. Slices
 1. **Slice 1, built:** Inventory, Listing funnel, shared control bar, glossary, drill-downs, CSV export with export log. Part 16, live 19 Oct 2026.
-2. **Slice 1b, built:** Inspections and garages, Deals and sales (James, 19 Oct 2026). Part 17, written and tested, waiting for approval to run live.
+2. **Slice 1b, built:** Inspections and garages, Deals and sales (James, 19 Oct 2026). Part 17, live 19 Oct 2026. Read-only check against hand counts: inspections requested in 30 days 2 = 2, open now 2 = 2, garage line turns in 30 days 1 = 1, deals 0 = 0.
 3. Slice 2: Demand (adds the search log), Sellers.
 4. Slice 3: Buyers and enquiries, Moderation, Traffic (adds the visit log).
 5. Left out on purpose (James, 19 Oct 2026): a Monday summary (every day is the same), and data checks (odometer flags, logbook name mismatches).

@@ -106,7 +106,7 @@
     return S.q(S.db.from("listings").select("*").eq("ref", ref).limit(1)).then(function (rows) {
       var l = rows[0];
       if (!l) { v.innerHTML = "<div class='empty'><b>Car not found</b><span>It may have been withdrawn. <a href='#/browse'>Browse cars</a></span></div>"; return; }
-      S.rpc("record_view", { p_listing: l.id, p_device: S.device() }).catch(function () {});
+      if (!S.isAdmin()) S.rpc("record_view", { p_listing: l.id, p_device: S.device() }).catch(function () {});  // Saaz staff looking don't count as demand
       return Promise.all([
         S.rpc("listing_stats", { p_listing: l.id }),
         l.current_review_id ? S.q(S.db.from("reviews").select("verdict,score,verify_code,valid_until,garage_name,issued_at,doc_no,status").eq("id", l.current_review_id)) : [],
@@ -117,8 +117,11 @@
         var ph = (l.photos || []).map(function (p) { return S.photo(p); });
         var gallery = "<div class='gallery'><div class='main'>" + (ph[0] ? "<img id='mainphoto' src='" + esc(ph[0]) + "' alt='Photo 1 of " + ph.length + "' decoding='async'>" : "<div class='car-photo'></div>") + "</div>" +
           (ph.length > 1 ? "<div class='shots'>" + ph.map(function (u, i) { return "<button type='button' data-i='" + i + "'" + (i ? "" : " aria-current='true'") + " aria-label='Show photo " + (i + 1) + "'><img src='" + esc(u) + "' alt='' loading='lazy' decoding='async'></button>"; }).join("") + "</div>" : "") + "</div>";
-        var buy = "";
-        if (l.status === "live" && !mine) {
+        var buy = "", asAdmin = S.inAdmin();
+        if (asAdmin) {
+          buy = "<p class='box'>You're viewing as admin, so offers and saves are off here. <a href='#/admin/car/" + l.id + "'>Manage this car in Admin</a></p>";
+          var ex = S.$("#viewas-extra"); if (ex) ex.innerHTML = "<a class='back' href='#/admin/car/" + l.id + "'>Manage this car</a>";
+        } else if (l.status === "live" && !mine) {
           if (!S.signedIn()) buy = "<a class='btn wide' href='#/signin' onclick='Saaz.after=location.hash'>Sign in to make an offer</a>";
           else if (open) buy = "<a class='btn wide' href='#/deals/" + open.id + "'>See your offer (" + S.label(open.status) + ")</a>";
           else buy = "<form id='offer' class='stack'><b>Make an offer</b><label>Your offer (" + l.currency + ")<input name='amount' type='number' inputmode='numeric' required min='1'></label>" +
@@ -136,7 +139,7 @@
           "<p class='car-bigprice'>" + S.money(l.currency, l.price) + "</p><p class='car-area'>" + esc(l.region) + ", " + S.COUNTRY[l.country] + (l.saaz_owned ? " · Sold by Saaz" : "") + "</p>" +
           (r ? "<div class='insp-card'><div class='insp-head'>" + S.chip(r.verdict) + "<span>" + r.score + "/100</span></div><p>Saaz inspection " + esc(r.doc_no) + " by " + esc(r.garage_name) + ", " + S.day(r.issued_at) + ". Valid until " + S.day(r.valid_until) + ".</p><a class='btn text' href='#/report/" + esc(r.verify_code) + "'>Read the inspection report</a></div>" : "") +
           buy +
-          (S.signedIn() && !mine ? "<button class='btn ghost wide' id='save'>" + (saved ? "Saved" : "Save this car") + "</button>" : "") +
+          (S.signedIn() && !mine && !asAdmin ? "<button class='btn ghost wide' id='save'>" + (saved ? "Saved" : "Save this car") + "</button>" : "") +
           (mine ? "<a class='btn ghost wide' href='#/my/cars/" + l.id + "'>Manage this car</a>" : "") +
           "<div class='demand'><span><b>" + st.views_7d + "</b> views this week</span><span><b>" + st.saves + "</b> saves</span><span><b>" + st.offers + "</b> offers so far</span></div></aside>" +
           "<div class='details'><div><h2>Details</h2><dl class='specs'>" + [["Year", l.year], ["Mileage", S.km(l.mileage)], ["Fuel", l.fuel], ["Gearbox", l.gearbox], ["Body", l.body], ["Colour", l.colour], ["Engine", l.engine], ["Plate", l.plate], ["Saaz ref", l.ref]]

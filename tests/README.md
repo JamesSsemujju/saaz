@@ -6,7 +6,7 @@ These run against a local copy of the Saaz stack, never the live project.
 |---|---|---|
 | `db_marketplace_test.py` | Every database rule: garages, listings, garage line, reviews, verify, offers, deals, access rules | 72 passed |
 | `db_audit_fixes_test.py` | Part 6 fixes: Uganda only, garage needs an Active member, one notice, re-queue, East Africa Time | 10 passed |
-| `browser_flow_test.py <width>` | The whole journey in Chromium: garage applies, admin approves, seller lists, garage reviews, admin approves, buyer offers, deal completes, plus Uganda-only, EAT, history pages, asterisks, invite link | 173 passed at 390 and 1280 px (18 Oct 2026) |
+| `browser_flow_test.py <width>` | The whole journey in Chromium: garage applies, admin approves, seller lists, garage reviews, admin approves, buyer offers, deal completes, plus Uganda-only, EAT, history pages, asterisks, invite link | 184 passed at 390 and 1280 px (19 Oct 2026), including staying in Admin |
 | `layout_audit.py <site> <car ref> <out> [--signed-in]` | The layout rules at 360 to 1440 px, with grid-overlay screenshots: one left edge, equal card rows, one control height, 44 px touch targets on phones, search on the first screen, price within two screens | 68 of 68 renders pass (18 Oct 2026) |
 | `db_reports_test.py` | Part 16 reports: access, every Inventory and Funnel number reconciled with a hand count, the Kampala-day rule, drill-downs, groups, sort, pages, compare, export log | 58 passed (19 Oct 2026) |
 | `db_reports_2_test.py` | Part 17: Inspections and garages, Deals and sales, the learned gap and its fallbacks, each reconciled with a hand count | 43 passed (19 Oct 2026) |

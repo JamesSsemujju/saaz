@@ -226,6 +226,10 @@
   };
   S.signedIn = function () { return !!(S.state.roles && S.state.roles.signed_in); };
   S.isAdmin = function () { return !!(S.state.roles && S.state.roles.admin); };
+  // In Admin: an admin session (password and authenticator, checked by the database) and Admin chosen as the area.
+  // It lasts until the admin leaves Admin, switches area, signs out, or the admin session ends. Viewing the marketplace keeps it.
+  S.inAdmin = function () { return S.isAdmin() && S.mode() === "admin"; };
+  S.leaveAdmin = function () { S.mode("buyer"); S.toast("You left Admin. Your account menu takes you back while your admin session lasts."); S.go("#/browse"); };
   S.me = function () { return (S.state.roles && S.state.roles.profile) || {}; };
 
   // ---------- router ----------
@@ -248,6 +252,7 @@
   function areas(r) {
     var a = [["buyer", "Buying", "#/browse"], ["seller", "Selling", "#/my/cars"]];
     if (r.garage) a.push(["garage", "Garage: " + (r.garage.name || "my garage"), "#/garage"]);
+    if (S.isAdmin()) a.push(["admin", "Admin", "#/admin"]);  // only while the admin session lasts: no password or code needed to go back
     return a;
   }
   function header(path, area) {
@@ -257,7 +262,7 @@
       "<a href='#/track'" + on(path === "/track" || /^\/inspection\//.test(path)) + ">Track an inspection</a>";
     var right;
     if (r && r.signed_in) {
-      var p = S.me(), cur = area || "buyer";
+      var p = S.me(), cur = area || (S.inAdmin() ? "admin" : "buyer");
       right = "<a class='hide-s' href='#/browse?saved=1'" + on(/saved=1/.test(location.hash)) + ">Saved</a>" +
         "<a class='hide-s' href='#/offers'" + on(path === "/offers" || /^\/deals\//.test(path)) + ">My offers</a>" +
         "<a href='#/inbox' class='inbox'" + on(path === "/inbox") + ">Inbox<b id='unread' hidden></b></a>" +
@@ -267,7 +272,8 @@
         "<b class='mh'>Switch area</b>" + areas(r).map(function (x) {
           return "<a href='" + x[2] + "' data-mode='" + x[0] + "'" + (x[0] === cur ? " aria-current='true'" : "") + ">" + S.esc(x[1]) + (x[0] === cur ? " <small>you're here</small>" : "") + "</a>";
         }).join("") +
-        (r.admin_account && (area === "admin" || (area !== "garage" && S.mode() === "seller")) ? "<hr><a href='#/admin/verify' class='adminentry'>Admin panel <small>password and authenticator</small></a>" : "") +
+        (r.admin_account && !S.isAdmin() && area !== "garage" && S.mode() === "seller" ? "<hr><a href='#/admin/verify' class='adminentry'>Admin panel <small>password and authenticator</small></a>" : "") +
+        (S.inAdmin() ? "<hr><button type='button' id='leaveadmin'>Leave Admin</button>" : "") +
         "<hr><a class='show-s' href='#/browse?saved=1'>Saved</a><a class='show-s' href='#/offers'>My offers</a>" +
         "<a href='#/account'>My account</a><button type='button' id='signout'>Sign out</button></div></details>";
     } else {
@@ -278,13 +284,17 @@
     return head + areaBar(path, area);
   }
   function areaBar(path, area) {
+    // Viewing the marketplace while in Admin: a bar that keeps the way back, and says offers and saves are off
+    if (!area && S.inAdmin()) return "<div class='areabar viewas'><div class='wrap'><a class='back' href='#/admin'>‹ Back to Admin</a><b>Viewing the marketplace as admin</b>" +
+      "<span id='viewas-extra'></span><button type='button' class='btn text' id='leaveadmin2'>Leave Admin</button></div></div>";
     if (!area || !S.signedIn()) return "";
     var r = S.state.roles, tabs = [], title = "";
     if (area === "seller") { title = "Selling"; tabs = [["#/my/cars", "My cars", /^\/my\//.test(path)], ["#/sell/new", "List a car", /^\/sell\//.test(path)]]; }
     if (area === "garage") { title = "Garage" + (r.garage && r.garage.name ? ": " + r.garage.name : ""); tabs = [["#/garage", r.garage && r.garage.member_role === "owner" ? "Jobs" : "My jobs", path !== "/garage/team"]];
       if (r.garage && r.garage.member_role === "owner") tabs.push(["#/garage/team", "Team", path === "/garage/team"]); }
     if (area === "admin") title = "Admin";
-    return "<div class='areabar'><div class='wrap'><a class='back' href='#/browse'>‹ Back to marketplace</a><b>" + S.esc(title) + "</b>" +
+    var back = area === "admin" ? "<a class='back' href='#/browse'>View marketplace as admin</a>" : "<a class='back' href='#/browse'>‹ Back to marketplace</a>";
+    return "<div class='areabar'><div class='wrap'>" + back + "<b>" + S.esc(title) + "</b>" + (area === "admin" ? "<button type='button' class='btn text' id='leaveadmin2'>Leave Admin</button>" : "") +
       (tabs.length ? "<nav aria-label='" + S.esc(title) + "'>" + tabs.map(function (t) { return "<a href='" + t[0] + "'" + (t[2] ? " aria-current='page'" : "") + ">" + t[1] + "</a>"; }).join("") + "</nav>" : "") + "</div></div>";
   }
   function wireHeader() {
@@ -295,6 +305,7 @@
       acct.onkeydown = function (e) { if (e.key === "Escape") { acct.open = false; acct.querySelector("summary").focus(); } };
     }
     var so = S.$("#signout"); if (so) so.onclick = function () { so.disabled = true; S.signOut(); };
+    ["#leaveadmin", "#leaveadmin2"].forEach(function (id) { var b = S.$(id); if (b) b.onclick = S.leaveAdmin; });
     if (S.signedIn()) S.q(S.db.from("notifications").select("id", { count: "exact", head: false }).eq("read", false).eq("user_id", S.me().id)).then(function (rows) {
       var b = S.$("#unread"); if (b && rows.length) { b.hidden = false; b.textContent = rows.length; }
     }).catch(function () {});
@@ -329,11 +340,13 @@
       var area = S.signedIn() ? areaOf(path) : "";
       if (area === "admin" && !S.isAdmin()) area = "";  // no Admin bar on the "Page not found" a non-admin sees
       if (area && (area !== "garage" || S.state.roles.garage) && (area !== "admin" || S.isAdmin())) S.mode(area);
-      root.innerHTML = header(path, area) + "<main id='view' class='wrap pad" + (area ? " inarea" : "") + "'><p class='loading'>Loading…</p></main>";
+      root.innerHTML = header(path, area) + "<main id='view' class='wrap pad" + (area || S.inAdmin() ? " inarea" : "") + "'><p class='loading'>Loading…</p></main>";
       wireHeader();
       var view = S.$("#view");
       var notFound = "<div class='empty'><b>Page not found</b><span><a href='#/browse'>Browse cars</a></span></div>";
-      if (!match) { view.innerHTML = notFound; return; }
+      // Inside Admin, a missing or failing page keeps the Admin menu, so there is always a way to the other Admin pages
+      var inAdminShell = function (h) { if (area === "admin" && S.adminPage) S.adminPage(view, "", h); else view.innerHTML = h; };
+      if (!match) { inAdminShell(notFound); return; }
       // Admin pages look like any missing page unless this session passed the admin's authenticator (checked by the database)
       if (match.need === "admin" && !S.isAdmin()) { view.innerHTML = notFound; return; }
       // Signed out (or the session ended) on a page that needs an account: a public page with a sign-in option, never the page itself
@@ -344,7 +357,8 @@
       }
       window.scrollTo(0, 0);
       Promise.resolve(match.handler(view, m.slice(1), query)).catch(function (e) {
-        view.innerHTML = "<div class='empty'><b>Couldn't load this page</b><span>" + S.esc(S.friendly(e)) + "</span></div>";
+        var h = "<div class='empty'><b>Couldn't load this page</b><span>" + S.esc(S.friendly(e)) + "</span></div>";
+        if (/^\/admin\/reports/.test(path) && S.reportShell) S.reportShell(view, path.split("/")[3] || "", query, h); else inAdminShell(h);
       });
     });
   };
@@ -526,7 +540,7 @@
   // The site root is the home page for buyers and visitors; a seller, garage or admin goes to their own area's start page
   S.route("/", function (v, m, q) {
     var h = S.signedIn() ? S.home() : "#/browse";
-    if (h !== "#/browse") return S.go(h);
+    if (h !== "#/browse" && h !== "#/admin") return S.go(h);
     return S.homePage(v, q);
   });
 
