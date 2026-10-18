@@ -70,7 +70,15 @@ with sync_playwright() as pw:
                                    ("admin@saaz.test", "admin", ["#/admin", "#/admin/cars", "#/admin/saaz", "#/admin/garages", "#/admin/users", "#/admin/deals", "#/admin/audit", "#/admin/outbox", "#/admin/settings", "#/admin/vehicles", "#/admin/reviews"] + (["#/admin/car/" + str(row[0])] if row else []))]:
             pg.goto("about:blank"); pg.goto(app + "#/signin"); pg.wait_for_timeout(500)
             pg.evaluate("localStorage.clear()"); pg.goto("about:blank"); pg.goto(app + "#/signin"); pg.wait_for_timeout(600)
-            pg.check(f"input[name=as][value={as_}]"); pg.fill("input[name=email]", email); pg.fill("input[name=password]", "demo1234"); pg.click("form button"); pg.wait_for_timeout(1200)
+            pg.check(f"input[name=as][value={'seller' if as_ == 'admin' else as_}]"); pg.fill("input[name=email]", email); pg.fill("input[name=password]", "demo1234"); pg.click("form button"); pg.wait_for_timeout(1200)
+            if as_ == "admin":  # staff step-up: password again, then the authenticator code (part 10)
+                import psycopg2, base64, hashlib, hmac, struct, time
+                db = psycopg2.connect(host="/var/tmp/saazpg", port=5433, user="postgres", dbname="sb"); k = db.cursor()
+                k.execute("select f.secret from auth.mfa_factors f join auth.users u on u.id=f.user_id where u.email=%s", (email,)); sec = k.fetchone()[0]; db.close()
+                key = base64.b32decode(sec.upper() + "=" * (-len(sec) % 8)); hm = hmac.new(key, struct.pack(">Q", int(time.time()) // 30), hashlib.sha1).digest(); o = hm[-1] & 15
+                pg.goto("about:blank"); pg.goto(app + "#/admin/verify"); pg.wait_for_timeout(900)
+                pg.fill("input[name=password]", "demo1234"); pg.click("#pf button"); pg.wait_for_timeout(1200)
+                pg.fill("input[name=code]", "%06d" % ((struct.unpack(">I", hm[o:o + 4])[0] & 0x7fffffff) % 1000000)); pg.click("#cf button"); pg.wait_for_timeout(1800)
             for h in hashes:
                 pg.goto("about:blank"); pg.goto(app + h); pg.wait_for_timeout(900); audit(f"app {as_} {h}")
         ctx.close()

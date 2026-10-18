@@ -1,54 +1,23 @@
 <!-- {"title": "Inspected cars | Saaz", "description": "Used cars in Kampala that passed a Saaz inspection, each shown with its report.", "nav": "cars"} -->
-<section class="phero slim"><div class="wrap">
-  <div>
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="{{base}}">Home</a><span>/</span><span>Inspected cars</span></nav>
-    <div class="top" style="margin-top:14px">{{cars_status}}</div>
-    <h1 style="margin-top:12px">Inspected cars</h1>
-    <p class="sub" style="margin-top:10px">Every car here passed a Saaz inspection at a partner garage. The report is on the listing.</p>
-  </div>
-</div></section>
-
-{{shop_by}}
-
-<section class="browse"><div class="wrap browse-grid">
-  <aside class="filters" aria-label="Filters">
-    <details class="filter-box" open>
-      <summary>Filters</summary>
-      <form id="carfilter" hidden>
-        {{filter_fields}}
-        <button type="reset" class="reset">Clear filters</button>
-      </form>
-      <noscript><p class="note">Filters need JavaScript. All cars are listed.</p></noscript>
-    </details>
-  </aside>
-  <div class="results">
-    <div class="results-bar">
-      <p id="carcount" aria-live="polite">{{car_count_text}}</p>
-      <label class="sort" hidden>Sort
-        <select id="carsort">
-          <option value="date">Newest inspection</option>
-          <option value="price-asc">Price: low to high</option>
-          <option value="price-desc">Price: high to low</option>
-          <option value="km">Mileage: lowest</option>
-          <option value="year">Year: newest</option>
-        </select>
-      </label>
-    </div>
-    <div class="cars" id="carlist">{{car_cards}}</div>
-    <div class="empty" id="nomatch" hidden><b>No cars match these filters</b><span>Clear a filter to see more cars.</span></div>
-    {{car_empty}}
-  </div>
-</div></section>
-
-<section class="band soft"><div class="wrap">
-  <div class="kicker">How listings work</div>
-  <h2>Only cars that passed get listed.</h2>
-  <ol class="steps">
-    <li><span class="n">1</span><div><b>The seller books an inspection</b><span>At a vetted partner garage, with a Saaz code.</span></div></li>
-    <li><span class="n">2</span><div><b>The car passes</b><span>Standard photos are taken at the garage.</span></div></li>
-    <li><span class="n">3</span><div><b>It appears here with its report</b><span>Findings, photos and the inspection date.</span></div></li>
-  </ol>
-  <p class="note" style="margin-top:28px"><a href="{{base}}inspections/">How Saaz inspections work</a> · <a href="{{base}}sell/">Sell your car</a></p>
+<section class="band compact"><div class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="{{base}}">Home</a><span>/</span><span>Inspected cars</span></nav>
+  <div class="sechead"><h1>Inspected cars</h1><p>Every car here passed a Saaz inspection at a partner garage. The report is on the listing.</p></div>
+  <form id="carfilter" class="filters" hidden>
+    {{filter_fields}}
+    <label>Sort<select id="carsort">
+      <option value="date">Newest inspection</option>
+      <option value="price-asc">Price: low to high</option>
+      <option value="price-desc">Price: high to low</option>
+      <option value="km">Mileage: lowest</option>
+      <option value="year">Year: newest</option>
+    </select></label>
+    <button type="reset" class="btn ghost">Clear</button>
+  </form>
+  <noscript><p class="note">Filters need JavaScript. All cars are listed.</p></noscript>
+  <p class="count" id="carcount" aria-live="polite">{{car_count_text}}</p>
+  <div class="cars" id="carlist">{{car_cards}}</div>
+  <div class="empty" id="nomatch" hidden><b>No cars match these filters</b><span>Clear a filter to see more cars.</span></div>
+  {{car_empty}}
 </div></section>
 {{saaz_config}}
 {{cars_script}}

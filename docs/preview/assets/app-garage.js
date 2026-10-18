@@ -76,7 +76,7 @@
               (owner && ["in_play", "agreed"].indexOf(c.status) >= 0 ? " · " + (j.inspector ? "given to " + esc(j.inspector) : "<b>not given out yet</b>") : "") + "</small></div></a></li>";
           }).join("") + "</ul>";
         }
-        var openById = "<form id='oid' class='inlineform'><label>Open an inspection by its ID<input name='id' placeholder='SZR-2026-000123' required></label><button class='btn small ghost dark'>Open</button></form>";
+        var openById = "<form id='oid' class='inlineform'><label>Open an inspection by its ID<input name='id' placeholder='SZR-2026-000123' required></label><button class='btn small ghost'>Open</button></form>";
         v.innerHTML = "<div class='pagehead'><h1>" + esc(g.garage) + "</h1><span class='chip'>" + esc(S.label(g.role)) + "</span></div>" + openById +
           (owner ? "<section><h2>Offered to you</h2><p class='note'>Only your garage can contact these sellers right now, inside Saaz. Give each car to a team member, or handle it yourself. Message within the time shown or the next garage comes in.</p>" + rows(inplay, "Nothing offered right now.") + "</section>" +
             "<section><h2>Booked jobs</h2>" + rows(booked, "No booked jobs.") + "</section>"
@@ -108,13 +108,13 @@
       return S.q(S.db.from("messages").select("*").eq("conversation_id", cid).order("created_at")).then(function (msgs) {
         c.garages = { name: "Seller" };
         var acts = [], owner = ((S.state.roles || {}).garage || {}).member_role === "owner", canStart = j.mine || (owner && !c.inspector_id);
-        if (c.status === "in_play" && owner) acts.push("<button class='btn ghost dark' id='decline'>Decline this car</button>");
+        if (c.status === "in_play" && owner) acts.push("<button class='btn ghost' id='decline'>Decline this car</button>");
         if (c.status === "agreed") {
           acts.push("<form id='df' class='inlineform'><label>Inspection date<input name='date' type='date' value='" + esc(c.review_date || "") + "'></label><button class='btn small'>Set date</button></form>");
 
-          if (owner) acts.push("<button class='btn ghost dark' id='release'>Release this job</button>");
+          if (owner) acts.push("<button class='btn ghost' id='release'>Release this job</button>");
         }
-        var giveTo = owner && ["in_play", "agreed"].indexOf(c.status) >= 0 ? "<form id='gf' class='inlineform'><label>Give this job to<select name='m' id='gsel'><option value=''>Loading team…</option></select></label><button class='btn small ghost dark'>Save</button></form>" : "";
+        var giveTo = owner && ["in_play", "agreed"].indexOf(c.status) >= 0 ? "<form id='gf' class='inlineform'><label>Give this job to<select name='m' id='gsel'><option value=''>Loading team…</option></select></label><button class='btn small ghost'>Save</button></form>" : "";
         v.innerHTML = "<p class='crumbs'><a href='#/garage'>Garage</a> / " + esc(l.ref) + "</p><div class='pagehead'><h1>" + esc(S.name(l)) + "</h1>" + S.chip(c.status) + "</div>" +
           "<p class='lead'>" + esc(l.region) + " · seller's mileage " + S.km(l.mileage) + "</p>" +
           (c.status === "in_play" ? "<p class='box'>Message the seller to arrange the inspection. They can agree once you've messaged. " + (c.garage_first_message_at ? "" : "You have until " + S.when(c.deadline) + ".") + "</p>" : "") +
@@ -197,8 +197,8 @@
         "<label>Odometer reading (km)<input name='odometer' type='number' min='0' max='1000000' value='" + esc(r.odometer == null ? "" : r.odometer) + "' required></label>" +
         "<label>Notes <small>(required if anything is not a Pass)</small><textarea name='notes' rows='4'>" + esc(r.notes) + "</textarea></label>" +
         "<label class='inline'><input type='checkbox' name='in_person' value='1'" + (r.in_person ? " checked" : "") + "> I inspected this car in person and checked the VIN against the logbook and the car.</label>" +
-        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn' name='go' value='save'>Save draft</button><button class='btn dark' name='go' value='issue'>Issue the Saaz inspection</button>" +
-        "<button type='button' class='btn ghost dark' id='discard'>Discard draft</button></div><p class='note'>Once issued, an inspection report can't be edited. It carries your name and member id.</p></form>";
+        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn' name='go' value='save'>Save draft</button><button class='btn' name='go' value='issue'>Issue the Saaz inspection</button>" +
+        "<button type='button' class='btn ghost' id='discard'>Discard draft</button></div><p class='note'>Once issued, an inspection report can't be edited. It carries your name and member id.</p></form>";
       S.$$("#f input[type=radio]").forEach(function (i) { i.onchange = function () { checks[i.name.slice(2)] = i.value; paint(); }; });
       S.$$("#panellist select").forEach(function (s) { s.onchange = function () { panels[s.name] = s.value; paint(); }; });
       paint();

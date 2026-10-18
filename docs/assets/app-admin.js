@@ -3,7 +3,7 @@
   var S = window.Saaz, esc = S.esc;
   // Navigation grouped by the work being done (Zoho-style): a stable side menu on wide screens, a "Go to" menu on phones.
   var GROUPS = [
-    ["Overview", [["", "Overview"]]],
+    ["Overview", [["", "Overview"], ["reports", "Reports"]]],
     ["Vehicles and listings", [["cars", "Cars"], ["saaz", "Saaz cars"], ["vehicles", "Vehicle records"], ["selling", "What's selling"]]],
     ["Inspections and garage line", [["conversations", "Garage line"], ["reviews", "Car inspection reports"]]],
     ["Garages and partners", [["garages", "Garages"]]],
@@ -131,17 +131,16 @@
     });
   });
 
+  // Cars: the marketplace listings page itself, with every car. Cars that aren't live carry their status on the photo.
+  var CAR_STATUSES = ["draft", "awaiting_review", "review_booked", "awaiting_approval", "changes_requested", "re_review_due", "live", "reserved", "sold", "rejected", "withdrawn"];
   A("/cars", function (v, m, q) {
     var st = q.get("status") || "";
-    var query = S.db.from("listings").select("id,ref,make,model,year,status,price,currency,country,region,saaz_owned,line_empty,updated_at").order("updated_at", { ascending: false }).limit(300);
-    if (st) query = query.eq("status", st);
-    return S.q(query).then(function (rows) {
-      page(v, "cars", "<form class='filters' id='fs'><select name='status'><option value=''>Every status</option>" + ["draft", "awaiting_review", "review_booked", "awaiting_approval", "changes_requested", "live", "reserved", "sold", "rejected", "withdrawn", "re_review_due"]
-        .map(function (s) { return "<option value='" + s + "'" + (s === st ? " selected" : "") + ">" + S.label(s) + "</option>"; }).join("") + "</select><button class='btn small'>Show</button></form>" +
-        table(["Ref", "Car", "Status", "Price", "Where", "Updated"], rows.map(function (l) {
-          return "<tr><td><a href='#/admin/car/" + l.id + "'>" + esc(l.ref) + "</a></td><td>" + esc(S.name(l)) + (l.saaz_owned ? " <span class='src'>Saaz</span>" : "") + "</td><td>" + S.chip(l.status) + (l.line_empty ? " <span class='chip s-flag'>Line empty</span>" : "") + "</td><td>" + S.money(l.currency, l.price) + "</td><td>" + esc(l.region) + "</td><td>" + S.day(l.updated_at) + "</td></tr>";
-        })));
-      S.$("#fs").onsubmit = function (e) { e.preventDefault(); S.go("#/admin/cars?status=" + S.form(e.target).status); };
+    return S.rpc("admin_listings", { p_status: st }).then(function (rows) {
+      var pg = S.listingsPage(rows, q, { admin: true, route: "#/admin/cars",
+        statusSelect: "<select name='status'><option value=''>Every status</option><option value='not_public'" + (st === "not_public" ? " selected" : "") + ">Not public</option>" +
+          CAR_STATUSES.map(function (x) { return "<option value='" + x + "'" + (x === st ? " selected" : "") + ">" + S.label(x) + "</option>"; }).join("") + "</select>",
+        cardOpts: function (l) { return { href: "#/admin/car/" + l.id, badge: l.status === "live" ? "" : "<span class='car-tag right" + (l.public ? "" : " priv") + "'>" + esc(S.label(l.status)) + "</span>" }; } });
+      page(v, "cars", pg.html); pg.wire();
     });
   });
 
@@ -182,18 +181,18 @@
           "<a href='#/report/" + esc(cur.verify_code) + "'>Open the report</a></div></section>" : "") +
         "<section><h2>Decision</h2><form id='dec' class='stack'><label>Note to the seller (needed for changes, reject and unlist)<textarea name='note' rows='2'></textarea></label>" +
         "<label class='inline'><input type='checkbox' name='new_review' value='1'> Request changes needs a new Saaz inspection</label><div class='row'>" +
-        (l.status === "awaiting_approval" ? "<button class='btn' value='approve'" + (cur && cur.verdict === "fail" ? " disabled title='A safety Fail cannot be approved'" : "") + ">Approve and go live</button><button class='btn ghost dark' value='changes'>Request changes</button><button class='btn ghost dark' value='reject'>Reject</button>" : "") +
-        (["live", "re_review_due"].indexOf(l.status) >= 0 ? "<button class='btn ghost dark' value='unlist'>Unlist</button>" : "") + "</div></form>" +
+        (l.status === "awaiting_approval" ? "<button class='btn' value='approve'" + (cur && cur.verdict === "fail" ? " disabled title='A safety Fail cannot be approved'" : "") + ">Approve and go live</button><button class='btn ghost' value='changes'>Request changes</button><button class='btn ghost' value='reject'>Reject</button>" : "") +
+        (["live", "re_review_due"].indexOf(l.status) >= 0 ? "<button class='btn ghost' value='unlist'>Unlist</button>" : "") + "</div></form>" +
         (cur && cur.verdict === "fail" ? "<p class='note'>A safety Fail can't be approved.</p>" : "") + "</section>" +
         (l.saaz_owned ? "" : S.actFor("afs", "Act for the seller", "Do what the seller can do, for them: the same rules apply. The seller is told each time, with your reason.", forSeller)) +
         "<section><h2>Garage line</h2>" + table(["Garage", "Status", "Round", "Opened", "Closed"], convs.map(function (c) {
           return "<tr><td>" + esc(c.garages.name) + (c.assigned_by_admin ? " <small>assigned</small>" : "") + "</td><td>" + S.chip(c.status) + "</td><td>" + c.round + "</td><td>" + S.when(c.opened_at) + "</td><td>" + S.when(c.closed_at) + "</td></tr>";
         })) + "<p class='note'>Saaz doesn't read these conversations.</p>" +
         (["awaiting_review", "review_booked"].indexOf(l.status) >= 0 ? "<form id='asg' class='inlineform'><label>Assign a garage directly<select name='g'>" + garages.map(function (g) { return "<option value='" + g.id + "'>" + esc(g.name + " · " + g.region) + "</option>"; }).join("") + "</select></label><button class='btn small'>Assign</button></form>" +
-          "<button class='btn small ghost dark' id='restart'>Restart the line</button>" : "") + "</section>" +
+          "<button class='btn small ghost' id='restart'>Restart the line</button>" : "") + "</section>" +
         (cur ? "<section><h2>Saaz view of this report</h2><p class='note'>Saaz never changes a report. Support it or object to it, with a reason: the garage and the seller see it, the report shows it, and the garage can reply. An objection keeps the car off sale until Saaz supports the report or asks for a new inspection.</p>" +
           "<div id='ops'><p class='loading'>Loading…</p></div><form id='opf' class='stack'><label>Reason<textarea name='reason' rows='2' minlength='10' required></textarea></label><div class='row'>" +
-          "<button class='btn small ghost dark' value='support'>Support the report</button><button class='btn small ghost dark' value='object'>Object to the report</button></div></form></section>" : "") +
+          "<button class='btn small ghost' value='support'>Support the report</button><button class='btn small ghost' value='object'>Object to the report</button></div></form></section>" : "") +
         "<section><h2>Demand</h2><div class='stats'>" + [["Views, 7 days", st.views_7d], ["Views in total", st.views_total], ["Saves", st.saves], ["Offers", st.offers], ["Auto-rejected", st.auto_rejected]]
           .map(function (x) { return "<div><b>" + (x[1] || 0) + "</b><span>" + x[0] + "</span></div>"; }).join("") + "</div></section>" +
         "<section><h2>Every inspection of this car</h2><div id='insps'><p class='loading'>Loading…</p></div></section>" +
@@ -269,8 +268,8 @@
     return Promise.all([S.q(S.db.from("garages").select("*").eq("id", id)), S.rpc("garage_team", { p_garage: id }),
       S.q(S.db.from("reviews").select("doc_no,verdict,score,status,verify_code,issued_at").eq("garage_id", id).neq("status", "draft").order("issued_at", { ascending: false }).limit(50))]).then(function (r) {
       var g = r[0][0], acts = [];
-      if (g.status === "applied" || g.status === "more_info") acts.push("<button class='btn' value='approve'>Approve</button><button class='btn ghost dark' value='more_info'>Ask for more information</button><button class='btn ghost dark' value='rejected'>Reject</button>");
-      if (g.status === "certified") acts.push("<button class='btn ghost dark' value='suspended'>Suspend</button>");
+      if (g.status === "applied" || g.status === "more_info") acts.push("<button class='btn' value='approve'>Approve</button><button class='btn ghost' value='more_info'>Ask for more information</button><button class='btn ghost' value='rejected'>Reject</button>");
+      if (g.status === "certified") acts.push("<button class='btn ghost' value='suspended'>Suspend</button>");
       if (g.status === "suspended") acts.push("<button class='btn' value='reinstate'>Reinstate</button>");
       page(v, "garages", "<p class='crumbs'><a href='#/admin/garages'>Garages</a> / " + esc(g.name) + "</p><div class='pagehead'><h2>" + esc(g.name) + "</h2>" + S.chip(g.status) + "</div>" +
         "<dl class='specs'>" + [["Type", S.label(g.business_type)], ["Where", g.region + ", " + S.COUNTRY[g.country]], ["Address", g.address], ["Phone", g.phone], ["Registration or licence", g.registration_no], ["Years", g.years], ["Specialties", (g.specialties || []).join(", ")], ["Honest-inspections declaration", g.honest_declaration ? "Ticked" : "No"], ["Note", g.status_note]]
@@ -391,8 +390,8 @@
           var auth = t.pinned ? "Approved " + S.day(t.pinned_at) : t.authenticators === 1 ? "<b>Added " + S.when(t.authenticator_added_at) + ", waiting for approval</b>" : t.authenticators > 1 ? "<b class='bad'>" + t.authenticators + " on the account: they remove extras</b>" : "Not set up yet";
           var acts = t.me || !full ? (t.me ? "<small>you</small>" : "") :
             (!t.pinned && t.authenticators === 1 ? "<button class='btn small' data-pin='" + t.user_id + "'>Approve authenticator</button> " : "") +
-            "<button class='btn small ghost dark' data-role='" + t.user_id + "' data-to='" + (t.role === "admin" ? "staff" : "admin") + "'>Make " + (t.role === "admin" ? "Staff" : "Admin") + "</button> " +
-            "<button class='btn small ghost dark' data-rmstaff='" + t.user_id + "'>Remove</button>";
+            "<button class='btn small ghost' data-role='" + t.user_id + "' data-to='" + (t.role === "admin" ? "staff" : "admin") + "'>Make " + (t.role === "admin" ? "Staff" : "Admin") + "</button> " +
+            "<button class='btn small ghost' data-rmstaff='" + t.user_id + "'>Remove</button>";
           return "<tr><td>" + esc(t.name) + "</td><td>" + esc(t.email) + "</td><td>" + esc(S.label(t.role)) + "</td><td>" + auth + "</td><td>" + acts + "</td></tr>";
         })) +
         (full ? "<section><h2>Add someone to the Saaz team</h2><form id='sf' class='inlineform'><label>Email of their Saaz account<input name='email' type='email' required></label><label>Role<select name='role'><option value='staff'>Staff</option><option value='admin'>Admin</option></select></label><button class='btn small'>Add</button></form>" +

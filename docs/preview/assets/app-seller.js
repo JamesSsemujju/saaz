@@ -62,7 +62,7 @@
         "<div><b>Photos<span class='req' aria-hidden='true'> *</span></b> <small>4 to 12. Shrunk to about 30 KB each.</small><div id='thumbs' class='thumbs'></div><input type='file' id='files' accept='image/*' multiple></div>" +
         (saaz ? "" : "<p class='note'>Tick one of these two<span class='req' aria-hidden='true'> *</span></p><label class='inline'><input type='checkbox' name='logbook_name_matches' value='1'" + (l.logbook_name_matches ? " checked" : "") + "> The logbook is in my name</label>" +
           "<label class='inline'><input type='checkbox' name='owner_authorised' value='1'" + (l.owner_authorised ? " checked" : "") + "> The owner authorised me to sell</label>") +
-        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn' name='go' value='save'>Save draft</button><button class='btn dark' name='go' value='submit'>Save and submit for a Saaz inspection</button></div>";
+        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn' name='go' value='save'>Save draft</button><button class='btn' name='go' value='submit'>Save and submit for a Saaz inspection</button></div>";
     }
     function drawThumbs() {
       S.$("#thumbs").innerHTML = photos.map(function (p, i) { return "<figure><img src='" + esc(S.photo(p)) + "' alt=''><button type='button' data-i='" + i + "' aria-label='Remove photo'>×</button></figure>"; }).join("");
@@ -203,11 +203,11 @@
   function draw(v, l, open, msgs, st, deals, hist, review, convs) {
     var editable = ["draft", "changes_requested"].indexOf(l.status) >= 0;
     var actions = [];
-    if (editable) actions.push("<a class='btn' href='#/my/edit/" + l.id + "'>Edit</a>", "<div id='scopebox'></div>", "<button class='btn dark' id='submit'>Submit for a Saaz inspection</button>");
-    if (["awaiting_review", "review_booked"].indexOf(l.status) >= 0 && !l.saaz_owned) actions.push("<form id='addscope' class='stack'><div id='scopebox'></div><button class='btn small ghost dark'>Request these inspections</button></form>");
-    if (l.status === "re_review_due") actions.push("<button class='btn dark' id='submit'>Submit for a new Saaz inspection</button>");
-    if (["live", "re_review_due"].indexOf(l.status) >= 0) actions.push("<button class='btn ghost dark' id='reopen'>Change something other than the price</button>");
-    if (["reserved", "sold", "withdrawn", "rejected"].indexOf(l.status) < 0) actions.push("<button class='btn ghost dark' id='withdraw'>Withdraw</button>");
+    if (editable) actions.push("<a class='btn' href='#/my/edit/" + l.id + "'>Edit</a>", "<div id='scopebox'></div>", "<button class='btn' id='submit'>Submit for a Saaz inspection</button>");
+    if (["awaiting_review", "review_booked"].indexOf(l.status) >= 0 && !l.saaz_owned) actions.push("<form id='addscope' class='stack'><div id='scopebox'></div><button class='btn small ghost'>Request these inspections</button></form>");
+    if (l.status === "re_review_due") actions.push("<button class='btn' id='submit'>Submit for a new Saaz inspection</button>");
+    if (["live", "re_review_due"].indexOf(l.status) >= 0) actions.push("<button class='btn ghost' id='reopen'>Change something other than the price</button>");
+    if (["reserved", "sold", "withdrawn", "rejected"].indexOf(l.status) < 0) actions.push("<button class='btn ghost' id='withdraw'>Withdraw</button>");
     var priceForm = ["live", "draft", "changes_requested", "awaiting_review", "review_booked", "awaiting_approval"].indexOf(l.status) >= 0
       ? "<form id='pricef' class='inlineform'><label>Price (" + l.currency + ")<input name='price' type='number' value='" + l.price + "' required></label><button class='btn small'>Change price</button></form><p class='note'>A live car keeps its inspection when only the price changes.</p>" : "";
     var daily = (st.daily_14 || []).map(function (d) { return { label: S.day(d.day), short: String(new Date(d.day + "T00:00:00").getDate()), value: d.views }; });
@@ -219,7 +219,7 @@
       "<div class='row'>" + actions.join("") + "</div>" + priceForm +
       (open ? "<section><h2>" + (open.status === "agreed" ? "Your garage" : "Garage in play") + "</h2>" + convoHtml(open, msgs, true) +
         (open.status === "in_play" ? "<div class='row'><button class='btn' id='agree'" + (open.garage_first_message_at ? "" : " disabled") + ">Agree: book my inspection with this garage</button>" +
-          "<button class='btn ghost dark' id='pass'>Pass to the next garage</button></div><div id='passbox'></div>" : "") + "</section>" : "") +
+          "<button class='btn ghost' id='pass'>Pass to the next garage</button></div><div id='passbox'></div>" : "") + "</section>" : "") +
       (review ? "<section><h2>Saaz inspection</h2><div class='insp-card'><div class='insp-head'>" + S.chip(review.verdict) + "<span>" + review.score + "/100 · " + esc(review.doc_no) + "</span></div>" +
         (review.odometer_flag ? "<p class='err'>Odometer flag: " + esc(review.odometer_flag) + "</p>" : "") + "<a href='#/report/" + esc(review.verify_code) + "'>Open the report</a></div></section>" : "") +
       "<section><h2>Demand</h2><div class='stats'>" +
@@ -289,14 +289,14 @@
       if (deal.status === "negotiating" && side !== "admin") {
         if (!myOk) acts.push("<button class='btn' data-a='accept'>Accept " + S.money(cur, deal.amount) + "</button>");
         acts.push("<form class='inlineform' id='cf'><label>Counter (" + cur + ")<input name='amount' type='number' required></label><button class='btn small'>Send counter</button></form>");
-        if (side === "seller") acts.push("<button class='btn ghost dark' data-a='reject'>Reject</button>");
-        if (side === "buyer") acts.push("<button class='btn ghost dark' data-a='withdraw'>Withdraw my offer</button>");
+        if (side === "seller") acts.push("<button class='btn ghost' data-a='reject'>Reject</button>");
+        if (side === "buyer") acts.push("<button class='btn ghost' data-a='withdraw'>Withdraw my offer</button>");
       }
       if (side === "admin") {
         if (deal.status === "negotiating") acts.push("<form class='inlineform' id='pf'><label>Propose a price to both (" + cur + ")<input name='amount' type='number' required></label><button class='btn small'>Propose</button></form>",
           "<form class='inlineform' id='mf'><label>Mark agreed: how did both confirm?<input name='note' required></label><button class='btn small'>Mark agreed</button></form>");
         if (deal.status === "agreed") acts.push("<button class='btn' data-a='complete'>Sale completed (handover confirmed)</button>");
-        if (deal.status === "negotiating" || deal.status === "agreed") acts.push("<button class='btn ghost dark' data-a='cancel'>Cancel deal</button>");
+        if (deal.status === "negotiating" || deal.status === "agreed") acts.push("<button class='btn ghost' data-a='cancel'>Cancel deal</button>");
       }
       var amt = function (f) { return { action: "counter", amount: +f.amount }; }, num = "<label>Counter (" + cur + ")<input name='amount' type='number' required></label>";
       var forSeller = [{ kind: "deal_seller", target: deal.id, label: "Counter for the seller", fields: num, p: amt },

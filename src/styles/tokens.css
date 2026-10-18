@@ -1,15 +1,55 @@
-/* tokens.css: every colour, size and font in one place.
+/* tokens.css: the only place sizes are set. Every other stylesheet uses these and nothing else.
+   tools/check_layout.py stops the build on any raw spacing, type or container value outside this file.
    Brand: Saaz Automotive logo (17 Oct 2026): black, silver, white. See brand/README.md.
-   Variable names are older than the brand (--navy is now Saaz Black); kept so nothing else had to change.
+   Older colour names (--navy is now Saaz Black) are kept so nothing else had to change.
    Silver (--accent) is for dark backgrounds only; on light backgrounds accents use --accent-ink (graphite). */
 :root{
+  /* colour */
   --navy:#0B0B0C; --navy-2:#232327; --navy-deep:#000000;
   --ink:#111827; --mut:#5B6675; --mut-on-dark:#C4C7CC;
   --soft:#F4F6F9; --line:#E3E8EF; --white:#FFFFFF;
   --accent:#D8DBE0; --accent-ink:#3A3D42; --ice:#E7E9EC;
-  --focus:#8FB1FF;
+  --focus:#8FB1FF; --field:#C7D0DB;
+  --good:#1E7B45; --good-bg:#E6F5EC; --good-ink:#14532D;
+  --warn:#A15C00; --warn-bg:#FFF1D6; --warn-ink:#7A4500;
+  --bad:#B42318; --bad-bg:#FDE2E0; --bad-ink:#8A1C12;
+  --info-bg:#EEF3FA; --grey-bg:#E6EBF2; --grey-ink:#33465E;
   --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --s-1:4px; --s-2:8px; --s-3:16px; --s-4:24px; --s-5:32px; --s-6:48px; --s-7:64px; --s-8:96px;
-  --radius:16px; --wrap:1120px;
+
+  /* spacing scale: 4 8 12 16 24 32 48 64 96. Every margin, padding, gap and offset is one of these. */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px; --sp-9:96px;
+
+  /* type: size and line height in pairs. Every line height is a multiple of 4, so text sits on the spacing scale. */
+  --fs-xs:12px; --lh-xs:16px;
+  --fs-sm:14px; --lh-sm:20px;
+  --fs-md:16px; --lh-md:24px;
+  --fs-lg:18px; --lh-lg:28px;
+  --fs-xl:20px; --lh-xl:28px;
+  --fs-2xl:24px; --lh-2xl:32px;
+  --fs-3xl:32px; --lh-3xl:40px;
+  --fs-4xl:40px; --lh-4xl:48px;
+  --fs-5xl:56px; --lh-5xl:64px;
+  --fs-micro:6px; --lh-micro:8px;  /* security microprint on the printed report only */
+  --fs-mark:96px; --lh-mark:96px;  /* VOID watermark across a report */
+
+  /* layout */
+  --container:1240px;            /* one content width, every page and section */
+  --gutter:var(--sp-4);          /* one page gutter: 16 on phones, 24 from 768 */
+  --cols:4;                      /* grid columns: 4 on phones, 12 from 768 */
+  --col-gap:var(--sp-4);         /* one grid gap: 16 on phones, 24 from 768 */
+  --section:var(--sp-7);         /* standard section padding: 48 on phones, 64 from 768 */
+  --section-compact:var(--sp-5); /* compact section padding: 24 on phones, 32 from 768 */
+  --header:64px;                 /* header height, every page */
+  --areabar:48px;                /* work-area bar height (Selling, Garage, Admin) */
+  --control:48px;                /* buttons and inputs: one height, also the touch target */
+  --control-sm:var(--control);   /* small controls in dense rows: 40 from 768; on phones every control is 48 (touch) */
+  --rail:240px;                  /* side menus (admin) */
+  --measure:680px;               /* longest line of running text */
+  --narrow:560px;                /* forms */
+  --doc:820px;                   /* documents (the inspection report) and wide forms */
+  --radius:12px; --radius-sm:8px; --radius-pill:999px;
+}
+@media (min-width:768px){
+  :root{ --gutter:var(--sp-5); --cols:12; --col-gap:var(--sp-5); --section:var(--sp-8); --section-compact:var(--sp-6); --control-sm:40px; }
 }

@@ -127,9 +127,9 @@
   S.teamActions = function (t, manage) {
     if (!manage || t.status === "removed" || (t.user_id && t.user_id === S.me().id)) return "";
     var e = S.esc(t.email);
-    if (t.kind === "invite") return "<button class='btn small ghost dark' data-inv='" + e + "'>Send invite</button> <button class='btn small ghost dark' data-rv='" + t.id + "'>Revoke</button>";
-    if (t.status === "invited" && !t.accepted_at) return "<button class='btn small ghost dark' data-inv='" + e + "'>Resend invite</button> <button class='btn small ghost dark' data-rm='" + t.id + "' data-what='revoke'>Revoke</button>";
-    return "<button class='btn small ghost dark' data-rm='" + t.id + "'>Remove</button>";
+    if (t.kind === "invite") return "<button class='btn small ghost' data-inv='" + e + "'>Send invite</button> <button class='btn small ghost' data-rv='" + t.id + "'>Revoke</button>";
+    if (t.status === "invited" && !t.accepted_at) return "<button class='btn small ghost' data-inv='" + e + "'>Resend invite</button> <button class='btn small ghost' data-rm='" + t.id + "' data-what='revoke'>Revoke</button>";
+    return "<button class='btn small ghost' data-rm='" + t.id + "'>Remove</button>";
   };
   S.wireTeam = function (root) {
     S.wireInvites(root);
@@ -147,7 +147,7 @@
     return "<section class='actfor' id='" + id + "'><h2>" + S.esc(title) + "</h2><p class='note'>" + intro + "</p>" +
       "<label>Reason (they see it, and it goes in the history)<textarea name='reason' rows='2' minlength='10' placeholder='For example: seller phoned, can not upload from their phone'></textarea></label>" +
       "<div class='actitems'>" + items.map(function (it, i) {
-        return "<form class='inlineform' data-i='" + i + "'>" + (it.fields || "") + "<button class='btn small ghost dark'>" + S.esc(it.label) + "</button></form>";
+        return "<form class='inlineform' data-i='" + i + "'>" + (it.fields || "") + "<button class='btn small ghost'>" + S.esc(it.label) + "</button></form>";
       }).join("") + "</div></section>";
   };
   S.wireActFor = function (id, items) {
@@ -273,7 +273,7 @@
     } else {
       right = "<a href='#/signin'" + on(path === "/signin") + ">Sign in</a><a class='hide-s' href='#/signup'" + on(path === "/signup") + ">Create account</a><a class='sellbtn' href='#/sell/new'>Sell a car</a>";
     }
-    var head = "<header class='apphead'><div class='wrap'><a class='logo' href='#/browse' aria-label='Saaz marketplace'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
+    var head = "<header class='apphead'><div class='wrap'><a class='logo' href='#/' aria-label='Saaz home'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
       "<nav class='appnav' aria-label='Marketplace'>" + links + "</nav><div class='appright'>" + right + "</div></div></header>";
     return head + areaBar(path, area);
   }
@@ -523,7 +523,12 @@
     });
   }, "user");
 
-  S.route("/", function () { S.go(S.signedIn() ? S.home() : "#/browse"); });
+  // The site root is the home page for buyers and visitors; a seller, garage or admin goes to their own area's start page
+  S.route("/", function (v, m, q) {
+    var h = S.signedIn() ? S.home() : "#/browse";
+    if (h !== "#/browse") return S.go(h);
+    return S.homePage(v, q);
+  });
 
   // Every field that must be filled in gets a red asterisk after its label
   S.markRequired = function (root) {

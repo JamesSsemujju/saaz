@@ -277,6 +277,28 @@ with sync_playwright() as pw:
     adm.set_viewport_size({"width": 1280, "height": 860}); go(adm, "#/admin/cars"); adm.wait_for_timeout(800)
     check("admin side menu grouped by work", adm.locator(".adminside .navgroup").count() == 7 and adm.locator(".adminside a[aria-current=page]").inner_text() == "Cars")
     adm.set_viewport_size({"width": W, "height": 860})
+    # Admin Cars page: the marketplace's own cards, every status; previews stay private
+    import admin_session
+    c0 = db.cursor(); sara = sql("select id from auth.users where email='sara@x.test'")[0][0]
+    c0.execute("select set_config('request.jwt.claims',%s,false)", (admin_session.claims(c0, sara),)); c0.execute("set role authenticated")
+    c0.execute("select save_listing(%s)", (json.dumps({"vin": "JN1TBNT37F0099999", "make": "Nissan", "model": "X-Trail", "year": 2016, "fuel": "Petrol", "gearbox": "Automatic", "body": "SUV", "colour": "Grey", "engine": "2.0",
+        "mileage": 91000, "plate": "UBC 789Z", "country": "UG", "region": "Kampala", "price": 60000000, "description": "Draft car for the preview test, details to follow.", "photos": [], "owner_authorised": True}),))
+    c0.execute("reset role"); draft_ref = sql("select ref from listings where make='Nissan'")[0][0]
+    sql("update listings set status='live' where status='sold'")  # test only: put the sold car back on sale to compare cards
+    go(adm, "#/admin/cars"); adm.wait_for_timeout(1200)
+    n_admin = adm.locator("#view .cars a.car").count(); check("admin Cars page is the listings page with every car", n_admin == 2, n_admin)
+    check("same heading and filters as the marketplace, plus status", "Cars with a Saaz inspection" in adm.inner_text("#view") and adm.locator("#flt select[name=status]").count() == 1 and adm.locator("#flt select[name=make]").count() == 1)
+    check("the draft carries its status on the photo", "Draft" in adm.inner_text("#view .cars"))
+    go(pub, "#/browse"); pub.wait_for_timeout(1000)
+    grab = "() => { const c = [...document.querySelectorAll('.cars a.car')].find(x => x.textContent.includes('Harrier')); return c ? c.innerHTML.replace(/href=\"[^\"]*\"/g, '') : null }"
+    a_card = adm.evaluate(grab); p_card = pub.evaluate(grab)
+    check("a live car's card is identical in admin and on the marketplace", a_card is not None and a_card == p_card, (a_card, p_card))
+    check("the draft is not on the marketplace", "X-Trail" not in pub.inner_text("#view"))
+    sql("update listings set status='sold' where make='Toyota'")
+    go(pub, "#/car/" + draft_ref); pub.wait_for_timeout(900); check("opening the draft directly as a visitor: not found", "Car not found" in pub.inner_text("#view"), pub.inner_text("#view")[:120])
+    go(adm, "#/admin/cars"); adm.wait_for_timeout(1000); adm.click("#view .cars a.car:has-text('X-Trail')"); adm.wait_for_timeout(1000)
+    check("clicking an admin card opens the car's management page", "#/admin/car/" in adm.url and "Act for the seller" in adm.inner_text("#view"), adm.url)
+    overflow(adm, "admin cars")
     # Garage invite stages: Invited, then Accepted; separate from the garage's certification
     go(gar, "#/garage/team"); gar.wait_for_timeout(800)
     check("team page shows the garage's certification separately", "Certified by Saaz" in gar.inner_text("#view"), gar.inner_text("#view")[:200])
@@ -300,15 +322,15 @@ with sync_playwright() as pw:
     go(buy, "#/browse"); buy.click("#acct summary"); check("buyer: no Admin panel in the menu", buy.locator(".acctmenu .adminentry").count() == 0); buy.click("#acct summary")
     # Sign-out, every role: straight to the public listings, session gone, protected pages and functions closed
     for name_, pg_, email_, protected in [("buyer", buy, "bob@x.test", "#/offers"), ("seller", sel, "sam@x.test", "#/my/cars"), ("garage", gar, "gus@garage.test", "#/garage"), ("admin", adm, "admin@saaz.test", "#/admin")]:
-        go(pg_, protected); pg_.wait_for_timeout(500)
+        go(pg_, "#/account"); pg_.evaluate("(h) => { location.hash = h; }", protected); pg_.wait_for_timeout(900)  # two signed-in pages in this tab's history
         tok = pg_.evaluate("() => Saaz.state.session && Saaz.state.session.access_token")
         pg_.click("#acct summary"); pg_.click("#signout"); pg_.wait_for_timeout(1500)
         check(f"{name_}: sign-out lands on the public listings", pg_.url.rstrip("/") + "/" == APP or pg_.url.startswith(APP + "#/browse"), pg_.url)
-        check(f"{name_}: no sign-in page after sign-out", "#/signin" not in pg_.url and "Cars with a Saaz inspection" in pg_.inner_text("#view"), pg_.inner_text("#view")[:120])
+        check(f"{name_}: no sign-in page after sign-out", "#/signin" not in pg_.url and "Latest inspected cars" in pg_.inner_text("#view"), pg_.inner_text("#view")[:120])
         check(f"{name_}: signed out in the header", pg_.locator("#acct").count() == 0 and pg_.locator(".appright a[href='#/signin']").count() == 1)
         check(f"{name_}: every session of the account ended", sql("select count(*) from auth.sessions s join auth.users u on u.id=s.user_id where u.email=%s", (email_,))[0][0] == 0)
         pg_.go_back(); pg_.wait_for_timeout(900)
-        txt = pg_.inner_text("#view"); check(f"{name_}: browser Back to a protected page shows no content", "Sign in to see this page" in txt or "Page not found" in txt or "Cars with a Saaz inspection" in txt, txt[:160])
+        txt = pg_.inner_text("#view"); check(f"{name_}: browser Back to a protected page shows no content", "Sign in to see this page" in txt and "#/account" in pg_.url, pg_.url + " " + txt[:160])
         r = pg_.evaluate("(t) => fetch('http://127.0.0.1:54321/rest/v1/rpc/update_profile', {method:'POST', headers:{'Content-Type':'application/json', apikey:'LOCALANON', Authorization:'Bearer '+t}, body: JSON.stringify({p_name:'X Y', p_country:'UG', p_mobile:''})}).then(r => r.json()).then(j => j.message || 'ok')", tok)
         check(f"{name_}: the old token is refused by the database", "session ended" in r, r)
     check("no script errors", not errors, errors[:5])

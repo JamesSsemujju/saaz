@@ -28,7 +28,7 @@ src/layouts/module.html  the template for every service page
 src/modules/<slug>.html  extra sections for one service page
 src/pages/*.html         homepage, how it works, buying safely, questions, about, privacy
 src/partials/            header, footer, icon set, car illustration
-src/styles/*.css         tokens, base, layout, components, pages. Joined into one file
+src/styles/*.css         tokens (the only place sizes are set), base, layout (the one header and footer), components, pages, cars, app. Joined into one file. The build stops if any spacing, type or container value is not a token (tools/check_layout.py). Rules: project-docs/Saaz_LayoutSystem_2026-10-18.md
 src/assets/img/          your fixed images go here
 src/lib/money-parser.js  the "40m" / UGX / KES parser from the old site. Kept, not used yet
 docs/                    built output. Never edit by hand
@@ -68,6 +68,8 @@ Built from "Saaz marketplace: build description" (17 Oct 2026). Lives at the sit
 - Browser: the whole flow at 320, 390 and 1280 px against a local stand-in for Supabase (66 checks each): garage applies, admin approves, seller lists with photos, garage contacts, seller agrees, garage issues the review, public verify, admin approves, buyer offers (auto-rejected, then accepted after a counter), contacts shared, admin completes, What's selling, every admin tab. No sideways scroll, no script errors.
 - Applied to the live Supabase project on 17 Oct 2026: parts 1, 2a, 2b and 5 (hardening) from this chat; the rest via `supabase/marketplace_run_in_sql_editor_2026-10-17.sql` in the SQL Editor (the connection here stops on SQL containing the word "delete"). Checked after: 21 tables, all with row-level security; 80 functions; internal helpers not callable from the website; sign-in-only actions not callable by visitors; James is admin with a profile.
 - Supabase security check after: 19 functions callable by visitors, on purpose (public browse, car stats, verify, report, what's selling, and the helpers the read rules use); `listing_views` has no read rule on purpose; leaked-password protection is off (dashboard setting).
+- Admin reports (18 Oct 2026): Admin > Reports. Slice 1 is Inventory and Listing funnel. Database part 16 (`supabase/marketplace_16_reports_inventory_funnel.sql`) must run in Supabase before this front end ships. Details: project-docs/Saaz_Reports_2026-10-18.md
+- Layout audit (18 Oct 2026): `tests/layout_audit.py` renders home, results and listing (and the static pages that share them) at 360, 390, 430, 768, 1024, 1280 and 1440 px with the column grid drawn on, plus the seller, garage, buyer and admin pages at 390 and 1280. 68 of 68 pass: one left edge, equal card rows, one control height, 44 px touch targets on phones, no sideways scroll, search on the first screen, price within two screens.
 - Text audit (17 Oct 2026): every site page, preview page and app page at 320, 390, 768 and 1280 px, checked for text spilling out of its box. Found one (the VIN decoder's Series value, e.g. ASA44L/ASA42L/AVA44L, ran into the Body column). Fixed with a wrap rule for long unbroken values in base.css and app.css. Re-run with every typed field and every decoder value filled with 43 characters without spaces: 0 problems.
 - Not tested yet: the live site against the real project, real email confirmation, a real phone on slow data.
 
@@ -102,6 +104,9 @@ Lost phone: in Supabase, Authentication, Users, open the admin and remove the ol
 **Sign-out** (`Saaz.signOut`, one function for every role): ends every session of the account on Supabase, clears what the browser kept, and opens https://jamesssemujju.github.io/saaz/ (the public listings). Never the sign-in page. Afterwards a copied token can't run any Saaz function (`require_user` checks the session is still live), and admin is gone at once. Back to a protected page shows "Sign in to see this page", not the page. A session that ends some other way (expired, signed out on another device) lands on the listings with "Your session ended".
 
 **Known limit:** table reads through row rules accept a copied token until it expires (Supabase default: 1 hour). Every function call, every write and all admin access stop at sign-out.
+
+## Admin Cars page = the marketplace listings page (added 18 Oct 2026)
+Admin, Cars is the marketplace listings page itself (`Saaz.listingsPage` in `app-public.js`): same heading, filters, cards and layout, with every car and one extra filter for status. Cards link to the car's admin page. Cars that aren't live show their status on the photo, where "Reserved" already shows. Card data comes from one database function, `listing_card`, used by `browse_listings` (live and reserved only, as before) and `admin_listings` (every status, admins only). Visibility rules are unchanged. Database: `supabase/marketplace_15_admin_listings_preview.sql` (applied 18 Oct 2026).
 
 ## Inspection IDs, tracking, scopes, one inspector (added 18 Oct 2026)
 **IDs from the request.** Sending a car for inspection creates its General inspection with an ID straight away (status Requested). The seller sees it on their car page. Statuses: Requested, In progress (database: `draft`), Completed (`issued`, later `superseded`), Cancelled. If a garage leaves, its inspections go back to Requested with the same ID.

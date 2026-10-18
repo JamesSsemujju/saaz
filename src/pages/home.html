@@ -1,8 +1,8 @@
 <!-- {"title": "Saaz: know the car before you pay", "description": "Saaz is building pre-purchase car inspections at vetted partner garages in Kampala, with a history for every car. Not trading yet.", "nav": "home"} -->
 <div class="hero"><div class="wrap">
-  <div>
+  <div class="hero-text">
     <div class="eyebrow">{{city}}, Uganda</div>
-    <h1>Know the car before you pay.</h1>
+    <h1 class="display">Know the car before you pay.</h1>
     <p class="sub">Inspections at vetted partner garages, with a report saved to the car's own history. The next buyer sees it too.</p>
     <form class="check" action="{{base}}history/#decode" method="get">
       <label for="car-id">17-character VIN</label>
@@ -12,7 +12,7 @@
     <p class="checknote">Free VIN decoding. Make, model, year and engine.</p>
     <nav class="paths" aria-label="Choose your path"><a href="{{base}}inspections/">I'm buying a car</a><a href="{{base}}sell/">I'm selling a car</a><a href="{{base}}partners/">I run a garage</a></nav>
   </div>
-  {{hero_visual}}
+  <div class="hero-art">{{hero_visual}}</div>
   <div class="promise">
     <div><svg class="icon"><use href="#i-shield"/></svg>Garages checked before they go live, and rated after every job.</div>
     <div><svg class="icon"><use href="#i-doc"/></svg>One report per inspection, saved against the chassis number.</div>
@@ -35,7 +35,7 @@
     <li><span class="n">2</span><div><b>Visit a partner garage</b><span>The garage checks the code and gives you the Saaz price.</span></div></li>
     <li><span class="n">3</span><div><b>Get the report</b><span>Checks and photos on a link you can share on WhatsApp, saved to the car's history.</span></div></li>
   </ol>
-  <p class="note" style="margin-top:28px"><a href="{{base}}how-it-works/">How it works for buyers, sellers and garages</a></p>
+  <p class="note"><a href="{{base}}how-it-works/">How it works for buyers, sellers and garages</a></p>
 </div></section>
 
 <section class="band dark"><div class="wrap split">
@@ -43,7 +43,7 @@
     <div class="kicker">For garages</div>
     <h2>Run a trusted garage in Kampala?</h2>
     <p class="lead">Saaz partners get inspection bookings from buyers. The better your reports, the higher you rank.</p>
-    <p style="margin-top:24px"><a class="btn" href="{{base}}partners/">See how partnership works <svg class="icon"><use href="#i-arrow"/></svg></a></p>
+    <p class="actions"><a class="btn" href="{{base}}partners/">See how partnership works <svg class="icon"><use href="#i-arrow"/></svg></a></p>
   </div>
   <ul class="ticks">
     <li><svg class="icon"><use href="#i-tick"/></svg>Business papers checked</li>
@@ -58,11 +58,11 @@
     <div class="kicker">Buying safely</div>
     <h2>Five checks before you pay for any car.</h2>
     <p class="lead">Simple checks that protect you whether or not you use Saaz.</p>
-    <p style="margin-top:20px"><a href="{{base}}safety/">Read the five checks</a></p>
+    <p class="actions"><a href="{{base}}safety/">Read the five checks</a></p>
   </div>
   <div>
     <div class="kicker">Questions</div>
-    <div class="faq" style="margin-top:0">
+    <div class="faq flush">
       <details><summary>Who does the inspection?</summary><p>Mechanics at partner garages that Saaz has checked. Saaz does not employ mechanics.</p></details>
       <details><summary>What if the garage misses a fault?</summary><p>You raise a dispute and the car gets a second inspection. Upheld disputes lower the garage's rating.</p></details>
     </div>

@@ -8,7 +8,7 @@ Wide screens: fixed side menu. Phones: a "Go to" menu at the top.
 
 | Group | Pages |
 |---|---|
-| Overview | Queues: cars waiting for approval, cars with no garage left, garage applications, deals waiting for handover |
+| Overview | Queues: cars waiting for approval, cars with no garage left, garage applications, deals waiting for handover. Reports (18 Oct 2026): own rail of reports, see Saaz_Reports_2026-10-18.md |
 | Vehicles and listings | Cars, Saaz cars, Vehicle records, What's selling |
 | Reviews and garage line | Garage line (counts only), Car review reports |
 | Garages and partners | Garages |

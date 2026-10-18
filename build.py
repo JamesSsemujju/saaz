@@ -20,7 +20,7 @@ How it fits together:
   src/modules/<slug>.html extra sections for one service page (optional)
   src/styles/*.css        joined, in order, into assets/saaz.css
   src/scripts/*.js        copied to assets/
-The build stops with an error on any unknown {{placeholder}} or broken internal link.
+The build stops with an error on any unknown {{placeholder}}, broken internal link, or size not taken from tokens.css.
 """
 import html, json, re, shutil, sys
 from datetime import date
@@ -29,7 +29,7 @@ MONO = ' class="mono"'
 
 ROOT = Path(__file__).resolve().parent
 SRC, DOCS = ROOT / "src", ROOT / "docs"
-CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "admin.css", "app.css"]
+CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "app.css"]
 DESKTOP_NAV = ["inspections", "cars", "sell", "import", "finance", "garages"]
 BUYER_FOOT = ["inspections", "history", "cars", "import", "finance"]
 SELLER_FOOT = ["sell", "garages", "partners"]
@@ -77,7 +77,7 @@ def build_site(out, base, cars, preview):
 
     def service_row(m):
         return (f'<li><a href="{base}{m["slug"]}/"><span class="ico">{icon(m["icon"])}</span>'
-                f'<span><span class="svc-name">{esc(m["name"])}</span><span class="svc-line" style="display:block">{esc(m["line"])}</span>'
+                f'<span><span class="svc-name">{esc(m["name"])}</span><span class="svc-line">{esc(m["line"])}</span>'
                 f'<span class="svc-meta"><span>{esc(m["audience"])}</span></span></span>'
                 f'<span class="svc-go">{icon("arrow")}</span></a></li>')
 
@@ -253,8 +253,8 @@ def build_site(out, base, cars, preview):
             "c_contact": (f'<a class="btn wide" href="{wa_url}?text=' + html.escape(__import__("urllib.parse").parse.quote(f"Hello Saaz, I'm interested in {name(c)} ({c['ref']}).")) + '">Ask about this car on WhatsApp</a>') if wa else "",
             "c_specs": "".join(f'<div><dt>{esc(k)}</dt><dd{MONO if k == "Chassis number" else ""}>{esc(v)}</dd></div>' for k, v in specs),
             "c_findings": findings,
-            "c_more": ('<section class="band soft"><div class="wrap"><div class="kicker">More inspected cars</div>'
-                       '<h2>More cars like this.</h2><div class="cars" style="margin-top:32px">' + "".join(card(x) for x in more) + "</div></div></section>") if more else "",
+            "c_more": ('<section class="band soft"><div class="wrap"><div class="sechead"><h2>More cars like this</h2></div>'
+                       '<div class="cars">' + "".join(card(x) for x in more) + "</div></div></section>") if more else "",
         }
         write(f"cars/{slug(c)}/index.html", page(car_tmpl, {"title": f"{name(c)} | Saaz", "description": f"{name(c)}, inspected {day(ins['date'])}."}, "cars", ctx))
 
@@ -269,6 +269,10 @@ def link_check(base):
                     bad.append((str(f.relative_to(DOCS)), href))
     return bad
 
+# Layout discipline: every spacing, type and container value comes from tokens.css (tools/check_layout.py)
+sys.path.insert(0, str(ROOT / "tools"))
+import check_layout
+if check_layout.main(): sys.exit("Fix the values above: use the tokens in src/styles/tokens.css.")
 base = site["basePath"]
 real = load("data/cars.json")["cars"]
 sample = load("data/cars.sample.json")["cars"]

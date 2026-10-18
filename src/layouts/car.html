@@ -1,12 +1,12 @@
-<section class="carpage"><div class="wrap">
-  <nav class="crumbs dark-crumbs" aria-label="Breadcrumb"><a href="{{base}}">Home</a><span>/</span><a href="{{base}}cars/">Inspected cars</a><span>/</span><span>{{c_name}}</span></nav>
-  <div class="car-grid">
+<section class="band compact"><div class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="{{base}}">Home</a><span>/</span><a href="{{base}}cars/">Inspected cars</a><span>/</span><span>{{c_name}}</span></nav>
+  <div class="listing">
     <div class="gallery">
-      {{c_photo_main}}
-      <div class="thumbs">{{c_thumbs}}</div>
+      <div class="main">{{c_photo_main}}</div>
+      <div class="shots">{{c_thumbs}}</div>
       <p class="note">Photos are taken at the partner garage during the inspection, at the same standard angles for every car.</p>
     </div>
-    <div class="buybox">
+    <aside class="buybox" aria-label="Price and contact">
       {{c_sample}}
       <h1 class="car-title">{{c_name}}</h1>
       <p class="car-sub">{{c_meta}}</p>
@@ -15,25 +15,15 @@
       <div class="insp-card">
         <div class="insp-head"><span class="result {{c_result_class}}">{{c_result}}</span><span>{{c_findings_count}}</span></div>
         <p>Inspected {{c_date}} at {{c_garage}}</p>
-        <a href="#report">Read the report</a>
+        <a class="btn text" href="#report">Read the report</a>
       </div>
       {{c_contact}}
       <p class="note">Saaz will never ask you to pay into a personal mobile money number.</p>
-      <p class="note"><a href="{{base}}finance/">Need finance?</a> · <a href="{{base}}history/">Vehicle history</a></p>
+    </aside>
+    <div class="details">
+      <div><h2>Details</h2><dl class="specs">{{c_specs}}</dl></div>
+      <div id="report"><h2>What the garage found</h2><ul class="findings">{{c_findings}}</ul></div>
     </div>
-  </div>
-</div></section>
-
-<section class="band"><div class="wrap split">
-  <div>
-    <div class="kicker">Details</div>
-    <h2>The car.</h2>
-    <dl class="specs">{{c_specs}}</dl>
-  </div>
-  <div id="report">
-    <div class="kicker">Inspection report</div>
-    <h2>What the garage found.</h2>
-    <ul class="findings">{{c_findings}}</ul>
   </div>
 </div></section>
 

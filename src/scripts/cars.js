@@ -1,4 +1,4 @@
-/* cars.js: filter and sort the car list on the browse page.
+/* cars.js: filter and sort the car list on the /cars/ page (same filter bar, grid and card as the marketplace).
    The cards are already in the HTML; this only shows, hides and reorders them, so the page works without JavaScript. */
 (function () {
   var form = document.getElementById("carfilter");
@@ -10,8 +10,6 @@
   var none = document.getElementById("nomatch");
   var sort = document.getElementById("carsort");
   form.hidden = false;
-  var sb = document.querySelector(".shopby"); if (sb) sb.hidden = false;
-  sort.parentElement.hidden = false;
 
   function inBand(v, band) {
     if (!band) return true;
@@ -41,21 +39,9 @@
       if (key === "year") return B.year - A.year;
       return B.date.localeCompare(A.date);
     }).forEach(function (c) { list.appendChild(c); });
-    document.querySelectorAll(".shopby button").forEach(function (b) {
-      var kv = b.dataset.set.split(":");
-      b.setAttribute("aria-pressed", String(form.elements[kv[0]].value === kv[1]));
-    });
   }
   form.addEventListener("change", apply);
   form.addEventListener("reset", function () { setTimeout(apply, 0); });
   sort.addEventListener("change", apply);
-  document.querySelectorAll(".shopby button").forEach(function (b) {
-    b.addEventListener("click", function () {
-      var kv = b.dataset.set.split(":"), el = form.elements[kv[0]];
-      el.value = el.value === kv[1] ? "" : kv[1];
-      apply();
-      list.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
   apply();
 })();
