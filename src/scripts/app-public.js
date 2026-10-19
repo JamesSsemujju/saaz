@@ -66,7 +66,7 @@
       "<p class='count'>" + shown.length + " car" + (shown.length === 1 ? "" : "s") + (pages > 1 ? " · page " + page + " of " + pages : "") +
         (model ? " · " + esc(make + " " + model) + " <a href='" + route + "'>clear</a>" : "") + "</p>" +
       (slice.length ? "<div class='cars' data-ref='results-grid'>" + slice.map(function (l) { return card(l, opts.cardOpts ? opts.cardOpts(l) : null); }).join("") + "</div>" + pager(route, q, page, pages)
-        : "<div class='empty'><b>" + (rows.length ? "No cars match these filters" : "No cars listed yet") + "</b><span>" +
+        : "<div class='empty' data-ref='no-cars'><b>" + (rows.length ? "No cars match these filters" : "No cars listed yet") + "</b><span>" +
           (rows.length ? "<a href='" + route + "'>Clear the filters</a>" : "Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a>") + "</span></div>");
     return { html: html, wire: function () {
       S.$("#flt").onsubmit = function (e) { e.preventDefault(); goSearch(e.target, route); };
@@ -90,7 +90,7 @@
         "<section class='band' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
         (rows.length ? "<div class='cars'>" + rows.slice(0, 8).map(function (l) { return card(l); }).join("") + "</div>" +
           (rows.length > 8 ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
-          : "<div class='empty'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a></span></div>") +
+          : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a></span></div>") +
         "</div></section>" +
         "<section class='band white' data-ref='trust-section'><div class='wrap'><div class='sechead'><h2>Why you can trust a car on Saaz</h2></div><div class='trust'>" +
           "<div><b>Inspected in person</b><p>A certified garage checks every car inside Saaz before it is listed. The score and result are on the photo.</p></div>" +

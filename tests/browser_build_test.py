@@ -179,6 +179,17 @@ with sync_playwright() as p:
         shot(tp, "4-touch-tagging")
         check("touch: no sideways scroll with the panel open", not tp.evaluate("() => document.documentElement.scrollWidth > innerWidth + 1"))
 
+    # ---------- the empty "No cars" box can be tagged, and pages are saved as /browse ----------
+    check("pages are saved by their plain address (/browse, not \\/browse)", sql("select count(*) from build.messages where route like '%%\\%%'")[0][0] == 0 and sql("select count(*) from build.messages where route = '/browse'")[0][0] >= 1)
+    go(adm, "#/browse?make=Nomake")
+    if not adm.locator(".ba-panel").is_visible(): adm.click(".ba-launch"); adm.wait_for_timeout(300)
+    adm.click("[data-tab=comment]"); adm.wait_for_timeout(300)
+    if not adm.locator(".ba-switch input").is_checked(): adm.check(".ba-switch input"); adm.wait_for_timeout(300)
+    ep = blank_point(adm, ".empty"); adm.mouse.dblclick(ep[0], ep[1]); adm.wait_for_timeout(1200)
+    check("the dashed box shown when no cars match can be tagged as //no-cars", refs(adm)[:1] == ["no-cars"], refs(adm))
+    adm.click("[data-act=cancel]"); adm.wait_for_timeout(300)
+    if adm.locator("[data-act=discard]").is_visible(): adm.click("[data-act=discard]"); adm.wait_for_timeout(300)
+
     # ---------- switched off ----------
     if adm.locator(".ba-switch input").count() and adm.locator(".ba-switch input").is_checked(): adm.uncheck(".ba-switch input")   # stop selecting to use Admin normally
     elif adm.locator(".ba-modebar").is_visible(): adm.click(".ba-modebar [data-act=mode-off]")

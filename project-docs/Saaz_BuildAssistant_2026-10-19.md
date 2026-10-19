@@ -125,6 +125,6 @@ Every switch is recorded (`build.toggles`) and written to All activity, with how
 | Suite | Result |
 |---|---|
 | `db_build_test.py` (access, switch, refs, idempotency, statuses, leases, retries, two agents at once, dependencies, conflicts shown to the agent, versions, append-only, privacy) | 70 passed |
-| `browser_build_test.py` at 1280 | 45 passed |
-| `browser_build_test.py` at 390 (includes touch) | 49 passed |
+| `browser_build_test.py` at 1280 | 47 passed |
+| `browser_build_test.py` at 390 (includes touch) | 51 passed |
 | Every other suite, re-run after the change | All pass (see tests/README.md) |

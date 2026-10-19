@@ -19,7 +19,7 @@
   }
   function routeNow() {
     var path = (location.hash.replace(/^#/, "") || "/").split("?")[0];
-    for (var i = 0; i < S.routes.length; i++) if (S.routes[i].re.test(path)) return S.routes[i].re.source.replace(/^\^|\$$/g, "");
+    for (var i = 0; i < S.routes.length; i++) if (S.routes[i].re.test(path)) return S.routes[i].re.source.replace(/^\^|\$$/g, "").replace(/\\\//g, "/");   // the pattern's source escapes slashes: /browse, not \/browse
     return path;
   }
 
