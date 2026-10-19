@@ -16,6 +16,10 @@
       "<div class='demand'><span>" + l.views_7d + " views this week</span><span>" + l.saves + " saves</span><span>" + l.offers + " offers</span></div></a>";
   }
   S.card = card;
+  // Admin card options: same card, with the stage on the photo when the car isn't live, opening the car's admin page
+  S.adminCardOpts = function (l) { return { href: "#/admin/car/" + l.id, badge: l.status === "live" ? "" : "<span class='car-tag right" + (l.public ? "" : " priv") + "'>" + esc(S.label(l.status)) + "</span>" }; };
+  // Viewing the marketplace as admin: every car at any stage, on the buyers' page. Nothing here changes a car's status.
+  var ADMIN_NOTE = "<p class='box spaced admin-preview'>Viewing as admin: every car at any stage is shown. Buyers see only live and reserved cars. Nothing here approves or publishes a car.</p>";
 
   // The listings page. The marketplace (#/browse) and Admin, Cars (#/admin/cars) are this same page:
   // same heading, filters, cards and layout. Admin passes every car, a status filter, and links cards to the car's admin page.
@@ -74,21 +78,23 @@
   };
 
   S.route("/browse", function (v, m, q) {
-    return S.rpc("browse_listings", { p_country: "UG" }).then(function (rows) {
-      var pg = S.listingsPage(rows || [], q);
-      v.innerHTML = pg.html; pg.wire();
+    var asAdmin = S.inAdmin();
+    return S.rpc(asAdmin ? "admin_listings" : "browse_listings", asAdmin ? { p_status: "" } : { p_country: "UG" }).then(function (rows) {
+      var pg = S.listingsPage(rows || [], q, asAdmin ? { admin: true, cardOpts: S.adminCardOpts } : null);
+      v.innerHTML = (asAdmin ? ADMIN_NOTE : "") + pg.html; pg.wire();
     });
   });
 
   // Home: headline, search under it, the latest cars, one trust section. The footer follows on every page.
   S.homePage = function (v) {
     v.className = "home";
-    return S.rpc("browse_listings", { p_country: "UG" }).then(function (rows) {
+    var asAdmin = S.inAdmin();
+    return S.rpc(asAdmin ? "admin_listings" : "browse_listings", asAdmin ? { p_status: "" } : { p_country: "UG" }).then(function (rows) {
       rows = rows || [];
-      v.innerHTML = "<section class='hero' data-ref='home-hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
+      v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") + "<section class='hero' data-ref='home-hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
         "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form></div></div></section>" +
         "<section class='band' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
-        (rows.length ? "<div class='cars'>" + rows.slice(0, 8).map(function (l) { return card(l); }).join("") + "</div>" +
+        (rows.length ? "<div class='cars'>" + rows.slice(0, 8).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>" +
           (rows.length > 8 ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
           : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a></span></div>") +
         "</div></section>" +

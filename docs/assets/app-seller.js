@@ -101,6 +101,8 @@
       };
     }
     v.innerHTML = "<div class='narrow wide'><h1>" + (existing ? "Edit " + esc(l.ref) : saaz ? "New Saaz car" : "List a car") + "</h1>" +
+      // BA-0004: an admin on the private-seller form is pointed to the Saaz car form, which doesn't ask about the logbook
+      (S.isAdmin() && !existing && !saaz ? "<p class='box spaced' data-ref='saaz-car-hint'>Is this a car Saaz owns, for example one Saaz imported? <a href='#/sell/new?saaz=1" + (preVin ? "&vin=" + encodeURIComponent(preVin) : "") + "'>List it as a Saaz car</a> instead. Saaz cars don't need the logbook or the owner's authorisation.</p>" : "") +
       "<p class='lead'>Start with the VIN or chassis number. The listing stays private until a Saaz inspection is issued and approved.</p>" +
       "<form id='vf' class='check light'><label for='vin'>VIN or chassis number</label><input id='vin' name='vin' required autocapitalize='characters' value='" + esc(preVin || "") + "'" + (existing ? " readonly" : "") + "><button>" + (existing ? "VIN locked" : "Look up") + "</button></form>" +
       "<div id='look' aria-live='polite'></div><div id='rest'></div></div>";

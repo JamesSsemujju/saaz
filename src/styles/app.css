@@ -40,6 +40,7 @@
 .appbody .box{background:#EEF3FA;border-radius:12px;padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0 0}
 .appbody .box.good{background:#E6F5EC}
 .appbody .box.warn{background:#FFF1D6}
+.appbody .box.spaced{margin:var(--sp-4) 0}
 .appbody .verdict{display:grid;gap:var(--sp-1);border-radius:12px;padding:var(--sp-4);margin:var(--sp-4) 0}
 .appbody .verdict.good{background:#E6F5EC;color:#14532D}
 .appbody .verdict.bad{background:#FDE2E0;color:#8A1C12}

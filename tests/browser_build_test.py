@@ -121,9 +121,12 @@ with sync_playwright() as p:
     check("and removing it restores the comment", text(adm) == EXPECT, text(adm))
     # drafts survive moving to another page and a reload
     adm.uncheck(".ba-switch input"); adm.wait_for_timeout(300)
+    car_ref = adm.locator(".car").first.get_attribute("data-ref-key")
     adm.locator(".car").first.click(); adm.wait_for_timeout(1500)
-    check("with selecting off, the site works normally (the car opens)", "#/car/" in adm.url)
+    check("with selecting off, the site works normally (as admin the car opens its admin page, BA-0003)", "#/admin/car/" in adm.url, adm.url)
     check("the draft is still there on the next page", text(adm) == EXPECT)
+    adm.evaluate("(r) => { location.hash = '#/car/' + r; }", car_ref); adm.wait_for_timeout(1500)   # the buyer's page of the same car
+    check("and on the page after that", text(adm) == EXPECT)
     adm.check(".ba-switch input"); pt = blank_point(adm, ".buybox"); adm.mouse.click(pt[0], pt[1]); adm.wait_for_timeout(1000)
     check("an element on another page joins the same comment", refs(adm) == ["vehicle-card", "header", "filter-panel", "price-panel"], refs(adm))
     adm.reload(); adm.wait_for_timeout(2500)

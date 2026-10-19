@@ -140,7 +140,7 @@
       var pg = S.listingsPage(rows, q, { admin: true, route: "#/admin/cars",
         statusSelect: "<select name='status'><option value=''>Every status</option><option value='not_public'" + (st === "not_public" ? " selected" : "") + ">Not public</option>" +
           CAR_STATUSES.map(function (x) { return "<option value='" + x + "'" + (x === st ? " selected" : "") + ">" + S.label(x) + "</option>"; }).join("") + "</select>",
-        cardOpts: function (l) { return { href: "#/admin/car/" + l.id, badge: l.status === "live" ? "" : "<span class='car-tag right" + (l.public ? "" : " priv") + "'>" + esc(S.label(l.status)) + "</span>" }; } });
+        cardOpts: S.adminCardOpts });
       page(v, "cars", pg.html); pg.wire();
     });
   });

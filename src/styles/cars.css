@@ -29,6 +29,13 @@
 .car-price small{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .car:hover .car-name{color:var(--accent-ink)}
 .car:hover .car-photo{box-shadow:0 12px 28px rgba(11,11,12,.18)}
+/* BA-0001: on hover (mouse) or keyboard focus the card's photo comes forward and zooms slightly; the text stays as it is */
+.car .car-photo{transition:transform .2s ease,box-shadow .2s ease}
+.car .car-photo img{transition:transform .3s ease}
+@media (hover:hover){.car:hover .car-photo{transform:translateY(-4px)}.car:hover .car-photo img{transform:scale(1.05)}}
+.car:focus-visible .car-photo{transform:translateY(-4px);box-shadow:0 12px 28px rgba(11,11,12,.18)}
+.car:focus-visible .car-photo img{transform:scale(1.05)}
+@media (prefers-reduced-motion:reduce){.car .car-photo,.car .car-photo img{transition:none}.car:hover .car-photo,.car:focus-visible .car-photo,.car:hover .car-photo img,.car:focus-visible .car-photo img{transform:none}}
 
 /* demand line elsewhere (listing panel) */
 .demand{display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut)}

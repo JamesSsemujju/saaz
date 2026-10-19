@@ -143,6 +143,8 @@ def claim(name):
 ths = [threading.Thread(target=claim, args=(f"agent-{i}",)) for i in range(4)]; [t.start() for t in ths]; [t.join() for t in ths]
 got = [r[1]["task"]["id"] for r in res if r[1]]
 check("four agents claiming at once: no task goes to two of them", len(got) == len(set(got)) and len(got) == 2, res)
+late = agent("select build_agent_claim('agent-late', 60)")
+check("an agent claiming afterwards doesn't get a task another agent already holds (found live: BA-0001 went out 5 times)", late is None or late["task"]["id"] not in got, late and late["task"]["ref"])
 
 # a lease that runs out: back to the queue with the reason, delivered again as attempt 2
 held = su("select id, lease_owner from build.tasks where status='queued' and lease_owner is not null order by created_at limit 1")[0]
