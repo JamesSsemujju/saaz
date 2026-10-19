@@ -2,7 +2,9 @@
 
 A private tool inside the Saaz site for building Saaz. You comment on elements of the real page, chat about the project, and a coding agent works the comments as a queue. It is not part of the marketplace. Visitors, buyers, sellers, garages and ordinary staff never see it or its records.
 
-Status: built and tested locally. **Not applied live.** Part 18 (`supabase/marketplace_18_build_assistant.sql`) needs your approval before it runs in Supabase. Until it runs, the site behaves exactly as today (the Build button never appears, because `build_status` doesn't exist and the page treats that as "not allowed").
+Status: **live since 19 Oct 2026.** Part 18 (`supabase/marketplace_18_build_assistant.sql`) was applied in Supabase as build_18a to build_18e, after the same five pieces passed the full database test locally. The switch starts **off**, so nobody sees the Build button until a full admin turns it on in Admin, System, Build Assistant (after you ship this code).
+
+Checked live after applying (read-only): 11 tables, 15 functions, 3 history-lock triggers, switch off, 0 tasks. A visitor is refused `build_status`; a signed-in non-admin gets `{"allowed": false}`; signed-in users are refused the agent functions and the `build` tables.
 
 ## Who can use it
 

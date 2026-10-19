@@ -28,7 +28,7 @@ Database: Supabase Postgres 17, project `dkxyvlkhpnajbpethwqb`. Source of truth 
 
 Indexes: unique partial indexes for one active listing, one open conversation, one open deal, one garage per person; `audit_log (entity, entity_id)`. At current volume (tens of rows) no performance issue. When listings pass a few thousand, add indexes on `listings(status, live_at)`, `listing_views(listing_id, day)`, `deals(listing_id, status)`.
 
-## Build Assistant (Part 18, private schema `build`, not applied live)
+## Build Assistant (Part 18, private schema `build`, applied 19 Oct 2026)
 Not reachable through the API; only the `build_*` functions, which check the admin session, full admin or developer, and the switch.
 
 | Table | Holds | Notes |
