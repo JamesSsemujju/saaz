@@ -85,25 +85,37 @@
     });
   });
 
+  // BA-0006: the hero and the latest cars sit together on one video background (James's road video, turned -90 degrees).
+  // Phones get the portrait version, which matches the tall shape of the two sections there. No sound, loops silently.
+  // Motion turned off on the device, or data saver on: the still frame only, and the video is never downloaded.
+  function homeVideo() {
+    var tall = window.matchMedia("(max-width: 767px)").matches, name = tall ? "home-road-tall" : "home-road-wide", base = S.site + "assets/video/" + name;
+    var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches || (navigator.connection && navigator.connection.saveData);
+    return "<div class='videobg-media' aria-hidden='true'>" + (still ? "<img src='" + base + ".jpg' alt=''>"
+      : "<video muted autoplay loop playsinline disablepictureinpicture preload='auto' poster='" + base + ".jpg'>" +
+        "<source src='" + base + ".webm' type='video/webm'><source src='" + base + ".mp4' type='video/mp4'></video>") + "</div>";
+  }
   // Home: headline, search under it, the latest cars, one trust section. The footer follows on every page.
   S.homePage = function (v) {
     v.className = "home";
     var asAdmin = S.inAdmin();
     return S.rpc(asAdmin ? "admin_listings" : "browse_listings", asAdmin ? { p_status: "" } : { p_country: "UG" }).then(function (rows) {
       rows = rows || [];
-      v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") + "<section class='hero' data-ref='home-hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
+      v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") + "<div class='videobg' data-ref='home-video'>" + homeVideo() + "<section class='hero' data-ref='home-hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
         "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form></div></div></section>" +
         "<section class='band' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
         (rows.length ? "<div class='cars'>" + rows.slice(0, 8).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>" +
           (rows.length > 8 ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
           : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a></span></div>") +
-        "</div></section>" +
+        "</div></section></div>" +
         "<section class='band white' data-ref='trust-section'><div class='wrap'><div class='sechead'><h2>Why you can trust a car on Saaz</h2></div><div class='trust'>" +
           "<div><b>Inspected in person</b><p>A certified garage checks every car inside Saaz before it is listed. The score and result are on the photo.</p></div>" +
           "<div><b>A report you can check</b><p>Each report has a code. Anyone can confirm it is real and unchanged.</p><a class='btn text' href='#/verify'>Verify a report</a></div>" +
           "<div><b>No money through Saaz</b><p>Make an offer here. Contact details are shared once you and the seller agree.</p><a class='btn text' href='#/track'>Track an inspection</a></div>" +
         "</div></div></section>";
       S.$("#hs").onsubmit = function (e) { e.preventDefault(); goSearch(e.target, "#/browse"); };
+      var bg = S.$(".videobg video");   // some browsers only autoplay when muted is set as a property, not just the attribute
+      if (bg) { bg.muted = true; var pl = bg.play(); if (pl && pl.catch) pl.catch(function () {}); }
     });
   };
 

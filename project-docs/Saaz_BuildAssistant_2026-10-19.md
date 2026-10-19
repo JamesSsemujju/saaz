@@ -129,8 +129,8 @@ Every switch is recorded (`build.toggles`) and written to All activity, with how
 | `browser_build_test.py` at 390 (includes touch) | 51 passed |
 | Every other suite, re-run after the change | All pass (see tests/README.md) |
 
-## Claim fix, Part 19 (19 Oct 2026, waiting for approval)
-Found while working the first real tasks: a task handed to an agent stays "queued" (with a lease) until the agent acknowledges it, and `build_agent_claim` didn't check that lease, so a second claim handed out the same task again. BA-0001 was delivered 5 times in one go; no other harm, and the history keeps that record. `supabase/marketplace_19_build_claim_fix.sql` hands out a queued task only when it has no lease or its lease ran out. `db_build_test.py` now fails without it and passes with it (71 passed). Until it is applied, agents should acknowledge each task before claiming the next.
+## Claim fix, Part 19 (applied live 19 Oct 2026, after James's approval)
+Found while working the first real tasks: a task handed to an agent stays "queued" (with a lease) until the agent acknowledges it, and `build_agent_claim` didn't check that lease, so a second claim handed out the same task again. BA-0001 was delivered 5 times in one go; no other harm, and the history keeps that record. `supabase/marketplace_19_build_claim_fix.sql` hands out a queued task only when it has no lease or its lease ran out. `db_build_test.py` now fails without it and passes with it (71 passed). Checked live after applying: BA-0006 was handed out once, and a second claim straight after got nothing.
 
 ## Tasks worked on 19 Oct 2026
 | Task | Asked | Done |
@@ -138,5 +138,6 @@ Found while working the first real tasks: a task handed to an agent stays "queue
 | BA-0001 | Cars react on hover | Option A: photo lifts and zooms slightly on hover or keyboard focus; text unchanged; still on phones and with reduced motion |
 | BA-0002 | Check that comments arrive | Answered; cancelled by James |
 | BA-0003, BA-0005 | See every car when viewing the marketplace as admin | Uses admin_listings: every stage, buyer card, stage on the photo, admin line, cards open the admin page, no "Saved only", nothing published |
+| BA-0006 | Video behind the hero and latest cars | James's road video turned -90 degrees (portrait on phones), silent, looping, about 0.5 MB per visitor (WebM, MP4 fallback); no section borders; white text over a dark tint; a still frame when motion is off or data saver is on. Files in src/assets/video/ |
 | BA-0004 | Saaz-owned car without a logbook | Already allowed via Admin, Saaz cars; pointer added on the sell form for admins |
 

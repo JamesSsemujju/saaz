@@ -422,6 +422,20 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .trust .btn.text{justify-self:start}
 .more{margin-top:var(--sp-6);display:flex;justify-content:center}
 
+/* BA-0006: the hero and the latest cars lie on one video background. No borders between them; everything in them sits in front.
+   A dark tint over the video keeps white text readable (about 10:1 over the brightest part of the road). */
+.videobg{position:relative;isolation:isolate;background:var(--navy);color:var(--white)}
+.videobg-media{position:absolute;inset:0;z-index:-1;overflow:hidden}
+.videobg-media video,.videobg-media img{display:block;width:100%;height:100%;object-fit:cover}
+.videobg-media::after{content:"";position:absolute;inset:0;background:rgba(11,11,12,.72)}
+.videobg .hero,.videobg .band{background:transparent;border:0;color:var(--white)}
+.videobg .sechead h2,.videobg .car-name,.videobg .car-price b{color:var(--white)}
+.videobg .car-meta,.videobg .car .demand,.videobg .car-price small{color:var(--mut-on-dark)}
+.videobg .car:hover .car-name{color:var(--accent)}
+.videobg .empty,.appbody .videobg .empty{border:0;background:transparent;color:var(--white);padding-inline:0}
+.videobg .empty a,.videobg .band a:not(.btn):not(.car){color:var(--white)}
+.videobg .band .btn.ghost{background:transparent;border-color:var(--mut-on-dark);color:var(--white)}
+
 /* cars.css: the one car card, the results page and the listing page.
    Result colours are for inspection results only: pass green, attention amber, note grey. */
 :root{--pass:var(--good);--pass-bg:var(--good-bg);--att:var(--warn);--att-bg:var(--warn-bg);--fail:var(--bad)}

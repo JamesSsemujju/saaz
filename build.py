@@ -193,6 +193,8 @@ def build_site(out, base, cars, preview):
         (out / "assets/img").mkdir(parents=True, exist_ok=True)
         for wdt in (640, 1280):
             shutil.copy2(SRC / "assets/img" / f"{f}-{wdt}.webp", out / "assets/img" / f"{f}-{wdt}.webp")
+    if (SRC / "assets/video").exists():  # BA-0006: the home page background video (mp4 and its still frames)
+        shutil.copytree(SRC / "assets/video", out / "assets/video", dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.md"))
     for sub in ("brand", "social"):  # logo and icons (brand kit); social icons for emails
         if (SRC / "assets/img" / sub).exists():
             shutil.copytree(SRC / "assets/img" / sub, out / "assets/img" / sub, dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.md"))
