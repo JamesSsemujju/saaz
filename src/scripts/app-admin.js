@@ -9,9 +9,9 @@
     ["Garages and partners", [["garages", "Garages"]]],
     ["Customers and deals", [["users", "Users"], ["deals", "Deals"]]],
     ["Communications", [["outbox", "Outbox"]]],
-    ["System", [["audit", "All activity"], ["team", "Saaz team"], ["settings", "Settings"]]]
+    ["System", [["audit", "All activity"], ["team", "Saaz team"], ["settings", "Settings"], ["build", "Build Assistant"]]]
   ];
-  var FULL_ONLY = ["team", "settings"];  // Staff don't get these (the database refuses them too)
+  var FULL_ONLY = ["team", "settings", "build"];  // Staff don't get these (the database refuses them too)
   function tabs(at) {
     var opts = "", side = "";
     var full = !!(S.state.roles || {}).full_admin;
@@ -19,7 +19,7 @@
       side += "<div class='navgroup'><b>" + g[0] + "</b>" + g[1].map(function (t) { return "<a href='#/admin" + (t[0] ? "/" + t[0] : "") + "'" + (t[0] === at ? " aria-current='page'" : "") + ">" + t[1] + "</a>"; }).join("") + "</div>";
       opts += "<optgroup label='" + g[0] + "'>" + g[1].map(function (t) { return "<option value='#/admin" + (t[0] ? "/" + t[0] : "") + "'" + (t[0] === at ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</optgroup>";
     });
-    return { side: "<nav class='adminside' aria-label='Admin'>" + side + "</nav>", phone: "<label class='adminjump'>Go to<select onchange='location.hash=this.value'>" + opts + "</select></label>" };
+    return { side: "<nav class='adminside' data-ref='admin-menu' aria-label='Admin'>" + side + "</nav>", phone: "<label class='adminjump'>Go to<select onchange='location.hash=this.value'>" + opts + "</select></label>" };
   }
   function page(v, at, html) { var t = tabs(at); v.innerHTML = "<h1 class='sr'>Admin</h1><div class='adminwrap'>" + t.side + "<div class='adminmain'>" + t.phone + html + "</div></div>"; }
   S.adminPage = page;  // the core uses it so a missing or failing Admin page still shows the Admin menu
@@ -405,6 +405,32 @@
           { text: "Cancel" }, { text: "Remove", primary: true, click: function (close, el) { el.disabled = true; S.rpc("admin_remove_staff", { p_user: b.dataset.rmstaff, p_reason: S.$("#rmwhy").value })
             .then(function () { close(); S.toast("Removed."); S.render(); }).catch(function (e2) { el.disabled = false; S.toast(S.friendly(e2), true); }); } }]);
       }; });
+    });
+  });
+
+  // ---------- Build Assistant: the switch (full admins only; the database checks it too) ----------
+  A("/build", function (v) {
+    return S.rpc("build_admin").then(function (b) {
+      var on = b.settings.enabled, c = b.counts || {}, open = Object.keys(c).filter(function (k) { return ["verified", "cancelled"].indexOf(k) < 0; }).reduce(function (n, k) { return n + c[k]; }, 0);
+      page(v, "build", "<div class='pagehead'><h2>Build Assistant</h2>" + "<span class='chip s-" + (on ? "active" : "suspended") + "'>" + (on ? "On" : "Off") + "</span>" + "</div>" +
+        "<p class='lead'>A private tool for building Saaz: comments on elements, chat, and the coding agent's task queue. Only admins in an admin session, and the developers listed below, can use it. Visitors and customers never see it or its records.</p>" +
+        "<section><h2>" + (on ? "Switch it off" : "Switch it on") + "</h2>" +
+        (on ? "<p>When off: nobody can send new comments or messages, the agent takes no new tasks, queued tasks wait (they are not marked done or removed), a task the agent already holds keeps its status and its agent can still record what happened. All history stays. The website is not affected.</p>"
+            : "<p>When on: admins in an admin session and the listed developers see a small Build button on every page.</p>") +
+        "<form id='bsw' class='inlineform'><label>Reason (kept in the history)<input name='reason' maxlength='200'" + (on ? " required" : "") + "></label><button class='btn" + (on ? " ghost" : "") + "'>" + (on ? "Switch off" : "Switch on") + "</button></form>" +
+        "<p class='note'>Open tasks: " + open + ". Agent last checked in: " + (b.agent_last_seen ? S.day(b.agent_last_seen) : "never") + ".</p></section>" +
+        "<section><h2>Developers</h2><p class='note'>Full admins can always use it. Add Saaz team members (they still need their authenticator).</p>" +
+        table(["Name", "Email", "Added", ""], (b.members || []).map(function (m) { return "<tr><td>" + esc(m.name || "") + "</td><td>" + esc(m.email) + "</td><td>" + S.day(m.added_at) + "</td><td><button class='btn small ghost' data-rm='" + esc(m.email) + "'>Remove</button></td></tr>"; })) +
+        "<form id='bmem' class='inlineform'><label>Email of a Saaz team member<input name='email' type='email' required></label><button class='btn small'>Add</button></form></section>" +
+        "<section><h2>History of the switch</h2>" + table(["When", "Change", "By", "Reason", "Open tasks then"], (b.toggles || []).map(function (t) {
+          return "<tr><td>" + S.day(t.at) + " " + new Date(t.at).toLocaleTimeString("en-GB", { timeZone: "Africa/Kampala", hour: "2-digit", minute: "2-digit" }) + "</td><td>" + (t.enabled ? "On" : "Off") + "</td><td>" + esc(t.by || "") + "</td><td>" + esc(t.reason || "") + "</td><td>" + (t.open_tasks || []).length + "</td></tr>"; })) + "</section>");
+      S.$("#bsw").onsubmit = function (e) {
+        e.preventDefault(); var bt = e.target.querySelector("button");
+        S.act(bt, function () { return S.rpc("build_set_enabled", { p_on: !on, p_reason: S.form(e.target).reason || null }); }, on ? "Build Assistant switched off." : "Build Assistant switched on.")
+          .then(function () { location.reload(); });
+      };
+      S.$("#bmem").onsubmit = function (e) { e.preventDefault(); S.act(e.target.querySelector("button"), function () { return S.rpc("build_member", { p_email: S.form(e.target).email, p_add: true }); }, "Added."); };
+      S.$$("[data-rm]").forEach(function (bt) { bt.onclick = function () { S.act(bt, function () { return S.rpc("build_member", { p_email: bt.dataset.rm, p_add: false }); }, "Removed."); }; });
     });
   });
 

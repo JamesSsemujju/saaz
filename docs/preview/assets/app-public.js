@@ -6,7 +6,7 @@
   function card(l, opts) {
     opts = opts || {};
     var r = l.review || {};
-    return "<a class='car' href='" + esc(opts.href || "#/car/" + l.ref) + "'><div class='car-photo'>" +
+    return "<a class='car' data-ref='vehicle-card' data-ref-key='" + esc(l.ref) + "' href='" + esc(opts.href || "#/car/" + l.ref) + "'><div class='car-photo'>" +
       (l.photos && l.photos[0] ? "<img src='" + esc(S.photo(l.photos[0])) + "' alt='' loading='lazy' decoding='async'>" : "") +
       (r.verdict ? "<span class='car-tag'><i></i>" + esc(S.label(r.verdict)) + " · " + r.score + "/100</span>" : "") +
       (opts.badge || (l.status === "reserved" ? "<span class='car-tag right'>Reserved</span>" : "")) + "</div>" +
@@ -44,7 +44,7 @@
         last = n;
       }
     }
-    return "<nav class='pager' aria-label='Pages'>" + (page > 1 ? "<a href='" + href(page - 1) + "' rel='prev'>Previous</a>" : "") + out.join("") +
+    return "<nav class='pager' data-ref='pager' aria-label='Pages'>" + (page > 1 ? "<a href='" + href(page - 1) + "' rel='prev'>Previous</a>" : "") + out.join("") +
       (page < pages ? "<a href='" + href(page + 1) + "' rel='next'>Next</a>" : "") + "</nav>";
   }
 
@@ -60,12 +60,12 @@
     var pages = Math.max(1, Math.ceil(shown.length / PER_PAGE)), page = Math.min(pages, Math.max(1, +(q.get("page") || 1)));
     var slice = shown.slice((page - 1) * PER_PAGE, page * PER_PAGE);
     var html = "<div class='sechead'><h1>" + (saved ? "Saved cars" : "Cars with a Saaz inspection") + "</h1><p>Every car here was inspected in person by a certified garage, inside Saaz.</p></div>" +
-      "<form id='flt' class='filters'>" + (opts.statusSelect ? "<label>Status" + opts.statusSelect + "</label>" : "") + searchFields(rows, make, body, max) +
+      "<form id='flt' class='filters' data-ref='filter-panel'>" + (opts.statusSelect ? "<label>Status" + opts.statusSelect + "</label>" : "") + searchFields(rows, make, body, max) +
       (S.signedIn() && !opts.admin ? "<label class='inline'><input type='checkbox' name='saved' value='1'" + (saved ? " checked" : "") + "> Saved only</label>" : "") +
       "<button class='btn'>Show cars</button></form>" +
       "<p class='count'>" + shown.length + " car" + (shown.length === 1 ? "" : "s") + (pages > 1 ? " · page " + page + " of " + pages : "") +
         (model ? " · " + esc(make + " " + model) + " <a href='" + route + "'>clear</a>" : "") + "</p>" +
-      (slice.length ? "<div class='cars'>" + slice.map(function (l) { return card(l, opts.cardOpts ? opts.cardOpts(l) : null); }).join("") + "</div>" + pager(route, q, page, pages)
+      (slice.length ? "<div class='cars' data-ref='results-grid'>" + slice.map(function (l) { return card(l, opts.cardOpts ? opts.cardOpts(l) : null); }).join("") + "</div>" + pager(route, q, page, pages)
         : "<div class='empty'><b>" + (rows.length ? "No cars match these filters" : "No cars listed yet") + "</b><span>" +
           (rows.length ? "<a href='" + route + "'>Clear the filters</a>" : "Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a>") + "</span></div>");
     return { html: html, wire: function () {
@@ -85,14 +85,14 @@
     v.className = "home";
     return S.rpc("browse_listings", { p_country: "UG" }).then(function (rows) {
       rows = rows || [];
-      v.innerHTML = "<section class='hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
-        "<form id='hs' class='homesearch' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form></div></div></section>" +
-        "<section class='band'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
+      v.innerHTML = "<section class='hero' data-ref='home-hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
+        "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form></div></div></section>" +
+        "<section class='band' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
         (rows.length ? "<div class='cars'>" + rows.slice(0, 8).map(function (l) { return card(l); }).join("") + "</div>" +
           (rows.length > 8 ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
           : "<div class='empty'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a></span></div>") +
         "</div></section>" +
-        "<section class='band white'><div class='wrap'><div class='sechead'><h2>Why you can trust a car on Saaz</h2></div><div class='trust'>" +
+        "<section class='band white' data-ref='trust-section'><div class='wrap'><div class='sechead'><h2>Why you can trust a car on Saaz</h2></div><div class='trust'>" +
           "<div><b>Inspected in person</b><p>A certified garage checks every car inside Saaz before it is listed. The score and result are on the photo.</p></div>" +
           "<div><b>A report you can check</b><p>Each report has a code. Anyone can confirm it is real and unchanged.</p><a class='btn text' href='#/verify'>Verify a report</a></div>" +
           "<div><b>No money through Saaz</b><p>Make an offer here. Contact details are shared once you and the seller agree.</p><a class='btn text' href='#/track'>Track an inspection</a></div>" +
@@ -115,7 +115,7 @@
       ]).then(function (res) {
         var st = res[0] || {}, r = res[1][0], saved = res[2].length > 0, open = res[3][0], mine = l.seller_id === S.me().id;
         var ph = (l.photos || []).map(function (p) { return S.photo(p); });
-        var gallery = "<div class='gallery'><div class='main'>" + (ph[0] ? "<img id='mainphoto' src='" + esc(ph[0]) + "' alt='Photo 1 of " + ph.length + "' decoding='async'>" : "<div class='car-photo'></div>") + "</div>" +
+        var gallery = "<div class='gallery' data-ref='car-gallery'><div class='main'>" + (ph[0] ? "<img id='mainphoto' src='" + esc(ph[0]) + "' alt='Photo 1 of " + ph.length + "' decoding='async'>" : "<div class='car-photo'></div>") + "</div>" +
           (ph.length > 1 ? "<div class='shots'>" + ph.map(function (u, i) { return "<button type='button' data-i='" + i + "'" + (i ? "" : " aria-current='true'") + " aria-label='Show photo " + (i + 1) + "'><img src='" + esc(u) + "' alt='' loading='lazy' decoding='async'></button>"; }).join("") + "</div>" : "") + "</div>";
         var buy = "", asAdmin = S.inAdmin();
         if (asAdmin) {
@@ -124,7 +124,7 @@
         } else if (l.status === "live" && !mine) {
           if (!S.signedIn()) buy = "<a class='btn wide' href='#/signin' onclick='Saaz.after=location.hash'>Sign in to make an offer</a>";
           else if (open) buy = "<a class='btn wide' href='#/deals/" + open.id + "'>See your offer (" + S.label(open.status) + ")</a>";
-          else buy = "<form id='offer' class='stack'><b>Make an offer</b><label>Your offer (" + l.currency + ")<input name='amount' type='number' inputmode='numeric' required min='1'></label>" +
+          else buy = "<form id='offer' class='stack' data-ref='offer-form'><b>Make an offer</b><label>Your offer (" + l.currency + ")<input name='amount' type='number' inputmode='numeric' required min='1'></label>" +
             "<label class='inline'><input type='checkbox' name='trade_in' value='1'> Includes a trade-in car</label>" +
             "<label>Message (optional)<textarea name='message' rows='2' maxlength='500'></textarea></label><p class='err' id='oerr' role='alert'></p><button class='btn wide'>Send offer</button>" +
             "<p class='note'>No money moves through Saaz. Contact details are shared once you both agree.</p></form>";
@@ -134,15 +134,15 @@
         v.innerHTML = (isPublic ? "" : "<p class='box warn preview'><b>Preview: not on the marketplace.</b> Status: " + esc(S.label(l.status)) + ". Buyers can't find or open this car; you see it because you're " + (mine ? "the seller" : "Saaz staff") + "." +
             (S.isAdmin() ? " <a href='#/admin/car/" + l.id + "'>Manage it</a>" : "") + "</p>") +
           "<p class='crumbs'><a href='#/browse'>Cars</a> / " + esc(l.ref) + "</p>" +
-          "<div class='listing'>" + gallery + "<aside class='buybox' aria-label='Price and contact'>" +
+          "<div class='listing'>" + gallery + "<aside class='buybox' data-ref='price-panel' aria-label='Price and contact'>" +
           "<h1 class='car-title'>" + esc(S.name(l)) + "</h1><p class='car-sub'>" + S.km(l.mileage) + " · " + esc(l.fuel) + " · " + esc(l.gearbox) + " · " + esc(l.body) + "</p>" +
           "<p class='car-bigprice'>" + S.money(l.currency, l.price) + "</p><p class='car-area'>" + esc(l.region) + ", " + S.COUNTRY[l.country] + (l.saaz_owned ? " · Sold by Saaz" : "") + "</p>" +
-          (r ? "<div class='insp-card'><div class='insp-head'>" + S.chip(r.verdict) + "<span>" + r.score + "/100</span></div><p>Saaz inspection " + esc(r.doc_no) + " by " + esc(r.garage_name) + ", " + S.day(r.issued_at) + ". Valid until " + S.day(r.valid_until) + ".</p><a class='btn text' href='#/report/" + esc(r.verify_code) + "'>Read the inspection report</a></div>" : "") +
+          (r ? "<div class='insp-card' data-ref='inspection-card'><div class='insp-head'>" + S.chip(r.verdict) + "<span>" + r.score + "/100</span></div><p>Saaz inspection " + esc(r.doc_no) + " by " + esc(r.garage_name) + ", " + S.day(r.issued_at) + ". Valid until " + S.day(r.valid_until) + ".</p><a class='btn text' href='#/report/" + esc(r.verify_code) + "'>Read the inspection report</a></div>" : "") +
           buy +
           (S.signedIn() && !mine && !asAdmin ? "<button class='btn ghost wide' id='save'>" + (saved ? "Saved" : "Save this car") + "</button>" : "") +
           (mine ? "<a class='btn ghost wide' href='#/my/cars/" + l.id + "'>Manage this car</a>" : "") +
           "<div class='demand'><span><b>" + st.views_7d + "</b> views this week</span><span><b>" + st.saves + "</b> saves</span><span><b>" + st.offers + "</b> offers so far</span></div></aside>" +
-          "<div class='details'><div><h2>Details</h2><dl class='specs'>" + [["Year", l.year], ["Mileage", S.km(l.mileage)], ["Fuel", l.fuel], ["Gearbox", l.gearbox], ["Body", l.body], ["Colour", l.colour], ["Engine", l.engine], ["Plate", l.plate], ["Saaz ref", l.ref]]
+          "<div class='details' data-ref='car-details'><div><h2>Details</h2><dl class='specs'>" + [["Year", l.year], ["Mileage", S.km(l.mileage)], ["Fuel", l.fuel], ["Gearbox", l.gearbox], ["Body", l.body], ["Colour", l.colour], ["Engine", l.engine], ["Plate", l.plate], ["Saaz ref", l.ref]]
             .filter(function (x) { return x[1]; }).map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl></div>" +
           "<div><h2>From the seller</h2><p class='pre'>" + esc(l.description) + "</p></div></div></div>";
         S.$$(".shots button", v).forEach(function (b) {

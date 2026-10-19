@@ -105,6 +105,9 @@ Lost phone: in Supabase, Authentication, Users, open the admin and remove the ol
 
 **Known limit:** table reads through row rules accept a copied token until it expires (Supabase default: 1 hour). Every function call, every write and all admin access stop at sign-out.
 
+## Build Assistant (added 19 Oct 2026, not applied live)
+A private tool for building Saaz: comment on elements of the real page (`//header`, `//vehicle-card-2`), chat about the project, and a coding agent works them as a queue with honest statuses. Full admins and listed developers only, in an admin session, behind a switch in Admin, System, Build Assistant. Customers never see it or its records (private `build` schema). Nothing is deployed by it. Details and the agent runbook: `project-docs/Saaz_BuildAssistant_2026-10-19.md`. Database: `supabase/marketplace_18_build_assistant.sql` (waiting for approval). Element names: `python3 tools/build_refs.py`.
+
 ## Admin Cars page = the marketplace listings page (added 18 Oct 2026)
 Admin, Cars is the marketplace listings page itself (`Saaz.listingsPage` in `app-public.js`): same heading, filters, cards and layout, with every car and one extra filter for status. Cards link to the car's admin page. Cars that aren't live show their status on the photo, where "Reserved" already shows. Card data comes from one database function, `listing_card`, used by `browse_listings` (live and reserved only, as before) and `admin_listings` (every status, admins only). Visibility rules are unchanged. Database: `supabase/marketplace_15_admin_listings_preview.sql` (applied 18 Oct 2026).
 

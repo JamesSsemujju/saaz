@@ -798,3 +798,55 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
   .rtable .tbl th,.rtable .tbl td{white-space:nowrap}
   .rtable .tbl td[data-label="Why"]{white-space:normal;min-width:var(--rail)}
 }
+
+/* build.css: the private Build Assistant (only drawn for admins the database allows; see build-assistant.js). Tokens only. */
+.ba{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.ba-launch{position:fixed;left:var(--sp-4);bottom:var(--sp-4);z-index:60;min-height:var(--control-sm);padding:0 var(--sp-4);border:1px solid var(--navy);border-radius:var(--radius-pill);background:var(--white);color:var(--navy);font:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.ba-launch[aria-expanded=true]{background:var(--navy);color:var(--white)}
+.ba-panel{position:fixed;z-index:60;right:var(--sp-4);bottom:var(--sp-4);width:min(400px,calc(100vw - 2 * var(--sp-4)));max-height:calc(100vh - var(--header) - 2 * var(--sp-4));display:flex;flex-direction:column;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 14px 40px rgba(0,0,0,.18)}
+.ba-head{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--line)}
+.ba-head b{color:var(--navy)}
+.ba-agent{color:var(--mut);font-size:var(--fs-xs);line-height:var(--lh-xs);margin-left:auto}
+.ba-tabs{display:flex;border-bottom:1px solid var(--line)}
+.ba-tabs button{flex:1;min-height:var(--control-sm);border:0;background:none;font:inherit;font-weight:600;color:var(--mut);cursor:pointer;box-shadow:inset 0 -2px 0 transparent}
+.ba-tabs button[aria-selected=true]{color:var(--navy);box-shadow:inset 0 -2px 0 var(--navy)}
+.ba-body{overflow:auto;padding:var(--sp-4);display:grid;gap:var(--sp-3);align-content:start}
+.ba-body>*{margin:0}
+.ba-editor{min-height:calc(var(--control) * 2);max-height:40vh;overflow:auto;padding:var(--sp-3);border:1px solid var(--field);border-radius:var(--radius-sm);font-size:var(--fs-md);line-height:var(--lh-md);white-space:pre-wrap;overflow-wrap:anywhere}
+.ba-editor:focus{outline:3px solid var(--focus);outline-offset:1px}
+.ba-chip{display:inline-flex;align-items:center;gap:var(--sp-1);padding:0 var(--sp-1) 0 var(--sp-2);border-radius:var(--radius-pill);background:var(--navy);color:var(--white);font-family:var(--mono);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;user-select:all}
+.ba-chip[data-stab=unstable]{background:var(--warn-bg);color:var(--warn-ink)}
+.ba-chip.flash{outline:3px solid var(--focus)}
+.ba-chip button{border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:0 var(--sp-1)}
+.ba-confirm{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);background:var(--warn-bg);border-radius:var(--radius-sm)}
+.ba-switch{min-height:var(--control-sm)}
+.ba-modebar{position:fixed;z-index:59;left:50%;bottom:var(--sp-4);transform:translateX(-50%);display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);max-width:calc(100vw - 2 * var(--sp-4));padding:var(--sp-1) var(--sp-4);background:var(--navy);color:var(--white);border-radius:var(--radius-pill)}
+.ba-modebar .btn.text{color:var(--white)}
+.ba-modebar .badge{background:var(--white);color:var(--navy)}
+.ba-outline{position:fixed;z-index:58;pointer-events:none;outline:2px dashed var(--focus);outline-offset:2px;border-radius:var(--radius-sm)}
+.ba-outline.tagged{outline-style:solid;outline-color:var(--navy)}
+.ba-annotating body *:not(.ba *){cursor:crosshair}
+.ba-thread{display:grid;gap:var(--sp-2);padding-bottom:var(--sp-3);border-bottom:1px solid var(--line)}
+.ba-thread>*{margin:0}
+.ba-msg{padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-sm);background:var(--soft)}
+.ba-msg.agent{background:var(--info-bg)}
+.ba-msg p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.ba-msg small{color:var(--mut)}
+.ba-task summary{cursor:pointer;display:flex;align-items:center;gap:var(--sp-2);min-height:var(--control-sm)}
+.ba-task .timeline{margin:var(--sp-2) 0}
+.ba-task .timeline small{display:block;color:var(--mut)}
+@media(max-width:767px){
+  .ba-panel{left:0;right:0;bottom:0;width:auto;max-height:70vh;border-radius:var(--radius) var(--radius) 0 0}
+  .ba-launch{bottom:var(--sp-4)}
+  .ba-modebar{top:auto;bottom:calc(var(--control) + 2 * var(--sp-4));border-radius:var(--radius)}
+  /* while selecting on a phone, keep the sheet short so most of the page stays visible to tap */
+  .ba-annotating .ba-panel{max-height:45vh}
+  .ba-annotating .ba-editor{max-height:16vh}
+  /* on Chat or Tasks the sheet takes the bottom, so the bar (and its Stop) sits at the top instead */
+  .ba-sheet-up .ba-modebar{top:var(--sp-2);bottom:auto}
+}
+/* with the panel open, its own switch and Comment button do the bar's job, so the bar steps aside and the header stays clear */
+.ba-panel-open .ba-modebar{display:none}
+.ba-pick:empty{display:none}
+.ba-pick{display:flex;align-items:center;gap:var(--sp-2);margin:0}
+@media print{.ba{display:none!important}}

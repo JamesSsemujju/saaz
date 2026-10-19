@@ -70,7 +70,7 @@
   S.reportShell = function (v, at, q, html) { shell(v, at, q, html); };  // the core shows a failing report inside the reports layout
   function shell(v, at, q, html) {
     var qs = keepQuery(q);
-    var rail = "<nav class='adminside' aria-label='Reports'><div class='navgroup'><a href='#/admin'>‹ Admin</a></div><div class='navgroup'><b>Reports</b>" +
+    var rail = "<nav class='adminside' data-ref='report-menu' aria-label='Reports'><div class='navgroup'><a href='#/admin'>‹ Admin</a></div><div class='navgroup'><b>Reports</b>" +
       REPORTS.map(function (r) { return "<a href='#/admin/reports/" + r.id + (qs ? "?" + qs : "") + "'" + (r.id === at ? " aria-current='page'" : "") + ">" + r.name + "</a>"; }).join("") +
       "</div><div class='navgroup'><a href='#/admin/reports/glossary" + (qs ? "?" + qs : "") + "'" + (at === "glossary" ? " aria-current='page'" : "") + ">Glossary</a></div></nav>";
     var phone = "<label class='adminjump'>Report<select onchange='location.hash=this.value'>" + REPORTS.map(function (r) { return [r.id, r.name]; }).concat([["glossary", "Glossary"]]).map(function (r) {
@@ -96,7 +96,7 @@
       scope: function () { return sel("scope", "Scope", opts.scopes.map(function (x) { return { value: x, label: S.label(x) }; }), "Any scope"); }
     };
     var ranges = [["today", "Today"], ["7", "Last 7 days"], ["30", "Last 30 days"], ["90", "Last 90 days"], ["custom", "Custom"]];
-    return "<form id='rbar' class='filters' aria-label='Report controls'>" +
+    return "<form id='rbar' class='filters' data-ref='report-controls' aria-label='Report controls'>" +
       "<label>Period<select name='range'>" + ranges.map(function (r) { return "<option value='" + r[0] + "'" + (p.range === r[0] || (q.get("range") === "custom" && r[0] === "custom") ? " selected" : "") + ">" + r[1] + "</option>"; }).join("") + "</select></label>" +
       "<label class='rcustom'" + (q.get("range") === "custom" ? "" : " hidden") + ">From<input type='date' name='from' value='" + p.from + "' max='" + opts.today + "'></label>" +
       "<label class='rcustom'" + (q.get("range") === "custom" ? "" : " hidden") + ">To<input type='date' name='to' value='" + p.to + "' max='" + opts.today + "'></label>" +
@@ -108,7 +108,7 @@
 
   // ---------- key numbers: one row; each opens its rows ----------
   function kpis(c, r, q) {
-    return "<div class='stats rkpis'>" + r.kpis.map(function (k) {
+    return "<div class='stats rkpis' data-ref='report-numbers'>" + r.kpis.map(function (k) {
       var g = G(k.key), p = new URLSearchParams(q.toString()); p.set("flag", k.flag); p.delete("page"); p.delete("group"); p.delete("sort"); p.delete("desc");
       var change = "";
       if (r.compare && k.prev !== undefined) {
@@ -196,7 +196,7 @@
         }).join("") + "</tbody></table></div>" + pager(c, r, q);
       }
     }
-    return "<section class='rtable' aria-label='Records'>" + drill + tools + "<p class='count'>" + count + "</p>" + body + "</section>";
+    return "<section class='rtable' data-ref='report-table' aria-label='Records'>" + drill + tools + "<p class='count'>" + count + "</p>" + body + "</section>";
   }
   function pager(c, r, q) {
     var pages = Math.ceil(r.total / r.size); if (pages < 2) return "";
@@ -251,7 +251,7 @@
             "Period " + esc(S.day(r.from)) + " to " + esc(S.day(r.to)) + (r.compare ? " compared with " + esc(S.day(r.prev_from)) + " to " + esc(S.day(r.prev_to)) : "") +
             ". All dates East Africa Time. Live data, worked out " + new Date(r.generated_at).toLocaleTimeString("en-GB", { timeZone: "Africa/Kampala", hour: "2-digit", minute: "2-digit" }) + ".</p></div>" +
             controlBar(c, q, p) + kpis(c, r, q) +
-            (r.trend && c.trend ? "<div class='rtrend'>" + c.trend.map(function (t) { return chart(t[1], t[0], r.trend, r.compare); }).join("") + "</div>" : "") +
+            (r.trend && c.trend ? "<div class='rtrend' data-ref='report-trend'>" + c.trend.map(function (t) { return chart(t[1], t[0], r.trend, r.compare); }).join("") + "</div>" : "") +
             table(c, r, q));
           var bar = S.$("#rbar");
           bar.range.onchange = function () { S.$$(".rcustom", bar).forEach(function (x) { x.hidden = bar.range.value !== "custom"; }); };

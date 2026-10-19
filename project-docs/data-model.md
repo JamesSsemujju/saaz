@@ -28,6 +28,23 @@ Database: Supabase Postgres 17, project `dkxyvlkhpnajbpethwqb`. Source of truth 
 
 Indexes: unique partial indexes for one active listing, one open conversation, one open deal, one garage per person; `audit_log (entity, entity_id)`. At current volume (tens of rows) no performance issue. When listings pass a few thousand, add indexes on `listings(status, live_at)`, `listing_views(listing_id, day)`, `deals(listing_id, status)`.
 
+## Build Assistant (Part 18, private schema `build`, not applied live)
+Not reachable through the API; only the `build_*` functions, which check the admin session, full admin or developer, and the switch.
+
+| Table | Holds | Notes |
+|---|---|---|
+| `build.settings` | One row: switch (off by default), project, environment | |
+| `build.toggles` | Every switch on or off, who, why, open tasks then | Append only |
+| `build.members` | Developers a full admin added | |
+| `build.elements` | Each tagged element: name, path, label, stability, routes | Name unique |
+| `build.threads` | Annotation or chat threads, with scope | |
+| `build.messages` | Comments, notes, questions, answers, reports | Client key unique (one save per press) |
+| `build.message_versions` | Earlier text of edited messages | Append only |
+| `build.message_refs` | Which elements a message tags, in order | Must match the text |
+| `build.tasks` | Queue: BA-0001 ref, status, dependencies, lease, attempts | |
+| `build.task_events` | Every status change and delivery | Append only |
+| `build.agent_runs` | Agent check-ins | |
+
 ## Proposed changes
 
 | Change | Why | Status |

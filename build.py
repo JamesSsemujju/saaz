@@ -29,13 +29,14 @@ MONO = ' class="mono"'
 
 ROOT = Path(__file__).resolve().parent
 SRC, DOCS = ROOT / "src", ROOT / "docs"
-CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "app.css"]
+CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "app.css", "build.css"]
 DESKTOP_NAV = ["inspections", "cars", "sell", "import", "finance", "garages"]
 BUYER_FOOT = ["inspections", "history", "cars", "import", "finance"]
 SELLER_FOOT = ["sell", "garages", "partners"]
 # Assumption: price and year bands for browsing. Edit here.
 PRICE_BANDS = [("Under 20m", 0, 19999999), ("20m to 40m", 20000000, 39999999), ("40m to 70m", 40000000, 69999999), ("70m to 100m", 70000000, 99999999), ("Over 100m", 100000000, None)]
 YEAR_BANDS = [("2010 and older", 0, 2010), ("2011 to 2014", 2011, 2014), ("2015 to 2017", 2015, 2017), ("2018 and newer", 2018, None)]
+BUILD_STAMP = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M")  # shown with Build Assistant comments as the version they were made on
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 def load(p): return json.loads((SRC / p).read_text(encoding="utf-8"))
@@ -110,7 +111,7 @@ def build_site(out, base, cars, preview):
                    whatsapp_footer=f'<li><a href="{wa_url}">WhatsApp +{site["whatsapp"]}</a></li>' if wa else "",
                    partner_contact=(f'<a class="btn" href="{wa_url}?text=I%20run%20a%20garage%20in%20Kampala%20and%20want%20to%20be%20a%20Saaz%20partner.">Talk to us on WhatsApp</a>') if wa else "",
                    robots='\n<meta name="robots" content="noindex,nofollow">' if preview else "",
-                   saaz_config="<script>window.SAAZ=" + json.dumps({"base": base, "supabaseUrl": "" if preview else site.get("supabaseUrl", ""), "supabaseAnonKey": "" if preview else site.get("supabaseAnonKey", ""), "whatsapp": site.get("whatsapp", "")}) + "</script>",
+                   saaz_config="<script>window.SAAZ=" + json.dumps({"build": BUILD_STAMP, "base": base, "supabaseUrl": "" if preview else site.get("supabaseUrl", ""), "supabaseAnonKey": "" if preview else site.get("supabaseAnonKey", ""), "whatsapp": site.get("whatsapp", "")}) + "</script>",
                    strip=("<b>Design preview.</b> Every car on these pages is an invented sample for reviewing the design. None is for sale.") if preview
                          else "<b>Preview.</b> Saaz is not trading yet. Nothing here can be bought, booked or paid for.")
         return ctx

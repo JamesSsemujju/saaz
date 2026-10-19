@@ -217,7 +217,7 @@
     if (S._signingOut) return; S._signingOut = true;
     var done = function () {
       S.state.roles = null; S.state.session = null; S.after = null;
-      try { localStorage.removeItem("saaz-mode"); Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
+      try { localStorage.removeItem("saaz-mode"); Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k) || /^saaz-build-/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
       try { if (notice) sessionStorage.setItem("saaz-bye", notice); } catch (e) {}
       location.replace(location.origin + S.site);
     };
@@ -266,8 +266,8 @@
       right = "<a class='hide-s' href='#/browse?saved=1'" + on(/saved=1/.test(location.hash)) + ">Saved</a>" +
         "<a class='hide-s' href='#/offers'" + on(path === "/offers" || /^\/deals\//.test(path)) + ">My offers</a>" +
         "<a href='#/inbox' class='inbox'" + on(path === "/inbox") + ">Inbox<b id='unread' hidden></b></a>" +
-        "<a class='sellbtn' href='#/sell/new'>Sell a car</a>" +
-        "<details class='acct' id='acct'><summary aria-label='Account menu'><span class='av'>" + S.esc(initials(p)) + "</span> ▾</summary><div class='acctmenu'>" +
+        "<a class='sellbtn' data-ref='sell-btn' href='#/sell/new'>Sell a car</a>" +
+        "<details class='acct' id='acct' data-ref='account-menu'><summary aria-label='Account menu'><span class='av'>" + S.esc(initials(p)) + "</span> ▾</summary><div class='acctmenu'>" +
         "<p class='who'><b>" + S.esc(p.name || "") + "</b><small>" + S.esc(p.email || "") + "</small></p>" +
         "<b class='mh'>Switch area</b>" + areas(r).map(function (x) {
           return "<a href='" + x[2] + "' data-mode='" + x[0] + "'" + (x[0] === cur ? " aria-current='true'" : "") + ">" + S.esc(x[1]) + (x[0] === cur ? " <small>you're here</small>" : "") + "</a>";
@@ -277,15 +277,15 @@
         "<hr><a class='show-s' href='#/browse?saved=1'>Saved</a><a class='show-s' href='#/offers'>My offers</a>" +
         "<a href='#/account'>My account</a><button type='button' id='signout'>Sign out</button></div></details>";
     } else {
-      right = "<a href='#/signin'" + on(path === "/signin") + ">Sign in</a><a class='hide-s' href='#/signup'" + on(path === "/signup") + ">Create account</a><a class='sellbtn' href='#/sell/new'>Sell a car</a>";
+      right = "<a href='#/signin'" + on(path === "/signin") + ">Sign in</a><a class='hide-s' href='#/signup'" + on(path === "/signup") + ">Create account</a><a class='sellbtn' data-ref='sell-btn' href='#/sell/new'>Sell a car</a>";
     }
-    var head = "<header class='apphead'><div class='wrap'><a class='logo' href='#/' aria-label='Saaz home'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
-      "<nav class='appnav' aria-label='Marketplace'>" + links + "</nav><div class='appright'>" + right + "</div></div></header>";
+    var head = "<header class='apphead' data-ref='header'><div class='wrap'><a class='logo' data-ref='logo' href='#/' aria-label='Saaz home'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
+      "<nav class='appnav' data-ref='main-nav' aria-label='Marketplace'>" + links + "</nav><div class='appright'>" + right + "</div></div></header>";
     return head + areaBar(path, area);
   }
   function areaBar(path, area) {
     // Viewing the marketplace while in Admin: a bar that keeps the way back, and says offers and saves are off
-    if (!area && S.inAdmin()) return "<div class='areabar viewas'><div class='wrap'><a class='back' href='#/admin'>‹ Back to Admin</a><b>Viewing the marketplace as admin</b>" +
+    if (!area && S.inAdmin()) return "<div class='areabar viewas' data-ref='area-bar'><div class='wrap'><a class='back' href='#/admin'>‹ Back to Admin</a><b>Viewing the marketplace as admin</b>" +
       "<span id='viewas-extra'></span><button type='button' class='btn text' id='leaveadmin2'>Leave Admin</button></div></div>";
     if (!area || !S.signedIn()) return "";
     var r = S.state.roles, tabs = [], title = "";
@@ -294,7 +294,7 @@
       if (r.garage && r.garage.member_role === "owner") tabs.push(["#/garage/team", "Team", path === "/garage/team"]); }
     if (area === "admin") title = "Admin";
     var back = area === "admin" ? "<a class='back' href='#/browse'>View marketplace as admin</a>" : "<a class='back' href='#/browse'>‹ Back to marketplace</a>";
-    return "<div class='areabar'><div class='wrap'>" + back + "<b>" + S.esc(title) + "</b>" + (area === "admin" ? "<button type='button' class='btn text' id='leaveadmin2'>Leave Admin</button>" : "") +
+    return "<div class='areabar' data-ref='area-bar'><div class='wrap'>" + back + "<b>" + S.esc(title) + "</b>" + (area === "admin" ? "<button type='button' class='btn text' id='leaveadmin2'>Leave Admin</button>" : "") +
       (tabs.length ? "<nav aria-label='" + S.esc(title) + "'>" + tabs.map(function (t) { return "<a href='" + t[0] + "'" + (t[2] ? " aria-current='page'" : "") + ">" + t[1] + "</a>"; }).join("") + "</nav>" : "") + "</div></div>";
   }
   function wireHeader() {
@@ -310,6 +310,21 @@
       var b = S.$("#unread"); if (b && rows.length) { b.hidden = false; b.textContent = rows.length; }
     }).catch(function () {});
   }
+
+  // Build Assistant (part 18): the database decides who may use it. Only then is its script loaded.
+  // Visitors, buyers, sellers, garages and staff who aren't developers never get the script or any of its data.
+  function buildCheck() {
+    if (S._buildLoaded || S._buildChecking || !S.isAdmin()) return;
+    var tok = (S.state.session || {}).access_token;
+    if (S._buildNo === tok) return;   // already told no (or Part 18 isn't there) for this session: don't ask on every page
+    S._buildChecking = true;
+    S.rpc("build_status").then(function (s) {
+      if (!s || !s.allowed || !s.enabled) { S._buildChecking = false; S._buildNo = tok; return; }
+      var tag = document.createElement("script"); tag.src = S.site + "assets/build-assistant.js?v=" + encodeURIComponent(C.build || ""); tag.defer = true;
+      document.body.appendChild(tag);
+    }).catch(function () { S._buildChecking = false; S._buildNo = tok; });
+  }
+  S.buildCheck = buildCheck;
 
   var linkPending = false;
   S.render = function () {
@@ -340,6 +355,7 @@
       var area = S.signedIn() ? areaOf(path) : "";
       if (area === "admin" && !S.isAdmin()) area = "";  // no Admin bar on the "Page not found" a non-admin sees
       if (area && (area !== "garage" || S.state.roles.garage) && (area !== "admin" || S.isAdmin())) S.mode(area);
+      buildCheck();
       root.innerHTML = header(path, area) + "<main id='view' class='wrap pad" + (area || S.inAdmin() ? " inarea" : "") + "'><p class='loading'>Loading…</p></main>";
       wireHeader();
       var view = S.$("#view");
