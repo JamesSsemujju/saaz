@@ -105,6 +105,23 @@ Lost phone: in Supabase, Authentication, Users, open the admin and remove the ol
 
 **Known limit:** table reads through row rules accept a copied token until it expires (Supabase default: 1 hour). Every function call, every write and all admin access stop at sign-out.
 
+## Seller page and listing form (added 23 Oct 2026)
+**One seller page:** `#/sell` in the app, public, no account needed. "Sell a car" opens it when signed out and goes straight to the form when signed in. The old `/sell/` forwards there (`src/pages/sell.html`); its old copy (codes, who pays, WhatsApp) is gone.
+
+**What it says, and where each fact comes from:** free to list (no listing or platform fee in code); inspection required (no Saaz review, no listing); the garage sets the inspection price and is paid directly (help page); lowest price and report validity read from `settings`; the checks read from `inspection_scopes`; agreed prices only from What's selling, and only when there are sales (none yet, so it says so). The sample report is labelled Sample. No buyer numbers, prices or testimonials are invented.
+
+**Try it:** a visitor types make, model, year, mileage and price and sees the marketplace's own car card (`S.card` with `preview`: no link, no demand line). What they typed is kept on the phone and fills the empty fields of the form when they start.
+
+**Sign-up keeps the intent:** "Start selling" ticks Sell a car on sign-up, and the confirmation link (`?next=sellnew`) opens the form instead of My cars.
+
+**Form:** the buyer card beside the form (below it on phones); hints for mileage, price (lowest price; typical agreed price only from real sales), description length and photo count; a count of photos that failed to upload. Unsaved new listings are kept on the phone and restored after a reload or sign-in, then cleared on save and on sign-out. My car shows the next step and "See it as buyers will" (the existing car page preview).
+
+**Database:** none needed for the page. Part 20 (`supabase/marketplace_20_photo_owner.sql`, NOT applied live): a seller's listing only takes photos that seller uploaded. Test: `tests/db_photo_owner_test.py` (runs in a transaction, rolls back). Once part 20 is live, the older database tests that use made-up photo names need real ones before part 20 goes into `tests/stack/reset.sh`. The local stand-in storage now records each upload in `storage.objects`, like Supabase.
+
+**Tested (local stack, 23 Oct 2026):** `tests/browser_sell_test.py` 39 of 39 at 320, 390 and 1280 px; `browser_flow_test.py` 184 of 184 at 390 and 1280; `browser_admin_preview_test.py` 26 of 26 at 390; `db_marketplace_test.py` 75 of 75; `db_photo_owner_test.py` 8 of 8. Not tested: the live site, a real phone, `layout_audit.py`.
+
+**Open calls:** "no commission" holds until a platform fee is decided; the Sell module status still says planned, early 2027; the Inspections page still describes the old code and who-pays model.
+
 ## Build Assistant (added 19 Oct 2026, database live 19 Oct, switch off)
 A private tool for building Saaz: comment on elements of the real page (`//header`, `//vehicle-card-2`), chat about the project, and a coding agent works them as a queue with honest statuses. Full admins and listed developers only, in an admin session, behind a switch in Admin, System, Build Assistant. Customers never see it or its records (private `build` schema). Nothing is deployed by it. Details and the agent runbook: `project-docs/Saaz_BuildAssistant_2026-10-19.md`. Database: `supabase/marketplace_18_build_assistant.sql` (applied 19 Oct 2026; switch starts off). Element names: `python3 tools/build_refs.py`. Claim fix: `supabase/marketplace_19_build_claim_fix.sql` (applied 19 Oct 2026).
 

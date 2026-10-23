@@ -3,17 +3,20 @@
   var S = window.Saaz, esc = S.esc;
 
   // The one listing card, used by the listings page for buyers and for Saaz staff. opts: where it links, and the tag on the photo.
+  // opts.preview: the same card for a car that isn't on the marketplace yet (the seller's own draft, or what a visitor types on #/sell).
+  // No link, no demand line (a preview has no buyers yet), and empty fields show what goes there instead of "undefined".
   function card(l, opts) {
     opts = opts || {};
-    var r = l.review || {};
-    return "<a class='car' data-ref='vehicle-card' data-ref-key='" + esc(l.ref) + "' href='" + esc(opts.href || "#/car/" + l.ref) + "'><div class='car-photo'>" +
-      (l.photos && l.photos[0] ? "<img src='" + esc(S.photo(l.photos[0])) + "' alt='' loading='lazy' decoding='async'>" : "") +
-      (r.verdict ? "<span class='car-tag'><i></i>" + esc(S.label(r.verdict)) + " · " + r.score + "/100</span>" : "") +
+    var r = l.review || {}, pv = !!opts.preview, tag = opts.preview ? "div" : "a";
+    var meta = [S.km(l.mileage), l.fuel, l.gearbox, l.region].filter(function (x) { return x !== "" && x != null; });
+    return "<" + tag + " class='car" + (pv ? " preview" : "") + "' data-ref='vehicle-card' data-ref-key='" + esc(l.ref || "") + "'" + (pv ? "" : " href='" + esc(opts.href || "#/car/" + l.ref) + "'") + "><div class='car-photo'>" +
+      (l.photos && l.photos[0] ? "<img src='" + esc(S.photo(l.photos[0])) + "' alt='' loading='lazy' decoding='async'>" : pv ? "<span class='phl'>Your photos go here</span>" : "") +
+      (r.verdict ? "<span class='car-tag'><i></i>" + esc(S.label(r.verdict)) + " · " + r.score + "/100</span>" : (opts.tag || "")) +
       (opts.badge || (l.status === "reserved" ? "<span class='car-tag right'>Reserved</span>" : "")) + "</div>" +
-      "<div class='car-name'>" + esc(S.name(l)) + (l.saaz_owned ? " <span class='src'>Saaz car</span>" : "") + "</div>" +
-      "<div class='car-meta'>" + S.km(l.mileage) + " · " + esc(l.fuel) + " · " + esc(l.gearbox) + " · " + esc(l.region) + "</div>" +
-      "<div class='car-price'><b>" + S.money(l.currency, l.price) + "</b></div>" +
-      "<div class='demand'><span>" + l.views_7d + " views this week</span><span>" + l.saves + " saves</span><span>" + l.offers + " offers</span></div></a>";
+      "<div class='car-name'>" + (pv && !(l.make || l.model) ? "<span class='ghosttext'>Year, make and model</span>" : esc(S.name(l))) + (l.saaz_owned ? " <span class='src'>Saaz car</span>" : "") + "</div>" +
+      "<div class='car-meta'>" + (meta.length ? meta.map(esc).join(" · ") : pv ? "<span class='ghosttext'>Mileage, fuel, gearbox, region</span>" : "") + "</div>" +
+      "<div class='car-price'><b>" + (pv && !l.price ? "<span class='ghosttext'>Your asking price</span>" : S.money(l.currency, l.price)) + "</b></div>" +
+      (pv ? "" : "<div class='demand'><span>" + l.views_7d + " views this week</span><span>" + l.saves + " saves</span><span>" + l.offers + " offers</span></div>") + "</" + tag + ">";
   }
   S.card = card;
   // Admin card options: same card, with the stage on the photo when the car isn't live, opening the car's admin page
@@ -71,7 +74,7 @@
         (model ? " · " + esc(make + " " + model) + " <a href='" + route + "'>clear</a>" : "") + "</p>" +
       (slice.length ? "<div class='cars' data-ref='results-grid'>" + slice.map(function (l) { return card(l, opts.cardOpts ? opts.cardOpts(l) : null); }).join("") + "</div>" + pager(route, q, page, pages)
         : "<div class='empty' data-ref='no-cars'><b>" + (rows.length ? "No cars match these filters" : "No cars listed yet") + "</b><span>" +
-          (rows.length ? "<a href='" + route + "'>Clear the filters</a>" : "Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a>") + "</span></div>");
+          (rows.length ? "<a href='" + route + "'>Clear the filters</a>" : "Cars appear here once they pass a Saaz inspection. <a href='#/sell'>Sell your car on Saaz</a>") + "</span></div>");
     return { html: html, wire: function () {
       S.$("#flt").onsubmit = function (e) { e.preventDefault(); goSearch(e.target, route); };
     } };
@@ -106,7 +109,7 @@
         "<section class='band' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
         (rows.length ? "<div class='cars'>" + rows.slice(0, 8).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>" +
           (rows.length > 8 ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
-          : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell/new'>List your car</a></span></div>") +
+          : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell'>Sell your car on Saaz</a></span></div>") +
         "</div></section></div>" +
         "<section class='band white' data-ref='trust-section'><div class='wrap'><div class='sechead'><h2>Why you can trust a car on Saaz</h2></div><div class='trust'>" +
           "<div><b>Inspected in person</b><p>A certified garage checks every car inside Saaz before it is listed. The score and result are on the photo.</p></div>" +

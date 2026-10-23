@@ -40,7 +40,7 @@
   S.km = function (n) { return n == null ? "" : Number(n).toLocaleString("en-US") + " km"; };
   // Status words come from the database; "review" there means the Saaz inspection
   S.label = function (s) { return String(s || "").replace(/_/g, " ").replace(/\breview\b/g, "inspection").replace(/^./, function (c) { return c.toUpperCase(); }); };
-  S.name = function (l) { return l.year + " " + l.make + " " + l.model; };
+  S.name = function (l) { return [l.year, l.make, l.model].filter(function (x) { return x !== "" && x != null; }).join(" "); };
   S.photo = function (p) { return p ? C.supabaseUrl + "/storage/v1/object/public/car-photos/" + p : ""; };
   S.chip = function (status) { return "<span class='chip s-" + S.esc(status) + "'>" + S.esc(S.label(status)) + "</span>"; };
   S.$ = function (sel, root) { return (root || document).querySelector(sel); };
@@ -217,7 +217,7 @@
     if (S._signingOut) return; S._signingOut = true;
     var done = function () {
       S.state.roles = null; S.state.session = null; S.after = null;
-      try { localStorage.removeItem("saaz-mode"); Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k) || /^saaz-build-/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
+      try { localStorage.removeItem("saaz-mode"); Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k) || /^saaz-build-/.test(k) || /^saaz-sell/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
       try { if (notice) sessionStorage.setItem("saaz-bye", notice); } catch (e) {}
       location.replace(location.origin + S.site);
     };
@@ -277,7 +277,7 @@
         "<hr><a class='show-s' href='#/browse?saved=1'>Saved</a><a class='show-s' href='#/offers'>My offers</a>" +
         "<a href='#/account'>My account</a><button type='button' id='signout'>Sign out</button></div></details>";
     } else {
-      right = "<a href='#/signin'" + on(path === "/signin") + ">Sign in</a><a class='hide-s' href='#/signup'" + on(path === "/signup") + ">Create account</a><a class='sellbtn' data-ref='sell-btn' href='#/sell/new'>Sell a car</a>";
+      right = "<a href='#/signin'" + on(path === "/signin") + ">Sign in</a><a class='hide-s' href='#/signup'" + on(path === "/signup") + ">Create account</a><a class='sellbtn' data-ref='sell-btn' href='#/sell'>Sell a car</a>";
     }
     var head = "<header class='apphead' data-ref='header'><div class='wrap'><a class='logo' data-ref='logo' href='#/' aria-label='Saaz home'><img src='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp' srcset='" + S.site + "assets/img/brand/saaz-wordmark-white-240.webp 1x, " + S.site + "assets/img/brand/saaz-wordmark-white-480.webp 2x' width='112' height='32' alt='Saaz'></a>" +
       "<nav class='appnav' data-ref='main-nav' aria-label='Marketplace'>" + links + "</nav><div class='appright'>" + right + "</div></div></header>";
@@ -336,7 +336,8 @@
         if (link.error) { history.replaceState(null, "", location.pathname + "#/signin"); setTimeout(function () { S.toast(link.error.replace(/\+/g, " ") + " Ask for a new link.", true); }, 600); }
         else {
           if (NEXT === "seller" || NEXT === "garage") S.mode(NEXT);
-          var land = link.type === "invite" ? "#/reset?first=1" : link.type === "recovery" ? "#/reset" : (NEXT === "seller" ? "#/my/cars" : "#/browse");
+          if (NEXT === "sellnew") S.mode("seller");
+          var land = link.type === "invite" ? "#/reset?first=1" : link.type === "recovery" ? "#/reset" : (NEXT === "sellnew" ? "#/sell/new" : NEXT === "seller" ? "#/my/cars" : "#/browse");
           history.replaceState(null, "", location.pathname + land);
         }
         S.render(); if (link.type === "signup") S.toast("Email confirmed. Welcome to Saaz.");
@@ -408,9 +409,12 @@
   });
 
   S.route("/signup", function (v) {
-    v.innerHTML = "<div class='narrow'><h1>Create your Saaz account</h1><p class='lead'>One account to buy and sell.</p>" +
-      "<form id='f' class='stack'><fieldset class='seg'><legend>I'm here to</legend><label><input type='radio' name='as' value='buyer' checked><span>Buy a car</span></label>" +
-      "<label><input type='radio' name='as' value='seller'><span>Sell a car</span></label></fieldset>" +
+    // Came from "Start selling" on #/sell: seller is ticked, and the email link brings them back to the listing form (next=sellnew)
+    var selling = /^#\/sell\/new/.test(S.after || "");
+    var nextFor = function (as) { return as === "seller" ? (selling ? "sellnew" : "seller") : "buyer"; };
+    v.innerHTML = "<div class='narrow'><h1>Create your Saaz account</h1><p class='lead'>" + (selling ? "One account to sell and buy. Next you add your car." : "One account to buy and sell.") + "</p>" +
+      "<form id='f' class='stack'><fieldset class='seg'><legend>I'm here to</legend><label><input type='radio' name='as' value='buyer'" + (selling ? "" : " checked") + "><span>Buy a car</span></label>" +
+      "<label><input type='radio' name='as' value='seller'" + (selling ? " checked" : "") + "><span>Sell a car</span></label></fieldset>" +
       "<label>Full name<input name='name' autocomplete='name' required minlength='2'></label>" +
       "<label>Email<input name='email' type='email' autocomplete='email' required></label>" +
 
@@ -421,16 +425,16 @@
     S.$("#f").onsubmit = function (e) {
       e.preventDefault(); var f = S.form(e.target), err = S.$("#err"), b = e.target.querySelector("button");
       b.disabled = true; err.textContent = "";
-      S.db.auth.signUp({ email: f.email, password: f.password, options: { data: { name: f.name, country: "UG", mobile: f.mobile, as: f.as === "seller" ? "seller" : "buyer" }, emailRedirectTo: location.origin + location.pathname + "?next=" + (f.as === "seller" ? "seller" : "buyer") } })
+      S.db.auth.signUp({ email: f.email, password: f.password, options: { data: { name: f.name, country: "UG", mobile: f.mobile, as: f.as === "seller" ? "seller" : "buyer" }, emailRedirectTo: location.origin + location.pathname + "?next=" + nextFor(f.as) } })
         .then(function (r) {
           if (r.error) throw r.error;
           if (r.data.user && r.data.user.identities && !r.data.user.identities.length) throw new Error("exists");
           if (!r.data.session) {
             b.disabled = false;
-            S.popup("Check your email", "<p>We sent a link to <strong>" + S.esc(f.email) + "</strong>. Open it to confirm your email; it signs you in" + (f.as === "seller" ? " and takes you to My cars" : "") + ".</p><p class='note'>Nothing after a few minutes? Check spam.</p>", [
+            S.popup("Check your email", "<p>We sent a link to <strong>" + S.esc(f.email) + "</strong>. Open it to confirm your email; it signs you in" + (f.as === "seller" ? (selling ? " and opens the form to list your car" : " and takes you to My cars") : "") + ".</p><p class='note'>Nothing after a few minutes? Check spam.</p>", [
               { text: "Resend email", click: function (close, el) {
                 el.disabled = true;
-                S.db.auth.resend({ type: "signup", email: f.email, options: { emailRedirectTo: location.origin + location.pathname + "?next=" + (f.as === "seller" ? "seller" : "buyer") } })
+                S.db.auth.resend({ type: "signup", email: f.email, options: { emailRedirectTo: location.origin + location.pathname + "?next=" + nextFor(f.as) } })
                   .then(function (x) { if (x.error) throw x.error; el.textContent = "Sent again"; })
                   .catch(function (e3) { el.disabled = false; S.toast(S.friendly(e3), true); });
               } },
@@ -495,7 +499,7 @@
             S.mode("garage"); S.toast(ty === "invite" ? "Password saved. Welcome to " + (roles.garage.name || "your garage") + "." : "Password saved."); S.go("#/garage");
           });
         }
-        if (ty === "signup") { S.mode(meta.as === "seller" ? "seller" : "buyer"); S.toast("Email confirmed. Welcome to Saaz."); return S.go(meta.as === "seller" ? "#/my/cars" : "#/browse"); }
+        if (ty === "signup") { S.mode(meta.as === "seller" ? "seller" : "buyer"); S.toast("Email confirmed. Welcome to Saaz."); return S.go(NEXT === "sellnew" ? "#/sell/new" : meta.as === "seller" ? "#/my/cars" : "#/browse"); }
         if (ty === "email_change") { S.toast("New email confirmed."); return S.go("#/account"); }
         S.toast(pw ? "Password saved." : "Signed in."); S.go(S.home());
       }).catch(function (x) { if (x) { err.textContent = S.friendly(x); b.disabled = false; } });

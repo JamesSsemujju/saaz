@@ -66,15 +66,15 @@
       "audience": "Private sellers",
       "status": "planned",
       "when": "Early 2027",
-      "line": "Inspect first, then list your car with its report attached.",
-      "intro": "Buyers trust a car that has a report. Get your car inspected at a partner garage, then list it on Saaz with the report attached.",
+      "line": "List free. A certified garage inspects your car, then buyers make offers.",
+      "intro": "List your car for free. A certified garage inspects it in person, the report goes on your listing, and buyers make offers inside Saaz. The garage sets the inspection price and you pay the garage.",
       "steps": [
-        ["Get a code for your car", "Choose who pays: you, the buyer, or both."],
-        ["Pass the inspection", "At any Saaz partner garage. Standard photos are taken there."],
-        ["List it", "Your listing shows the report. Buyers contact you by WhatsApp."]
+        ["Add your car", "VIN or chassis number, details and 4 to 12 photos. Saved as a private draft."],
+        ["A certified garage inspects it", "Saaz offers your car to the nearest certified garage. You agree, they inspect it in person."],
+        ["Saaz approves it, buyers make offers", "Contact details are shared once you and a buyer agree."]
       ],
-      "depends": ["Inspections running", "Listing rules and seller terms"],
-      "platform": ["Codes and booking", "Inspection report", "Inspected listings"],
+      "depends": ["Certified garages taking jobs", "Seller terms"],
+      "platform": ["Listing and photos", "Garage line", "Inspection report", "Offers and deals"],
       "related": ["inspections", "cars"]
     },
     {

@@ -41,11 +41,51 @@
   var STATUS_TEXT = { draft: "Draft. Only you can see it.", awaiting_review: "Waiting for a garage. Saaz puts one certified garage in play at a time.", review_booked: "Booked with a garage for its Saaz inspection.",
     awaiting_approval: "Saaz inspection issued. Saaz is checking it.", changes_requested: "Saaz asked for changes.", live: "Live on Saaz.", reserved: "Reserved: a deal is agreed.", sold: "Sold.",
     rejected: "Not approved.", withdrawn: "Withdrawn.", re_review_due: "The Saaz inspection expired. Submit again for a new review." };
+  // What the seller can do next, by status (only steps the product really has)
+  var NEXT_TEXT = { draft: "Next: submit it for a Saaz inspection. Saaz then offers your car to the nearest certified garage.",
+    changes_requested: "Next: make the changes Saaz asked for, then submit again.",
+    awaiting_review: "Next: when a garage messages you, agree to book the inspection or pass to the next garage.",
+    review_booked: "Next: take the car to the garage on the date it sets.",
+    live: "Buyers can find your car. Set offer rules below so offers under your floor are handled for you." };
+
+  // ---------- Facts the seller pages show, read from the database (one place) ----------
+  // settings and inspection_scopes are readable by visitors (marketplace_4_access.sql, marketplace_14). Fallbacks are the values in those files.
+  S.sellFacts = function () {
+    if (S._sellFacts) return Promise.resolve(S._sellFacts);
+    var fb = { minPrice: 1000000, validDays: 60, scopes: null };
+    if (!S.db) return Promise.resolve(fb);
+    return Promise.all([
+      S.q(S.db.from("settings").select("key,value").in("key", ["min_price_ugx", "review_valid_days"])).catch(function () { return []; }),
+      S.scopes().catch(function () { return null; })
+    ]).then(function (r) {
+      var f = Object.assign({}, fb);
+      (r[0] || []).forEach(function (x) { if (x.key === "min_price_ugx") f.minPrice = +x.value || fb.minPrice; if (x.key === "review_valid_days") f.validDays = +x.value || fb.validDays; });
+      f.scopes = r[1]; S._sellFacts = f; return f;
+    });
+  };
+  // Sale prices by model from What's selling (public). Only rows that are a trend, not a hint, are used.
+  S.soldPrices = function () {
+    if (S._soldPrices) return Promise.resolve(S._soldPrices);
+    return S.rpc("whats_selling", { p_country: "UG" }).then(function (rows) { S._soldPrices = (rows || []).filter(function (r) { return !r.hint_only && r.typical_price; }); return S._soldPrices; }).catch(function () { return []; });
+  };
+  S.soldPriceFor = function (rows, make, model) {
+    var mk = String(make || "").trim().toLowerCase(), md = String(model || "").trim().toLowerCase();
+    return mk && md ? rows.filter(function (r) { return r.make.toLowerCase() === mk && r.model.toLowerCase() === md; })[0] : null;
+  };
+  // Check names for people
+  var CHECK_NAMES = { engine: "Engine", gearbox: "Gearbox", brakes: "Brakes", steering: "Steering", tyres: "Tyres", electrics: "Electrics", body: "Body and paint",
+    chassis: "Chassis", interior: "Interior", test_drive: "Test drive", odometer: "Odometer reading", vin: "VIN or chassis number" };
+  S.checkName = function (k) { return CHECK_NAMES[k] || S.label(k); };
+  // Local copy of an unsaved listing form, so a closed tab, an ended session or a sign-in doesn't lose it. Cleared on save and on sign-out.
+  var DRAFT_KEY = function () { return "saaz-selldraft-" + (S.me().id || "anon"); }, START_KEY = "saaz-sellstart";
+  function readLocal(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  function writeLocal(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
   // ---------- List a car ----------
-  function sellForm(v, existing, saaz, preVin) {
-    var l = existing || {}, look = null, photos = (l.photos || []).slice();
-    var lockedMsg = "";
+  function sellForm(v, existing, saaz, preVin, facts, sold) {
+    var l = existing || {}, look = null, photos = (l.photos || []).slice(), minPrice = facts.minPrice;
+    var lockedMsg = "", restored = null, saved = existing ? null : readLocal(DRAFT_KEY());
+    if (saved && !preVin) preVin = saved.vin;
     function fieldsHtml(locked) {
       var dis = locked ? " readonly" : "";
       return "<div class='grid2'><label>Make<input name='make' required value='" + esc(l.make || "") + "'" + dis + "></label><label>Model<input name='model' required value='" + esc(l.model || "") + "'" + dis + "></label>" +
@@ -54,36 +94,87 @@
         "<label>Gearbox<select name='gearbox' required" + (locked ? " disabled" : "") + ">" + ["Automatic", "Manual"].map(function (x) { return "<option" + (l.gearbox === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
         "<label>Body<select name='body' required" + (locked ? " disabled" : "") + ">" + ["Saloon", "Hatchback", "SUV", "Station wagon", "Pickup", "Van", "Minibus", "Coupe"].map(function (x) { return "<option" + (l.body === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select></label>" +
         "<label>Engine<input name='engine' placeholder='2.0' value='" + esc(l.engine || "") + "'" + dis + "></label><label>Colour<input name='colour' required value='" + esc(l.colour || "") + "'></label>" +
-        "<label>Mileage (km)<input name='mileage' type='number' min='0' max='1000000' required value='" + esc(l.mileage == null ? "" : l.mileage) + "'></label>" +
+        "<label>Mileage (km)<input name='mileage' type='number' inputmode='numeric' min='0' max='1000000' required value='" + esc(l.mileage == null ? "" : l.mileage) + "'><small class='fieldhint'>The garage reads the odometer at the inspection, and the reading stays in this car's Saaz history.</small></label>" +
         "<input type='hidden' name='country' id='ctry' value='UG'>" +
         "<label>Region<select name='region' id='reg' required></select></label><label>Number plate (Uganda)<input name='plate' required placeholder='UBA 123X' value='" + esc(l.plate || "") + "' autocapitalize='characters'></label>" +
-        "<label>Asking price (UGX)<input name='price' type='number' required min='1000000' step='1000' value='" + esc(l.price || "") + "'></label></div>" +
-        "<label>Description<textarea name='description' rows='4' minlength='30' required>" + esc(l.description || "") + "</textarea></label>" +
-        "<div><b>Photos<span class='req' aria-hidden='true'> *</span></b> <small>4 to 12. Shrunk to about 30 KB each.</small><div id='thumbs' class='thumbs'></div><input type='file' id='files' accept='image/*' multiple></div>" +
+        "<label>Asking price (UGX)<input name='price' type='number' inputmode='numeric' required min='" + minPrice + "' step='1000' value='" + esc(l.price || "") + "'><small class='fieldhint' id='h-price' aria-live='polite'></small></label></div>" +
+        "<label>Description<textarea name='description' rows='4' minlength='30' required placeholder='Service history, recent work, anything a buyer should know'>" + esc(l.description || "") + "</textarea><small class='fieldhint' id='h-desc' aria-live='polite'></small></label>" +
+        "<div><b>Photos<span class='req' aria-hidden='true'> *</span></b> <small>4 to 12. The first one is the photo on your card. Shrunk to about 30 KB each.</small><div id='thumbs' class='thumbs'></div><input type='file' id='files' accept='image/*' multiple><small class='fieldhint' id='h-photos' aria-live='polite'></small></div>" +
         (saaz ? "" : "<p class='note'>Tick one of these two<span class='req' aria-hidden='true'> *</span></p><label class='inline'><input type='checkbox' name='logbook_name_matches' value='1'" + (l.logbook_name_matches ? " checked" : "") + "> The logbook is in my name</label>" +
           "<label class='inline'><input type='checkbox' name='owner_authorised' value='1'" + (l.owner_authorised ? " checked" : "") + "> The owner authorised me to sell</label>") +
-        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn' name='go' value='save'>Save draft</button><button class='btn' name='go' value='submit'>Save and submit for a Saaz inspection</button></div>";
+        "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn ghost' name='go' value='save'>Save draft</button><button class='btn' name='go' value='submit'>Save and submit for a Saaz inspection</button></div>" +
+        "<p class='note'>Submitting asks Saaz to offer your car to the nearest certified garage. The garage sets the inspection price and you pay it there. Your car stays private until the inspection is issued and Saaz approves it.</p>";
     }
     function drawThumbs() {
       S.$("#thumbs").innerHTML = photos.map(function (p, i) { return "<figure><img src='" + esc(S.photo(p)) + "' alt=''><button type='button' data-i='" + i + "' aria-label='Remove photo'>×</button></figure>"; }).join("");
-      S.$$("#thumbs button").forEach(function (b) { b.onclick = function () { photos.splice(+b.dataset.i, 1); drawThumbs(); }; });
+      S.$$("#thumbs button").forEach(function (b) { b.onclick = function () { photos.splice(+b.dataset.i, 1); drawThumbs(); keep(); }; });
+      var n = photos.length, h = S.$("#h-photos");
+      if (h) h.textContent = n >= 4 ? n + " photos added." + (n < 12 ? " You can add " + (12 - n) + " more." : "") : n + " of at least 4 photos. Buyers look at the photos first.";
+      preview();
+    }
+    // The card buyers will see, drawn by the marketplace's own card (S.card) as the seller types
+    function formState() {
+      var fm = S.$("#f"); if (!fm) return null; var f = S.form(fm);
+      S.$$("select[disabled]", fm).forEach(function (x) { f[x.name] = x.value; });
+      S.$$("input[type=checkbox]", fm).forEach(function (x) { f[x.name] = x.checked; });
+      return f;
+    }
+    function preview() {
+      var f = formState(), box = S.$("#pv"); if (!f || !box) return;
+      box.innerHTML = S.card({ year: f.year, make: f.make, model: f.model, mileage: f.mileage === "" ? null : f.mileage, fuel: f.fuel, gearbox: f.gearbox, region: f.region,
+        price: f.price === "" ? null : f.price, currency: "UGX", photos: photos, saaz_owned: !!saaz }, { preview: true, tag: "<span class='car-tag pending'>Inspection result goes here</span>" });
+      var d = S.$("#h-desc"), len = String(f.description || "").trim().length;
+      if (d) d.textContent = len >= 30 ? "" : len + " of at least 30 characters.";
+    }
+    function priceHint() {
+      var f = formState(), h = S.$("#h-price"); if (!f || !h) return;
+      var p = +f.price;
+      if (f.price !== "" && p < minPrice) { h.textContent = "The lowest asking price on Saaz is " + S.money("UGX", minPrice) + "."; return; }
+      var row = S.soldPriceFor(sold, f.make, f.model);
+      h.textContent = row ? "Typical agreed price for a " + row.make + " " + row.model + " on Saaz, last 90 days: " + S.money("UGX", Math.round(row.typical_price)) + " (" + row.sold_90d + " sold). You set your own price."
+        : "You can change the price until a deal is agreed.";
+    }
+    // Keep a local copy of new, unsaved listings only (an edit is already saved in Saaz)
+    function keep() {
+      if (existing) return; var f = formState(); if (!f) return;
+      writeLocal(DRAFT_KEY(), { vin: S.$("#vin").value, f: f, photos: photos, at: Date.now() });
+    }
+    function restore(d) {
+      var fm = S.$("#f"); if (!fm || !d || !d.f) return;
+      Object.keys(d.f).forEach(function (k) {
+        var el = fm.elements[k]; if (!el || el.readOnly || el.disabled || el.type === "hidden") return;
+        if (el.type === "checkbox") el.checked = !!d.f[k]; else el.value = d.f[k];
+      });
+      photos = (d.photos || []).slice(0, 12);
     }
     function regions() {
       var c = S.$("#ctry").value, sel = S.$("#reg");
       sel.innerHTML = S.REGIONS[c].map(function (r) { return "<option" + (r === l.region ? " selected" : "") + ">" + r + "</option>"; }).join("");
     }
     function showForm(locked) {
-      S.$("#rest").innerHTML = lockedMsg + "<form id='f' class='stack'>" + fieldsHtml(locked) + "</form>";
-      regions(); drawThumbs();
+      S.$("#rest").innerHTML = lockedMsg + (restored ? "<p class='box' id='restored'>Your unsaved details for this car are back. <button type='button' class='btn text' id='startover'>Start again</button></p>" : "") +
+        "<div class='sellgrid'><form id='f' class='stack'>" + fieldsHtml(locked) + "</form>" +
+        "<aside class='sellpreview' aria-label='How buyers will see your car'><h2>How buyers will see it</h2><div id='pv'></div>" +
+        "<p class='note'>This is the card on the Saaz car list. Buyers see it once the inspection is issued and Saaz approves your car." + (l.ref ? " <a href='#/car/" + esc(l.ref) + "'>Open the full car page</a>" : "") + "</p></aside></div>";
+      regions();
+      if (restored) restore(restored);
+      drawThumbs(); priceHint();
+      var so = S.$("#startover"); if (so) so.onclick = function () { writeLocal(DRAFT_KEY(), null); S.render(); };
+      S.$("#f").addEventListener("input", function (e) { preview(); keep(); if (/^(price|make|model)$/.test(e.target.name)) priceHint(); });
+      S.$("#f").addEventListener("change", function () { preview(); keep(); });
       S.$("#files").onchange = function (e) {
-        var files = Array.prototype.slice.call(e.target.files, 0, 12 - photos.length);
+        var files = Array.prototype.slice.call(e.target.files, 0, 12 - photos.length), failed = [];
         S.toast("Uploading " + files.length + " photo" + (files.length === 1 ? "" : "s") + "…");
         Promise.all(files.map(function (file) {
           return shrink(file).then(function (blob) {
             var path = S.me().id + "/" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + ".webp";
             return S.db.storage.from("car-photos").upload(path, blob, { contentType: "image/webp" }).then(function (r) { if (r.error) throw r.error; photos.push(path); });
-          });
-        })).then(function () { drawThumbs(); S.toast("Photos added."); }).catch(function (e2) { drawThumbs(); S.toast(S.friendly(e2), true); });
+          }).then(function () { return true; }, function (e3) { failed.push(e3); return false; });
+        })).then(function () {
+          drawThumbs(); keep();
+          if (failed.length) S.toast(failed.length + " of " + files.length + " photo" + (files.length === 1 ? "" : "s") + " didn't upload. " + S.friendly(failed[0]) + " Add " + (failed.length === 1 ? "it" : "them") + " again.", true);
+          else S.toast("Photos added.");
+        });
         e.target.value = "";
       };
       S.$("#f").onsubmit = function (e) {
@@ -96,11 +187,11 @@
         S.rpc("save_listing", { p: p }).then(function (id) {
           l.id = id;
           return go === "submit" ? S.rpc("submit_listing", { p_listing: id }).then(function () { return id; }) : id;
-        }).then(function (id) { S.toast(go === "submit" ? "Submitted. Saaz is putting a garage in play." : "Draft saved."); S.go("#/my/cars/" + id); })
+        }).then(function (id) { writeLocal(DRAFT_KEY(), null); writeLocal(START_KEY, null); S.toast(go === "submit" ? "Submitted. Saaz is putting a garage in play." : "Draft saved."); S.go("#/my/cars/" + id); })
           .catch(function (e2) { err.textContent = S.friendly(e2); S.$$("button", e.target).forEach(function (b) { b.disabled = false; }); if (l.id) history.replaceState(null, "", "#/my/edit/" + l.id); });
       };
     }
-    v.innerHTML = "<div class='narrow wide'><h1>" + (existing ? "Edit " + esc(l.ref) : saaz ? "New Saaz car" : "List a car") + "</h1>" +
+    v.innerHTML = "<div class='sellform'><h1>" + (existing ? "Edit " + esc(l.ref) : saaz ? "New Saaz car" : "List a car") + "</h1>" +
       // BA-0004: an admin on the private-seller form is pointed to the Saaz car form, which doesn't ask about the logbook
       (S.isAdmin() && !existing && !saaz ? "<p class='box spaced' data-ref='saaz-car-hint'>Is this a car Saaz owns, for example one Saaz imported? <a href='#/sell/new?saaz=1" + (preVin ? "&vin=" + encodeURIComponent(preVin) : "") + "'>List it as a Saaz car</a> instead. Saaz cars don't need the logbook or the owner's authorisation.</p>" : "") +
       "<p class='lead'>Start with the VIN or chassis number. The listing stays private until a Saaz inspection is issued and approved.</p>" +
@@ -114,20 +205,24 @@
       e.preventDefault(); var vin = S.$("#vin").value.toUpperCase().replace(/\s/g, ""); S.$("#vin").value = vin;
       S.rpc("vin_lookup", { p_vin: vin }).then(function (r) {
         look = r; var box = S.$("#look");
+        restored = saved && saved.vin === vin ? saved : null;
+        // What a visitor typed on #/sell fills only fields the lookup left empty
+        var start = restored ? null : readLocal(START_KEY);
+        var fillStart = function () { if (start) ["make", "model", "year", "mileage", "price"].forEach(function (k) { if ((l[k] === "" || l[k] == null) && start[k]) l[k] = start[k]; }); };
         if (r.active_listing) { box.innerHTML = "<p class='err'>This car already has an active listing on Saaz.</p>"; S.$("#rest").innerHTML = ""; return; }
         if (r.found === "saaz_import") {
           var veh = r.vehicle; l = Object.assign(l, { make: veh.make, model: veh.model, year: veh.year, fuel: veh.fuel, gearbox: veh.gearbox, body: veh.body, engine: veh.engine, mileage: r.highest_km });
           lockedMsg = "<p class='box good'>Saaz import record found. Make, model, year, fuel, gearbox, body and engine are filled in and locked. Import mileage: " + S.km(veh.import_mileage) + ".</p>";
-          box.innerHTML = ""; showForm(true);
+          fillStart(); box.innerHTML = ""; showForm(true);
         } else if (r.found === "earlier") {
           var v2 = r.vehicle; l = Object.assign(l, { make: v2.make, model: v2.model, year: v2.year, fuel: v2.fuel, gearbox: v2.gearbox, body: v2.body, engine: v2.engine });
           lockedMsg = "<p class='box'>Saaz has seen this car before. Its history carries on with this listing. Mileage can't be lower than " + S.km(r.highest_km) + ".</p>";
-          box.innerHTML = ""; showForm(false);
+          fillStart(); box.innerHTML = ""; showForm(false);
         } else {
           var d = S.decode(vin); l = Object.assign(l, { make: d.make || "", model: d.model || "", year: d.year || "" });
           lockedMsg = "<p class='box'>New to Saaz. " + (d.make ? "Partial decode from the " + esc(d.how) + ": " + esc([d.make, d.model, d.year].filter(Boolean).join(" ")) + ". Check it." : "The " + esc(d.how) + " gave nothing. Fill in the details.") +
             " Importer unknown. This listing starts the car's Saaz record.</p>";
-          box.innerHTML = ""; showForm(false);
+          fillStart(); box.innerHTML = ""; showForm(false);
         }
       }).catch(function (e2) { S.$("#look").innerHTML = "<p class='err'>" + esc(S.friendly(e2)) + "</p>"; });
     };
@@ -136,14 +231,117 @@
   S.route("/sell/new", function (v, m, q) {
     var saaz = q.get("saaz") === "1";
     if (saaz && !S.isAdmin()) { v.innerHTML = "<div class='empty'><b>Admins only</b></div>"; return; }
-    sellForm(v, null, saaz, q.get("vin"));
+    return Promise.all([S.sellFacts(), S.soldPrices()]).then(function (r) { sellForm(v, null, saaz, q.get("vin"), r[0], r[1]); });
   }, "user");
   S.route("/my/edit/([0-9a-f-]+)", function (v, m) {
     return S.q(S.db.from("listings").select("*, vehicles(vin)").eq("id", m[0])).then(function (rows) {
       var l = rows[0]; if (!l) throw new Error("Listing not found.");
-      sellForm(v, l, l.saaz_owned, l.vehicles.vin);
+      return Promise.all([S.sellFacts(), S.soldPrices()]).then(function (r) { sellForm(v, l, l.saaz_owned, l.vehicles.vin, r[0], r[1]); });
     });
   }, "user");
+
+  // ---------- The seller page (#/sell): public, no account needed to read it ----------
+  // Every claim here is a rule the product enforces. Sources: README ("no Saaz review, no listing"; payments and the platform fee left out),
+  // help.html (the garage sets the inspection price, paid to the garage), settings (lowest price, report valid days), inspection_scopes (the checks).
+  S.route("/sell", function (v) {
+    v.className = "sellpage";
+    var start = readLocal(START_KEY) || {}, signed = S.signedIn();
+    var go = signed ? "#/sell/new" : "#/signup";
+    var cta = function (label, cls) { return "<a class='btn " + (cls || "") + "' data-start href='" + go + "'>" + label + "</a>"; };
+    var field = function (k, label, type, ph) {
+      return "<label>" + label + "<input name='" + k + "' " + (type === "number" ? "type='number' inputmode='numeric' min='0'" : "autocapitalize='words'") +
+        " placeholder='" + ph + "' value='" + esc(start[k] == null ? "" : start[k]) + "'></label>";
+    };
+    v.innerHTML =
+      "<section class='hero sellhero' data-ref='sell-hero'><div class='wrap'>" +
+        "<div class='sellcopy'><h1 class='display'>Your car deserves the right buyer.</h1>" +
+        "<p class='sub'>Free to list. A certified garage inspects your car, buyers see the report, and you decide which offers to take.</p>" +
+        "<div class='row heroact'>" + cta("Start selling your car") + "<button type='button' class='btn ghost' id='tohow'>How it works</button></div></div>" +
+        "<div class='tryit' data-ref='sell-try'><h2>Your car, the way buyers will see it</h2>" +
+          "<form id='tf' class='tryfields' autocomplete='off'>" + field("make", "Make", "", "Toyota") + field("model", "Model", "", "Harrier") +
+            field("year", "Year", "number", "2015") + field("mileage", "Mileage (km)", "number", "78000") +
+            "<label class='full'>Asking price (UGX)<input name='price' type='number' inputmode='numeric' min='0' step='100000' placeholder='72000000' value='" + esc(start.price || "") + "'></label></form>" +
+          "<div id='tpv' aria-live='polite'></div>" +
+          "<p class='note'>Kept on this phone only. It fills in the listing form when you start.</p></div>" +
+      "</div></section>" +
+
+      "<section class='band white' id='inspection' data-ref='sell-inspection'><div class='wrap'><div class='split'>" +
+        "<div><h2>Every car on Saaz is inspected first</h2>" +
+          "<p class='lead'>No inspection, no listing. A certified garage checks your car in person, and the report goes on your listing so buyers don't have to guess.</p>" +
+          "<h3 class='minihead'>What the garage checks</h3><ul class='checkgrid' id='checks'><li>Engine</li><li>Gearbox</li><li>Brakes</li><li>Steering</li><li>Tyres</li><li>Electrics</li></ul>" +
+          "<p class='note' id='limits'>The report records the car on the day of the inspection. It is not a guarantee.</p></div>" +
+        "<figure class='samplereport' aria-label='Sample inspection report'><span class='sample'>Sample</span>" +
+          "<div class='insp-card'><div class='insp-head'>" + S.chip("pass") + "<span>84/100</span><span>Report SZR-SAMPLE</span></div>" +
+          "<ul class='findings'><li><span class='lvl attention'>Attention</span><div><b>Tyres</b><span>Front tyres at about 30% tread.</span></div></li><li><span class='lvl note'>Note</span><div><b>Body and paint</b><span>Small scratch on the rear bumper.</span></div></li></ul>" +
+          "<p class='note'>Each real report has a number, a score out of 100, the garage's notes, and a code anyone can use to <a href='#/verify'>check it is real and unchanged</a>.</p></div></figure>" +
+      "</div></div></section>" +
+
+      "<section class='band soft' data-ref='sell-costs'><div class='wrap'><div class='sechead'><h2>What it costs</h2></div><dl class='costs'>" +
+        "<div><dt>Listing your car</dt><dd>Free. Saaz charges no listing fee and no commission.</dd></div>" +
+        "<div><dt>The inspection</dt><dd>Required before your car goes live. The garage sets the price and you pay the garage.</dd></div>" +
+        "<div><dt>Extra checks</dt><dd id='extras'>Optional. Ask for a closer look at one area, with its own report.</dd></div>" +
+        "<div><dt>Money through Saaz</dt><dd>None. You and the buyer settle payment yourselves once you agree a deal.</dd></div>" +
+      "</dl></div></section>" +
+
+      "<section class='band white' data-ref='sell-price'><div class='wrap'><div class='sechead'><h2>You set the price</h2><p>Buyers see the report next to your price, so they can see what they are paying for.</p></div>" +
+        "<div class='features three'>" +
+          "<div><div><b>Your number</b><span id='pricerule'>You choose the asking price and can change it until a deal is agreed. A live car keeps its inspection when only the price changes.</span></div></div>" +
+          "<div><div><b>Offer rules</b><span>Set a minimum offer. Offers below it are turned down for you, or flagged for you to decide. Buyers never see your minimum.</span></div></div>" +
+          "<div><div><b>Your phone stays private</b><span>Buyers make offers inside Saaz. Phone numbers and emails are shared only after you both agree.</span></div></div>" +
+        "</div><div id='market'></div></div></section>" +
+
+      "<section class='band soft' id='how' data-ref='sell-steps'><div class='wrap'><div class='sechead'><h2>How selling works</h2></div><ol class='steps sellsteps'>" +
+        "<li><span class='n'>1</span><div><b>Add your car</b><span>Start with the VIN or chassis number, then the details and 4 to 12 photos. It saves as a draft only you can see.</span></div></li>" +
+        "<li><span class='n'>2</span><div><b>A certified garage inspects it</b><span>Saaz offers your car to the nearest certified garage. You agree, they set a date, and they inspect it in person.</span></div></li>" +
+        "<li><span class='n'>3</span><div><b>Saaz approves it and it goes live</b><span>Saaz checks the report. Your car appears on Saaz with the report attached.</span></div></li>" +
+        "<li><span class='n'>4</span><div><b>Buyers make offers</b><span>Accept, counter or decline. Contact details are shared once you agree.</span></div></li>" +
+      "</ol></div></section>" +
+
+      "<section class='band white' data-ref='sell-faq'><div class='wrap'><div class='sechead'><h2>Questions sellers ask</h2></div><div class='faq flush'>" +
+        "<details><summary>Is listing my car free?</summary><p>Yes. Saaz charges nothing to list or to sell. You pay the garage for the inspection.</p></details>" +
+        "<details><summary>Can I list without an inspection?</summary><p>No. A car goes live only after a Saaz inspection is issued and Saaz approves it. Until then it is a private draft.</p></details>" +
+        "<details><summary>What does the inspection cost?</summary><p>Each certified garage sets its own price, and you pay the garage directly. No money moves through Saaz.</p></details>" +
+        "<details><summary>Can I change my listing later?</summary><p>You can change the price until a deal is agreed. To change anything else on a live car, it goes back to draft, and submitting again books a new inspection.</p></details>" +
+        "<details><summary>What happens when a buyer is interested?</summary><p>They make an offer in Saaz. You accept, counter or decline, or let your offer rules handle low offers. Contacts are shared once you both agree.</p></details>" +
+        "<details><summary>How do I know my car is live?</summary><p>My cars shows each car's stage, from draft to sold. Saaz also sends a notice to your Saaz inbox when your car is approved.</p></details>" +
+        "<details><summary>How long does a report last?</summary><p id='validfaq'>A report is valid for 60 days. After that you submit the car again for a new inspection.</p></details>" +
+      "</div></div></section>" +
+
+      "<section class='band dark sellclose' data-ref='sell-close'><div class='wrap'><h2>Ready to put your car on the market?</h2>" +
+        "<p class='sub'>Start with your VIN or chassis number. Save a draft and finish when you're ready.</p><div class='row heroact'>" + cta("List your car for free") + "</div></div></section>";
+
+    // Starting: what was typed above is kept for the form; signed-out sellers come back to the form after creating an account or signing in
+    S.$$("[data-start]", v).forEach(function (a) { a.onclick = function () { if (!signed) S.after = "#/sell/new"; }; });
+    S.$("#tohow").onclick = function () { S.$("#how").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); };
+    var tf = S.$("#tf");
+    function tryCard() {
+      var f = S.form(tf), has = ["make", "model", "year", "mileage", "price"].some(function (k) { return f[k] !== ""; });
+      S.$("#tpv").innerHTML = S.card({ make: f.make, model: f.model, year: f.year, mileage: f.mileage === "" ? null : f.mileage, price: f.price === "" ? null : f.price, currency: "UGX", photos: [] },
+        { preview: true, tag: "<span class='car-tag pending'>Inspection result goes here</span>" });
+      writeLocal(START_KEY, has ? f : null);
+    }
+    tf.addEventListener("input", tryCard); tf.onsubmit = function (e) { e.preventDefault(); };
+    tryCard();
+
+    // Filled in from the database after first paint; a slow phone sees the page straight away
+    var here = location.hash;
+    S.sellFacts().then(function (facts) {
+      if (location.hash !== here) return;
+      var gen = facts.scopes && facts.scopes.by.general;
+      if (gen) S.$("#checks").innerHTML = gen.checks.map(function (k) { return "<li>" + esc(S.checkName(k)) + "</li>"; }).join("");
+      var extra = facts.scopes ? facts.scopes.list.filter(function (x) { return x.key !== "general"; }).map(function (x) { return x.name; }) : [];
+      if (extra.length) S.$("#extras").textContent = "Optional: " + extra.join(", ") + ". Each has its own report, and the garage sets its price.";
+      S.$("#limits").textContent = "The report records the car on the day of the inspection. It is not a guarantee. It is valid for " + facts.validDays + " days.";
+      S.$("#validfaq").textContent = "A report is valid for " + facts.validDays + " days. After that you submit the car again for a new inspection.";
+      S.$("#pricerule").textContent = "You choose the asking price, from " + S.money("UGX", facts.minPrice) + ", and can change it until a deal is agreed. A live car keeps its inspection when only the price changes.";
+    });
+    S.soldPrices().then(function (rows) {
+      if (location.hash !== here) return;
+      S.$("#market").innerHTML = rows.length
+        ? "<h3 class='minihead'>Agreed prices on Saaz, last 90 days</h3>" + S.sellingTable(rows.slice(0, 5)) + "<p class='note'><a href='#/selling'>See every model on What's selling</a></p>"
+        : "<p class='note'>Agreed prices by model will show on <a href='#/selling'>What's selling</a> as cars sell on Saaz.</p>";
+    });
+  });
 
   // ---------- My cars ----------
   S.carRows = function (rows, saaz) {
@@ -205,6 +403,7 @@
   function draw(v, l, open, msgs, st, deals, hist, review, convs) {
     var editable = ["draft", "changes_requested"].indexOf(l.status) >= 0;
     var actions = [];
+    if (["sold", "withdrawn", "rejected"].indexOf(l.status) < 0) actions.push("<a class='btn ghost' href='#/car/" + esc(l.ref) + "'>" + (l.status === "live" || l.status === "reserved" ? "Open the car page" : "See it as buyers will") + "</a>");
     if (editable) actions.push("<a class='btn' href='#/my/edit/" + l.id + "'>Edit</a>", "<div id='scopebox'></div>", "<button class='btn' id='submit'>Submit for a Saaz inspection</button>");
     if (["awaiting_review", "review_booked"].indexOf(l.status) >= 0 && !l.saaz_owned) actions.push("<form id='addscope' class='stack'><div id='scopebox'></div><button class='btn small ghost'>Request these inspections</button></form>");
     if (l.status === "re_review_due") actions.push("<button class='btn' id='submit'>Submit for a new Saaz inspection</button>");
@@ -216,7 +415,8 @@
     var model = st.model || {};
     v.innerHTML = "<p class='crumbs'><a href='" + (l.saaz_owned ? "#/admin/saaz" : "#/my/cars") + "'>" + (l.saaz_owned ? "Saaz cars" : "My cars") + "</a> / " + esc(l.ref) + "</p>" +
       "<div class='pagehead'><h1>" + esc(S.name(l)) + "</h1>" + S.chip(l.status) + "</div>" + progress(l.status) +
-      "<p class='box'>" + esc(STATUS_TEXT[l.status] || "") + (l.line_empty ? " No garage is left in line: Saaz will find one and let you know." : "") + "</p>" +
+      "<p class='box'>" + esc(STATUS_TEXT[l.status] || "") + (l.line_empty ? " No garage is left in line: Saaz will find one and let you know." : "") +
+        (NEXT_TEXT[l.status] ? " " + esc(NEXT_TEXT[l.status]) : "") + "</p>" +
       (l.admin_note ? "<p class='box warn'><b>Note from Saaz:</b> " + esc(l.admin_note) + "</p>" : "") +
       "<div class='row'>" + actions.join("") + "</div>" + priceForm +
       (open ? "<section><h2>" + (open.status === "agreed" ? "Your garage" : "Garage in play") + "</h2>" + convoHtml(open, msgs, true) +

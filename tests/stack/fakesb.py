@@ -146,6 +146,8 @@ class H(BaseHTTPRequestHandler):
                 msg = email.parser.BytesParser(policy=email.policy.default).parsebytes(b"Content-Type: " + ct.encode() + b"\r\n\r\n" + data)
                 data = [part.get_payload(decode=True) for part in msg.iter_parts() if part.get_filename() is not None or part.get_content_type() != "text/plain"][-1]
             f = os.path.join(STORE, key); os.makedirs(os.path.dirname(f), exist_ok=True); open(f, "wb").write(data)
+            # Like real Supabase: every upload is a row in storage.objects (the photo-owner rule in part 20 checks it)
+            bucket, name = key.split("/", 1); db("insert into storage.objects (bucket_id, name) values (%s, %s)", (bucket, name))
             return self.send(200, {"Key": key, "Id": str(uuid.uuid4())})
         self.send(404, {"message": "not found"})
     def rest(self, method, p):

@@ -821,6 +821,59 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
   .rtable .tbl td[data-label="Why"]{white-space:normal;min-width:var(--rail)}
 }
 
+/* ---------- Seller page (#/sell) and the listing form (#/sell/new), 23 Oct 2026 ---------- */
+.sellpage .sellhero{padding-block:var(--section-compact) var(--section)}
+.sellpage .sellhero .sub{color:var(--mut-on-dark);font-size:var(--fs-lg);line-height:var(--lh-lg);max-width:var(--measure);margin-top:var(--sp-4)}
+.sellpage .heroact{margin-top:var(--sp-5)}
+.tryit{background:var(--white);color:var(--ink);border-radius:var(--radius);padding:var(--sp-5);display:grid;gap:var(--sp-4)}
+.tryit h2{font-size:var(--fs-xl);line-height:var(--lh-xl);color:var(--navy);margin:0}
+.tryit .note{margin:0}
+.tryfields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)}
+.tryfields label{display:grid;gap:var(--sp-1);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600;min-width:0}
+.tryfields .full{grid-column:1/-1}
+.car.preview{cursor:default}
+.car.preview:hover .car-name{color:inherit}
+.car.preview:hover .car-photo,.car.preview:hover .car-photo img{transform:none;box-shadow:none}
+.car-tag.pending{background:var(--white);color:var(--mut);border:1px dashed var(--field)}
+.ghosttext{color:var(--mut);font-weight:400}
+.sellpage .minihead{font-size:var(--fs-lg);line-height:var(--lh-lg);margin-top:var(--sp-6);color:var(--navy)}
+.checkgrid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2) var(--sp-4);margin-top:var(--sp-3)}
+.checkgrid li{display:flex;gap:var(--sp-2);align-items:baseline;min-width:0;overflow-wrap:anywhere}
+.checkgrid li:before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--good);transform:translateY(-1px)}
+.samplereport{margin:0;display:grid;gap:var(--sp-2);justify-items:start}
+.samplereport .insp-card{width:100%;border:1px solid var(--line);background:var(--white);gap:var(--sp-4)}
+.samplereport .note{margin:0}
+.costs{display:grid;gap:var(--sp-4) var(--col-gap);margin:0}
+.costs>div{border-top:2px solid var(--navy);padding-top:var(--sp-3);min-width:0}
+.costs dt{font-weight:700;color:var(--navy);font-size:var(--fs-lg);line-height:var(--lh-lg)}
+.costs dd{margin:var(--sp-1) 0 0;color:var(--mut)}
+.sellpage .features>div{grid-template-columns:minmax(0,1fr)}
+.sellpage .sellclose .sub{color:var(--mut-on-dark);margin-top:var(--sp-3);max-width:var(--measure)}
+.sellpage .sellclose h2{color:var(--white)}
+@media(min-width:768px){
+  .costs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .checkgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(min-width:1024px){
+  .sellpage .sellhero .wrap>.sellcopy{grid-column:1/span 6}
+  .sellpage .sellhero .wrap>.tryit{grid-column:8/span 5}
+  .costs{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+/* the listing form: form on the left, the buyer's card beside it from 1024 */
+.appbody .sellform{max-width:var(--doc)}
+.sellgrid{display:grid;gap:var(--sp-6);margin-top:var(--sp-4)}
+.sellpreview h2{font-size:var(--fs-xl);line-height:var(--lh-xl);margin-bottom:var(--sp-3)}
+.sellpreview #pv{max-width:var(--narrow)}
+.appbody .fieldhint{display:block;font-weight:400;color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);margin-top:var(--sp-1)}
+.appbody .fieldhint:empty{display:none}
+@media(min-width:1024px){
+  .appbody .sellform{max-width:none}
+  .sellgrid{grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--col-gap)}
+  .sellgrid>form{grid-column:1/span 7}
+  .sellgrid>.sellpreview{grid-column:9/span 4;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start}
+}
+.sellform .grid2>label{align-content:start}
+
 /* build.css: the private Build Assistant (only drawn for admins the database allows; see build-assistant.js). Tokens only. */
 .ba{font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .ba-launch{position:fixed;left:var(--sp-4);bottom:var(--sp-4);z-index:60;min-height:var(--control-sm);padding:0 var(--sp-4);border:1px solid var(--navy);border-radius:var(--radius-pill);background:var(--white);color:var(--navy);font:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)}
