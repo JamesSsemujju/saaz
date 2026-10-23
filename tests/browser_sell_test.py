@@ -29,6 +29,9 @@ with sync_playwright() as pw:
 
     # 1. The page, signed out
     go("#/sell")
+    check("slate palette: dark bands are #06141B, body ink #253745",
+          pg.evaluate("getComputedStyle(document.querySelector('.sellhero')).backgroundColor") == "rgb(6, 20, 27)" and pg.evaluate("getComputedStyle(document.body).color") == "rgb(37, 55, 69)",
+          (pg.evaluate("getComputedStyle(document.querySelector('.sellhero')).backgroundColor"), pg.evaluate("getComputedStyle(document.body).color")))
     check("header Sell goes to the seller page when signed out", pg.get_attribute("[data-ref=sell-btn]", "href").endswith("#/sell"))
     check("hero headline and one main action", "Your car deserves the right buyer." in text() and pg.locator(".sellhero a.btn[data-start]").count() == 1)
     pg.wait_for_timeout(600)
@@ -80,7 +83,12 @@ with sync_playwright() as pw:
     check("photo count guidance", "0 of at least 4" in text("#h-photos"))
     pg.fill("input[name=colour]", "Pearl white"); pg.fill("textarea[name=description]", "Short")
     check("description length guidance", "5 of at least 30" in text("#h-desc"), text("#h-desc"))
-    pg.set_input_files("#files", photos); pg.wait_for_timeout(3000)
+    pg.set_input_files("#files", photos); pg.wait_for_timeout(150)
+    check("upload progress shows in the photo control", pg.is_visible("#upbar") and "of 4" in text("#uptext"), text("#uptext") if pg.locator("#uptext").count() else None)
+    pg.wait_for_timeout(1200)
+    check("upload progress ends with the count", text("#uptext") == "Uploaded 4 of 4" or pg.is_hidden("#upbar"), text("#uptext"))
+    pg.wait_for_timeout(1800)
+    check("progress bar tidies away when done", pg.is_hidden("#upbar"))
     check("4 photos uploaded, guidance updated", pg.locator("#thumbs img").count() == 4 and "4 photos added" in text("#h-photos"), text("#h-photos"))
     check("first photo shows on the buyer card", pg.locator("#pv .car-photo img").count() == 1)
     overflow("listing form"); shot("form")
@@ -94,7 +102,10 @@ with sync_playwright() as pw:
     pg.select_option("#reg", "Kampala"); pg.fill("input[name=plate]", "UBA 123X")
     pg.fill("textarea[name=description]", "Clean Harrier, one owner in Uganda, full service history at the dealer.")
     pg.check("input[name=logbook_name_matches]")
-    pg.click("button[value=save]"); pg.wait_for_timeout(2000)
+    pg.route("**/rpc/save_listing", lambda r: (pg.wait_for_timeout(700), r.continue_()))
+    pg.click("button[value=save]"); pg.wait_for_timeout(200)
+    check("saving shows a busy toast with a spinner", "busy" in pg.get_attribute("#toast", "class") and "Saving your draft" in text("#toast"), pg.get_attribute("#toast", "class"))
+    pg.wait_for_timeout(2000); pg.unroute("**/rpc/save_listing")
     check("draft saved, car page opens", "#/my/cars/" in pg.url, pg.url)
     check("local copy cleared after saving", pg.evaluate("Object.keys(localStorage).filter(k=>/^saaz-sell/.test(k)).length") == 0)
     check("next step shown on the car page", "Next: submit it for a Saaz inspection" in text())

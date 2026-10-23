@@ -51,3 +51,10 @@ h3{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
 .sechead h2{margin:0}
 .sechead p{flex-basis:100%;color:var(--mut);margin:0}
 .sechead .btn.text{font-weight:700}
+
+/* ---------- Polish (23 Oct 2026, from make-interfaces-feel-better and web-animation-design) ---------- */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+h1,h2,h3{text-wrap:balance}
+p,li,dd{text-wrap:pretty}
+/* prices and counts don't jiggle as they change */
+.car-price,.stats b,.rkpis b,.upbar b,.price,.money,.demand{font-variant-numeric:tabular-nums}

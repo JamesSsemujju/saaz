@@ -122,6 +122,17 @@ Lost phone: in Supabase, Authentication, Users, open the admin and remove the ol
 
 **Open calls:** "no commission" holds until a platform fee is decided; the Sell module status still says planned, early 2027; the Inspections page still describes the old code and who-pays model.
 
+## Slate colours, toasts, upload progress and polish (added 23 Oct 2026)
+**Colours:** Saaz Black is replaced by a slate palette, set only in `src/styles/tokens.css`: `#06141B` (dark bands, buttons, headings), `#11212D` (hover), `#253745` (body text, links), `#4A5C6A` (muted text), `#9BA8AB` (muted text on dark, input borders), `#CCD0CF` (silver). Light surfaces are tints of the silver. Contrast: body text 12.3 and muted 6.9 on white; silver 12.0 and muted 7.6 on the dark slate. Shadows and overlays use `--shade`. Status colours (good, warn, bad) are unchanged. Still black: the app icons and favicons in `src/assets/img/brand/` (brand files, not tokens).
+
+**Toast with states:** `S.busy(msg)` shows a spinner and stays until the next `S.toast`; `S.toast(msg, bad, action)` can carry one button (`{text, href}` or `{text, click}`); `S.toastHide()` clears it. Saving or submitting a listing shows the busy state; a failed save clears it and shows the error in the form.
+
+**Upload progress:** photo uploads show "Uploading 2 of 4…" and a bar inside the photo control, end with "Uploaded 4 of 4", then tidy away. The file input is disabled while uploading.
+
+**Polish (from the make-interfaces-feel-better and web-animation-design skills):** buttons press in slightly (scale 0.97, 100 ms); headings wrap evenly; body text avoids single-word last lines; prices and counts use fixed-width digits; a hairline inside car photos; toast motion 220 ms easing out. Motion is off for anyone who asks their phone to reduce it.
+
+**Tested (local stack, 23 Oct 2026):** `browser_sell_test.py` 44 of 44 at 320, 390 and 1280 (adds palette, upload progress and busy toast checks); `browser_flow_test.py` 184 of 184 at 390 and 1280; `browser_admin_preview_test.py` 26 of 26; `db_marketplace_test.py` 75 of 75; `db_photo_owner_test.py` 8 of 8. Not checked: the printed inspection report and the static car pages by eye, a real phone.
+
 ## Build Assistant (added 19 Oct 2026, database live 19 Oct, switch off)
 A private tool for building Saaz: comment on elements of the real page (`//header`, `//vehicle-card-2`), chat about the project, and a coding agent works them as a queue with honest statuses. Full admins and listed developers only, in an admin session, behind a switch in Admin, System, Build Assistant. Customers never see it or its records (private `build` schema). Nothing is deployed by it. Details and the agent runbook: `project-docs/Saaz_BuildAssistant_2026-10-19.md`. Database: `supabase/marketplace_18_build_assistant.sql` (applied 19 Oct 2026; switch starts off). Element names: `python3 tools/build_refs.py`. Claim fix: `supabase/marketplace_19_build_claim_fix.sql` (applied 19 Oct 2026).
 

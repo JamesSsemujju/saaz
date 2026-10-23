@@ -4,6 +4,9 @@
    Sizes are modifiers: .small (dense rows), .wide (full width). Every button and input in a row shares one height. */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:var(--control);max-width:100%;padding:var(--sp-2) var(--sp-5);text-align:center;border:1px solid var(--navy);border-radius:var(--radius-pill);background:var(--navy);color:var(--white);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:700;text-decoration:none;cursor:pointer}  /* a long label wraps and the button grows; one line is always exactly --control */
 .btn:hover{background:var(--navy-2)}
+.btn{transition-property:background-color,border-color,color,transform;transition-duration:150ms,150ms,150ms,100ms;transition-timing-function:ease,ease,ease,cubic-bezier(0.165,0.84,0.44,1)}
+.btn:active:not(:disabled){transform:scale(.97)}  /* a press you can feel */
+@media(prefers-reduced-motion:reduce){.btn{transition-property:background-color,border-color,color}.btn:active:not(:disabled){transform:none}}
 .btn.ghost{background:var(--white);color:var(--navy)}
 .btn.ghost:hover{background:var(--soft)}
 .btn.text{background:none;border-color:transparent;color:var(--accent-ink);padding:0;text-decoration:underline}
@@ -104,7 +107,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 
 /* coverage tiles */
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--col-gap);margin-top:var(--sp-6)}
-.tiles div{background:var(--white);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-3);box-shadow:0 1px 2px rgba(11,11,12,.06)}
+.tiles div{background:var(--white);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-3);box-shadow:0 1px 2px rgba(var(--shade),.06)}
 .tiles .icon{color:var(--navy)}
 .tiles b{font-size:var(--fs-md);color:var(--navy);line-height:var(--lh-md)}
 @media(min-width:768px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -134,7 +137,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .stop:before{content:"";position:absolute;left:var(--sp-3);top:var(--sp-5);bottom:0;width:2px;background:var(--line)}
 .stop:last-child:before{display:none}
 .stop i{width:24px;height:24px;border-radius:50%;border:2px solid var(--navy);background:var(--white)}
-.stop.first i{background:var(--navy);box-shadow:0 0 0 6px rgba(11,11,12,.08)}
+.stop.first i{background:var(--navy);box-shadow:0 0 0 6px rgba(var(--shade),.08)}
 .stop em{font-style:normal;color:var(--mut);font-size:var(--fs-sm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;line-height:var(--lh-sm)}
 .stop b{display:block;font-size:var(--fs-lg);color:var(--navy);margin:var(--sp-1) 0;line-height:var(--lh-lg)}
 .stop span{color:var(--mut);font-size:var(--fs-md);line-height:var(--lh-md)}

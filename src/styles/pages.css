@@ -54,7 +54,7 @@
 .videobg{position:relative;isolation:isolate;background:var(--navy);color:var(--white)}
 .videobg-media{position:absolute;inset:0;z-index:-1;overflow:hidden}
 .videobg-media video,.videobg-media img{display:block;width:100%;height:100%;object-fit:cover}
-.videobg-media::after{content:"";position:absolute;inset:0;background:rgba(11,11,12,.72)}
+.videobg-media::after{content:"";position:absolute;inset:0;background:rgba(var(--shade),.72)}
 .videobg .hero,.videobg .band{background:transparent;border:0;color:var(--white)}
 .videobg .sechead h2,.videobg .car-name,.videobg .car-price b{color:var(--white)}
 .videobg .car-meta,.videobg .car .demand,.videobg .car-price small{color:var(--mut-on-dark)}

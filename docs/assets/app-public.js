@@ -239,8 +239,8 @@
       PANELS.map(function (p) {
         var b = box[p[0]], mk = (panels && panels[p[0]]) || "none";
         return "<g" + (editable ? " tabindex='0' role='button' data-panel='" + p[0] + "'" : "") + "><title>" + p[1] + ": " + S.label(mk) + "</title>" +
-          "<rect x='" + b[0] + "' y='" + b[1] + "' width='" + b[2] + "' height='" + b[3] + "' rx='6' fill='" + S.markColour[mk] + "' stroke='#5B6675'/>" +
-          (mk !== "none" ? "<text x='" + (b[0] + b[2] / 2) + "' y='" + (b[1] + b[3] / 2 + 4) + "' text-anchor='middle' font-size='10' fill='#111827'>" + mk.slice(0, 3).toUpperCase() + "</text>" : "") + "</g>";
+          "<rect x='" + b[0] + "' y='" + b[1] + "' width='" + b[2] + "' height='" + b[3] + "' rx='6' fill='" + S.markColour[mk] + "' stroke='#4A5C6A'/>" +
+          (mk !== "none" ? "<text x='" + (b[0] + b[2] / 2) + "' y='" + (b[1] + b[3] / 2 + 4) + "' text-anchor='middle' font-size='10' fill='#06141B'>" + mk.slice(0, 3).toUpperCase() + "</text>" : "") + "</g>";
       }).join("") + "</svg>";
   };
 

@@ -1,19 +1,22 @@
 /* tokens.css: the only place sizes are set. Every other stylesheet uses these and nothing else.
    tools/check_layout.py stops the build on any raw spacing, type or container value outside this file.
-   Brand: Saaz Automotive logo (17 Oct 2026): black, silver, white. See brand/README.md.
+   Brand: Saaz Automotive logo (17 Oct 2026). Colours moved from black to the slate palette on 23 Oct 2026.
    Older colour names (--navy is now Saaz Black) are kept so nothing else had to change.
-   Silver (--accent) is for dark backgrounds only; on light backgrounds accents use --accent-ink (graphite). */
+   Silver (--accent) is for dark backgrounds only; on light backgrounds accents use --accent-ink (slate). */
 :root{
-  /* colour */
-  --navy:#0B0B0C; --navy-2:#232327; --navy-deep:#000000;
-  --ink:#111827; --mut:#5B6675; --mut-on-dark:#C4C7CC;
-  --soft:#F4F6F9; --line:#E3E8EF; --white:#FFFFFF;
-  --accent:#D8DBE0; --accent-ink:#3A3D42; --ice:#E7E9EC;
-  --focus:#8FB1FF; --field:#C7D0DB;
+  /* colour: slate palette (23 Oct 2026), replacing Saaz Black. Six base values: 06141B 11212D 253745 4A5C6A 9BA8AB CCD0CF.
+     Older names kept so nothing else had to change: --navy is the darkest slate. Light surfaces are tints of CCD0CF.
+     Contrast on white: ink 12.3, muted 6.9. On --navy: silver 12.0, muted-on-dark 7.6. */
+  --navy:#06141B; --navy-2:#11212D; --navy-deep:#06141B;
+  --ink:#253745; --mut:#4A5C6A; --mut-on-dark:#9BA8AB;
+  --soft:#F0F2F2; --line:#DCE1E1; --white:#FFFFFF;
+  --accent:#CCD0CF; --accent-ink:#253745; --ice:#E3E7E7;
+  --focus:#8FB1FF; --field:#9BA8AB;
   --good:#1E7B45; --good-bg:#E6F5EC; --good-ink:#14532D;
   --warn:#A15C00; --warn-bg:#FFF1D6; --warn-ink:#7A4500;
   --bad:#B42318; --bad-bg:#FDE2E0; --bad-ink:#8A1C12;
-  --info-bg:#EEF3FA; --grey-bg:#E6EBF2; --grey-ink:#33465E;
+  --info-bg:#E8EEF0; --grey-bg:#E3E7E7; --grey-ink:#253745;
+  --shade:6,20,27;   /* the darkest slate as r,g,b, for shadows and overlays: rgba(var(--shade),.2) */
   --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 

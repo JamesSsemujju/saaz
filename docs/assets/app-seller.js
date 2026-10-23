@@ -99,7 +99,8 @@
         "<label>Region<select name='region' id='reg' required></select></label><label>Number plate (Uganda)<input name='plate' required placeholder='UBA 123X' value='" + esc(l.plate || "") + "' autocapitalize='characters'></label>" +
         "<label>Asking price (UGX)<input name='price' type='number' inputmode='numeric' required min='" + minPrice + "' step='1000' value='" + esc(l.price || "") + "'><small class='fieldhint' id='h-price' aria-live='polite'></small></label></div>" +
         "<label>Description<textarea name='description' rows='4' minlength='30' required placeholder='Service history, recent work, anything a buyer should know'>" + esc(l.description || "") + "</textarea><small class='fieldhint' id='h-desc' aria-live='polite'></small></label>" +
-        "<div><b>Photos<span class='req' aria-hidden='true'> *</span></b> <small>4 to 12. The first one is the photo on your card. Shrunk to about 30 KB each.</small><div id='thumbs' class='thumbs'></div><input type='file' id='files' accept='image/*' multiple><small class='fieldhint' id='h-photos' aria-live='polite'></small></div>" +
+        "<div><b>Photos<span class='req' aria-hidden='true'> *</span></b> <small>4 to 12. The first one is the photo on your card. Shrunk to about 30 KB each.</small><div id='thumbs' class='thumbs'></div><input type='file' id='files' accept='image/*' multiple>" +
+        "<div class='upbar' id='upbar' hidden><b id='uptext' aria-live='polite'></b><span class='uptrack'><i id='upfill'></i></span></div><small class='fieldhint' id='h-photos' aria-live='polite'></small></div>" +
         (saaz ? "" : "<p class='note'>Tick one of these two<span class='req' aria-hidden='true'> *</span></p><label class='inline'><input type='checkbox' name='logbook_name_matches' value='1'" + (l.logbook_name_matches ? " checked" : "") + "> The logbook is in my name</label>" +
           "<label class='inline'><input type='checkbox' name='owner_authorised' value='1'" + (l.owner_authorised ? " checked" : "") + "> The owner authorised me to sell</label>") +
         "<p class='err' id='err' role='alert'></p><div class='row'><button class='btn ghost' name='go' value='save'>Save draft</button><button class='btn' name='go' value='submit'>Save and submit for a Saaz inspection</button></div>" +
@@ -163,15 +164,23 @@
       S.$("#f").addEventListener("input", function (e) { preview(); keep(); if (/^(price|make|model)$/.test(e.target.name)) priceHint(); });
       S.$("#f").addEventListener("change", function () { preview(); keep(); });
       S.$("#files").onchange = function (e) {
-        var files = Array.prototype.slice.call(e.target.files, 0, 12 - photos.length), failed = [];
-        S.toast("Uploading " + files.length + " photo" + (files.length === 1 ? "" : "s") + "…");
+        var files = Array.prototype.slice.call(e.target.files, 0, 12 - photos.length), failed = [], doneN = 0;
+        if (!files.length) return;
+        // Progress in the control itself (slow data: the seller sees it moving), not a toast at the end only
+        var bar = S.$("#upbar"), fill = S.$("#upfill"), label = S.$("#uptext"), inp = e.target;
+        var step = function () {
+          label.textContent = doneN < files.length ? "Uploading " + (doneN + 1) + " of " + files.length + "…" : "Uploaded " + (files.length - failed.length) + " of " + files.length;
+          fill.style.setProperty("--p", Math.max(0.06, doneN / files.length));
+        };
+        bar.hidden = false; bar.classList.remove("done"); inp.disabled = true; step();
         Promise.all(files.map(function (file) {
           return shrink(file).then(function (blob) {
             var path = S.me().id + "/" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + ".webp";
             return S.db.storage.from("car-photos").upload(path, blob, { contentType: "image/webp" }).then(function (r) { if (r.error) throw r.error; photos.push(path); });
-          }).then(function () { return true; }, function (e3) { failed.push(e3); return false; });
+          }).then(function () { doneN++; step(); return true; }, function (e3) { failed.push(e3); doneN++; step(); return false; });
         })).then(function () {
-          drawThumbs(); keep();
+          drawThumbs(); keep(); inp.disabled = false; bar.classList.add("done");
+          setTimeout(function () { if (bar.classList.contains("done")) bar.hidden = true; }, 1600);
           if (failed.length) S.toast(failed.length + " of " + files.length + " photo" + (files.length === 1 ? "" : "s") + " didn't upload. " + S.friendly(failed[0]) + " Add " + (failed.length === 1 ? "it" : "them") + " again.", true);
           else S.toast("Photos added.");
         });
@@ -184,11 +193,12 @@
           mileage: f.mileage, country: f.country, region: f.region, plate: f.plate, price: f.price, description: f.description, photos: photos,
           logbook_name_matches: !!f.logbook_name_matches, owner_authorised: !!f.owner_authorised, saaz_owned: !!saaz };
         S.$$("button", e.target).forEach(function (b) { b.disabled = true; }); err.textContent = "";
+        S.busy(go === "submit" ? "Saving and submitting your car…" : "Saving your draft…");
         S.rpc("save_listing", { p: p }).then(function (id) {
           l.id = id;
           return go === "submit" ? S.rpc("submit_listing", { p_listing: id }).then(function () { return id; }) : id;
         }).then(function (id) { writeLocal(DRAFT_KEY(), null); writeLocal(START_KEY, null); S.toast(go === "submit" ? "Submitted. Saaz is putting a garage in play." : "Draft saved."); S.go("#/my/cars/" + id); })
-          .catch(function (e2) { err.textContent = S.friendly(e2); S.$$("button", e.target).forEach(function (b) { b.disabled = false; }); if (l.id) history.replaceState(null, "", "#/my/edit/" + l.id); });
+          .catch(function (e2) { S.toastHide(); err.textContent = S.friendly(e2); S.$$("button", e.target).forEach(function (b) { b.disabled = false; }); if (l.id) history.replaceState(null, "", "#/my/edit/" + l.id); });
       };
     }
     v.innerHTML = "<div class='sellform'><h1>" + (existing ? "Edit " + esc(l.ref) : saaz ? "New Saaz car" : "List a car") + "</h1>" +

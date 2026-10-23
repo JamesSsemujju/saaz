@@ -82,10 +82,25 @@
     d.querySelector(".pop-x").onclick = close; d.addEventListener("cancel", function (e) { e.preventDefault(); close(); });
     document.body.appendChild(d); d.showModal(); return close;
   };
-  S.toast = function (msg, bad) {
-    var t = S.$("#toast"); t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
-    clearTimeout(S._t); S._t = setTimeout(function () { t.className = "toast"; }, 4200);
+  // One toast that changes state: S.busy("Saving…") stays up with a spinner until the next S.toast or S.toastHide.
+  // S.toast(msg, bad, action): action {text, href} or {text, click} puts one button inside the toast.
+  S.toast = function (msg, bad, action) {
+    var t = S.$("#toast"); clearTimeout(S._t);
+    t.textContent = ""; var m = document.createElement("span"); m.className = "tmsg"; m.textContent = msg; t.appendChild(m);
+    if (action && action.text) {
+      var a = document.createElement(action.href ? "a" : "button"); a.className = "tact"; a.textContent = action.text;
+      if (action.href) a.href = action.href; else a.type = "button";
+      a.onclick = function () { t.className = "toast"; if (action.click) action.click(); }; t.appendChild(a);
+    }
+    t.className = "toast show" + (bad ? " bad" : "");
+    S._t = setTimeout(function () { t.className = "toast"; }, action ? 6000 : 4200);
   };
+  S.busy = function (msg) {
+    var t = S.$("#toast"); clearTimeout(S._t);
+    t.textContent = ""; var m = document.createElement("span"); m.className = "tmsg"; m.textContent = msg; t.appendChild(m);
+    t.className = "toast show busy";
+  };
+  S.toastHide = function () { clearTimeout(S._t); var t = S.$("#toast"); if (t) t.className = "toast"; };
   // Run an action from a button: disable it, show the database's answer, then re-render.
   S.act = function (btn, fn, ok) {
     if (btn) btn.disabled = true;

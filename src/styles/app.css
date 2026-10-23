@@ -37,7 +37,7 @@
 .appbody .checks2{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4)}
 
 /* boxes */
-.appbody .box{background:#EEF3FA;border-radius:12px;padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0 0}
+.appbody .box{background:var(--info-bg);border-radius:12px;padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0 0}
 .appbody .box.good{background:#E6F5EC}
 .appbody .box.warn{background:#FFF1D6}
 .appbody .box.spaced{margin:var(--sp-4) 0}
@@ -160,7 +160,7 @@
 @media print{
   @page{size:A4;margin:12mm}
   .apphead,.noprint,.toast{display:none!important}
-  .appbody{background:#fff}.appbody .pad{padding:0}
+  .appbody{background:var(--white)}.appbody .pad{padding:0}
   .report{border:0;max-width:none;padding:0}
 }
 
@@ -195,12 +195,12 @@
 
 /* Pop-up (S.popup) */
 dialog.pop{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100vh - 32px);overflow:auto;border:0;border-radius:12px;padding:var(--sp-5) var(--sp-5) var(--sp-4);width:min(420px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--navy)}
-dialog.pop::backdrop{background:rgba(11,11,12,.55)}
+dialog.pop::backdrop{background:rgba(var(--shade),.55)}
 dialog.pop h2{margin:0 var(--sp-6) var(--sp-3) 0;font-size:var(--fs-xl);line-height:var(--lh-xl)}
 dialog.pop .pop-body p{margin:0 0 var(--sp-3);overflow-wrap:anywhere}
 dialog.pop .pop-acts{display:flex;gap:var(--sp-3);justify-content:flex-end;flex-wrap:wrap;margin-top:var(--sp-4)}
 dialog.pop .pop-x{position:absolute;top:var(--sp-3);right:var(--sp-3);background:none;border:0;font-size:var(--fs-2xl);cursor:pointer;color:var(--accent-ink);padding:var(--sp-1) var(--sp-2);line-height:var(--lh-2xl)}
-dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line,#D8DBE0)}
+dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
 .appbody b.bad{color:#8A1C12}
 /* Team list: invite details on their own line, buttons never squashed */
 .appbody .list.team li{flex-wrap:wrap;gap:var(--sp-3)}
@@ -212,7 +212,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .appbody .staff .qr{display:block;width:200px;height:200px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:var(--sp-2);margin:var(--sp-2) 0}
 .appbody .staff .key code{font-family:var(--mono);overflow-wrap:anywhere;font-size:var(--fs-sm);line-height:var(--lh-sm)}
 /* admin acting for a seller or buyer */
-.appbody .actfor{border-color:#C4C7CC;background:#FAFAFB}
+.appbody .actfor{border-color:var(--field);background:var(--soft)}
 .appbody .actfor .actitems{display:grid;gap:var(--sp-3);margin-top:var(--sp-3)}
 .appbody .actfor .actitems form{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:var(--sp-3)}
 .acctmenu a.adminentry{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
@@ -331,3 +331,19 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
   .sellgrid>.sellpreview{grid-column:9/span 4;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start}
 }
 .sellform .grid2>label{align-content:start}
+
+/* ---------- Toast with states (23 Oct 2026): busy (spinner, stays), done, failed; one action inside ---------- */
+.toast{display:flex;align-items:center;gap:var(--sp-3);opacity:0;transition-property:transform,opacity;transition-duration:220ms;transition-timing-function:cubic-bezier(0.165,0.84,0.44,1)}
+.toast.show{opacity:1}
+.toast .tmsg{min-width:0}
+.toast .tact{flex:none;background:none;border:0;border-left:1px solid rgba(255,255,255,.25);padding:0 0 0 var(--sp-3);color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+.toast.busy:before{content:"";flex:none;width:var(--sp-4);height:var(--sp-4);border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:var(--white);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.toast.busy:before{animation:none;border-top-color:rgba(255,255,255,.3)}}
+/* upload progress inside the photo control */
+.upbar{display:grid;gap:var(--sp-2);margin-top:var(--sp-3);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.upbar b{color:var(--navy);font-variant-numeric:tabular-nums}
+.uptrack{display:block;height:var(--sp-2);border-radius:var(--radius-pill);background:var(--ice);overflow:hidden}
+.uptrack i{display:block;height:100%;background:var(--navy);transform-origin:left;transform:scaleX(var(--p,0));transition:transform 200ms cubic-bezier(0.165,0.84,0.44,1)}
+.upbar.done .uptrack i{background:var(--good)}
+@media(prefers-reduced-motion:reduce){.uptrack i{transition:none}}

@@ -1,19 +1,22 @@
 /* tokens.css: the only place sizes are set. Every other stylesheet uses these and nothing else.
    tools/check_layout.py stops the build on any raw spacing, type or container value outside this file.
-   Brand: Saaz Automotive logo (17 Oct 2026): black, silver, white. See brand/README.md.
+   Brand: Saaz Automotive logo (17 Oct 2026). Colours moved from black to the slate palette on 23 Oct 2026.
    Older colour names (--navy is now Saaz Black) are kept so nothing else had to change.
-   Silver (--accent) is for dark backgrounds only; on light backgrounds accents use --accent-ink (graphite). */
+   Silver (--accent) is for dark backgrounds only; on light backgrounds accents use --accent-ink (slate). */
 :root{
-  /* colour */
-  --navy:#0B0B0C; --navy-2:#232327; --navy-deep:#000000;
-  --ink:#111827; --mut:#5B6675; --mut-on-dark:#C4C7CC;
-  --soft:#F4F6F9; --line:#E3E8EF; --white:#FFFFFF;
-  --accent:#D8DBE0; --accent-ink:#3A3D42; --ice:#E7E9EC;
-  --focus:#8FB1FF; --field:#C7D0DB;
+  /* colour: slate palette (23 Oct 2026), replacing Saaz Black. Six base values: 06141B 11212D 253745 4A5C6A 9BA8AB CCD0CF.
+     Older names kept so nothing else had to change: --navy is the darkest slate. Light surfaces are tints of CCD0CF.
+     Contrast on white: ink 12.3, muted 6.9. On --navy: silver 12.0, muted-on-dark 7.6. */
+  --navy:#06141B; --navy-2:#11212D; --navy-deep:#06141B;
+  --ink:#253745; --mut:#4A5C6A; --mut-on-dark:#9BA8AB;
+  --soft:#F0F2F2; --line:#DCE1E1; --white:#FFFFFF;
+  --accent:#CCD0CF; --accent-ink:#253745; --ice:#E3E7E7;
+  --focus:#8FB1FF; --field:#9BA8AB;
   --good:#1E7B45; --good-bg:#E6F5EC; --good-ink:#14532D;
   --warn:#A15C00; --warn-bg:#FFF1D6; --warn-ink:#7A4500;
   --bad:#B42318; --bad-bg:#FDE2E0; --bad-ink:#8A1C12;
-  --info-bg:#EEF3FA; --grey-bg:#E6EBF2; --grey-ink:#33465E;
+  --info-bg:#E8EEF0; --grey-bg:#E3E7E7; --grey-ink:#253745;
+  --shade:6,20,27;   /* the darkest slate as r,g,b, for shadows and overlays: rgba(var(--shade),.2) */
   --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 
@@ -108,6 +111,13 @@ h3{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
 .sechead p{flex-basis:100%;color:var(--mut);margin:0}
 .sechead .btn.text{font-weight:700}
 
+/* ---------- Polish (23 Oct 2026, from make-interfaces-feel-better and web-animation-design) ---------- */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+h1,h2,h3{text-wrap:balance}
+p,li,dd{text-wrap:pretty}
+/* prices and counts don't jiggle as they change */
+.car-price,.stats b,.rkpis b,.upbar b,.price,.money,.demand{font-variant-numeric:tabular-nums}
+
 /* layout.css: the one header and the one footer. Every page, static or app, uses this markup. */
 /* The header stays in view from 1024 (one row). On phones and tablets it is two rows, so it scrolls away to leave the screen to the page. */
 .apphead{background:var(--navy);color:var(--white);position:relative;z-index:20}
@@ -183,6 +193,9 @@ h3{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
    Sizes are modifiers: .small (dense rows), .wide (full width). Every button and input in a row shares one height. */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:var(--control);max-width:100%;padding:var(--sp-2) var(--sp-5);text-align:center;border:1px solid var(--navy);border-radius:var(--radius-pill);background:var(--navy);color:var(--white);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:700;text-decoration:none;cursor:pointer}  /* a long label wraps and the button grows; one line is always exactly --control */
 .btn:hover{background:var(--navy-2)}
+.btn{transition-property:background-color,border-color,color,transform;transition-duration:150ms,150ms,150ms,100ms;transition-timing-function:ease,ease,ease,cubic-bezier(0.165,0.84,0.44,1)}
+.btn:active:not(:disabled){transform:scale(.97)}  /* a press you can feel */
+@media(prefers-reduced-motion:reduce){.btn{transition-property:background-color,border-color,color}.btn:active:not(:disabled){transform:none}}
 .btn.ghost{background:var(--white);color:var(--navy)}
 .btn.ghost:hover{background:var(--soft)}
 .btn.text{background:none;border-color:transparent;color:var(--accent-ink);padding:0;text-decoration:underline}
@@ -283,7 +296,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 
 /* coverage tiles */
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--col-gap);margin-top:var(--sp-6)}
-.tiles div{background:var(--white);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-3);box-shadow:0 1px 2px rgba(11,11,12,.06)}
+.tiles div{background:var(--white);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-3);box-shadow:0 1px 2px rgba(var(--shade),.06)}
 .tiles .icon{color:var(--navy)}
 .tiles b{font-size:var(--fs-md);color:var(--navy);line-height:var(--lh-md)}
 @media(min-width:768px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -313,7 +326,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .stop:before{content:"";position:absolute;left:var(--sp-3);top:var(--sp-5);bottom:0;width:2px;background:var(--line)}
 .stop:last-child:before{display:none}
 .stop i{width:24px;height:24px;border-radius:50%;border:2px solid var(--navy);background:var(--white)}
-.stop.first i{background:var(--navy);box-shadow:0 0 0 6px rgba(11,11,12,.08)}
+.stop.first i{background:var(--navy);box-shadow:0 0 0 6px rgba(var(--shade),.08)}
 .stop em{font-style:normal;color:var(--mut);font-size:var(--fs-sm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;line-height:var(--lh-sm)}
 .stop b{display:block;font-size:var(--fs-lg);color:var(--navy);margin:var(--sp-1) 0;line-height:var(--lh-lg)}
 .stop span{color:var(--mut);font-size:var(--fs-md);line-height:var(--lh-md)}
@@ -427,7 +440,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .videobg{position:relative;isolation:isolate;background:var(--navy);color:var(--white)}
 .videobg-media{position:absolute;inset:0;z-index:-1;overflow:hidden}
 .videobg-media video,.videobg-media img{display:block;width:100%;height:100%;object-fit:cover}
-.videobg-media::after{content:"";position:absolute;inset:0;background:rgba(11,11,12,.72)}
+.videobg-media::after{content:"";position:absolute;inset:0;background:rgba(var(--shade),.72)}
 .videobg .hero,.videobg .band{background:transparent;border:0;color:var(--white)}
 .videobg .sechead h2,.videobg .car-name,.videobg .car-price b{color:var(--white)}
 .videobg .car-meta,.videobg .car .demand,.videobg .car-price small{color:var(--mut-on-dark)}
@@ -466,12 +479,12 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .car-price b{font-size:var(--fs-xl);line-height:var(--lh-xl);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
 .car-price small{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .car:hover .car-name{color:var(--accent-ink)}
-.car:hover .car-photo{box-shadow:0 12px 28px rgba(11,11,12,.18)}
+.car:hover .car-photo{box-shadow:0 12px 28px rgba(var(--shade),.18)}
 /* BA-0001: on hover (mouse) or keyboard focus the card's photo comes forward and zooms slightly; the text stays as it is */
 .car .car-photo{transition:transform .2s ease,box-shadow .2s ease}
 .car .car-photo img{transition:transform .3s ease}
 @media (hover:hover){.car:hover .car-photo{transform:translateY(-4px)}.car:hover .car-photo img{transform:scale(1.05)}}
-.car:focus-visible .car-photo{transform:translateY(-4px);box-shadow:0 12px 28px rgba(11,11,12,.18)}
+.car:focus-visible .car-photo{transform:translateY(-4px);box-shadow:0 12px 28px rgba(var(--shade),.18)}
 .car:focus-visible .car-photo img{transform:scale(1.05)}
 @media (prefers-reduced-motion:reduce){.car .car-photo,.car .car-photo img{transition:none}.car:hover .car-photo,.car:focus-visible .car-photo,.car:hover .car-photo img,.car:focus-visible .car-photo img{transform:none}}
 
@@ -539,6 +552,8 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .findings span{color:var(--mut)}
 /* in a row of fields the button keeps one line, like the fields beside it */
 .filters .btn,.homesearch .btn{white-space:nowrap;padding-inline:var(--sp-4)}
+/* a hairline inside every car photo so light photos don't melt into the page (23 Oct 2026) */
+.car-photo:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(var(--shade),.08);pointer-events:none}
 
 /* app.css: the marketplace app at /app/. Mobile first; everything scoped under .appbody so the public site is untouched. */
 .appbody{background:var(--soft);color:var(--ink);min-height:100vh}
@@ -579,7 +594,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .appbody .checks2{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4)}
 
 /* boxes */
-.appbody .box{background:#EEF3FA;border-radius:12px;padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0 0}
+.appbody .box{background:var(--info-bg);border-radius:12px;padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0 0}
 .appbody .box.good{background:#E6F5EC}
 .appbody .box.warn{background:#FFF1D6}
 .appbody .box.spaced{margin:var(--sp-4) 0}
@@ -702,7 +717,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 @media print{
   @page{size:A4;margin:12mm}
   .apphead,.noprint,.toast{display:none!important}
-  .appbody{background:#fff}.appbody .pad{padding:0}
+  .appbody{background:var(--white)}.appbody .pad{padding:0}
   .report{border:0;max-width:none;padding:0}
 }
 
@@ -737,12 +752,12 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 
 /* Pop-up (S.popup) */
 dialog.pop{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100vh - 32px);overflow:auto;border:0;border-radius:12px;padding:var(--sp-5) var(--sp-5) var(--sp-4);width:min(420px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--navy)}
-dialog.pop::backdrop{background:rgba(11,11,12,.55)}
+dialog.pop::backdrop{background:rgba(var(--shade),.55)}
 dialog.pop h2{margin:0 var(--sp-6) var(--sp-3) 0;font-size:var(--fs-xl);line-height:var(--lh-xl)}
 dialog.pop .pop-body p{margin:0 0 var(--sp-3);overflow-wrap:anywhere}
 dialog.pop .pop-acts{display:flex;gap:var(--sp-3);justify-content:flex-end;flex-wrap:wrap;margin-top:var(--sp-4)}
 dialog.pop .pop-x{position:absolute;top:var(--sp-3);right:var(--sp-3);background:none;border:0;font-size:var(--fs-2xl);cursor:pointer;color:var(--accent-ink);padding:var(--sp-1) var(--sp-2);line-height:var(--lh-2xl)}
-dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line,#D8DBE0)}
+dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
 .appbody b.bad{color:#8A1C12}
 /* Team list: invite details on their own line, buttons never squashed */
 .appbody .list.team li{flex-wrap:wrap;gap:var(--sp-3)}
@@ -754,7 +769,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .appbody .staff .qr{display:block;width:200px;height:200px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:var(--sp-2);margin:var(--sp-2) 0}
 .appbody .staff .key code{font-family:var(--mono);overflow-wrap:anywhere;font-size:var(--fs-sm);line-height:var(--lh-sm)}
 /* admin acting for a seller or buyer */
-.appbody .actfor{border-color:#C4C7CC;background:#FAFAFB}
+.appbody .actfor{border-color:var(--field);background:var(--soft)}
 .appbody .actfor .actitems{display:grid;gap:var(--sp-3);margin-top:var(--sp-3)}
 .appbody .actfor .actitems form{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:var(--sp-3)}
 .acctmenu a.adminentry{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
@@ -873,6 +888,22 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
   .sellgrid>.sellpreview{grid-column:9/span 4;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start}
 }
 .sellform .grid2>label{align-content:start}
+
+/* ---------- Toast with states (23 Oct 2026): busy (spinner, stays), done, failed; one action inside ---------- */
+.toast{display:flex;align-items:center;gap:var(--sp-3);opacity:0;transition-property:transform,opacity;transition-duration:220ms;transition-timing-function:cubic-bezier(0.165,0.84,0.44,1)}
+.toast.show{opacity:1}
+.toast .tmsg{min-width:0}
+.toast .tact{flex:none;background:none;border:0;border-left:1px solid rgba(255,255,255,.25);padding:0 0 0 var(--sp-3);color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+.toast.busy:before{content:"";flex:none;width:var(--sp-4);height:var(--sp-4);border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:var(--white);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.toast.busy:before{animation:none;border-top-color:rgba(255,255,255,.3)}}
+/* upload progress inside the photo control */
+.upbar{display:grid;gap:var(--sp-2);margin-top:var(--sp-3);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.upbar b{color:var(--navy);font-variant-numeric:tabular-nums}
+.uptrack{display:block;height:var(--sp-2);border-radius:var(--radius-pill);background:var(--ice);overflow:hidden}
+.uptrack i{display:block;height:100%;background:var(--navy);transform-origin:left;transform:scaleX(var(--p,0));transition:transform 200ms cubic-bezier(0.165,0.84,0.44,1)}
+.upbar.done .uptrack i{background:var(--good)}
+@media(prefers-reduced-motion:reduce){.uptrack i{transition:none}}
 
 /* build.css: the private Build Assistant (only drawn for admins the database allows; see build-assistant.js). Tokens only. */
 .ba{font-size:var(--fs-sm);line-height:var(--lh-sm)}
