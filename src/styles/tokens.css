@@ -50,6 +50,7 @@
   --rail:240px;                  /* side menus (admin) */
   --measure:680px;               /* longest line of running text */
   --narrow:560px;                /* forms */
+  --card:208px;                  /* BA-0008: narrowest a listing card gets; the grid fits as many as the width allows */
   --doc:820px;                   /* documents (the inspection report) and wide forms */
   --radius:12px; --radius-sm:8px; --radius-pill:999px;
 }

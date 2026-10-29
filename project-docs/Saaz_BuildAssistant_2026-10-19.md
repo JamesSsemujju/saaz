@@ -141,3 +141,10 @@ Found while working the first real tasks: a task handed to an agent stays "queue
 | BA-0006 | Video behind the hero and latest cars | James's road video turned -90 degrees (portrait on phones), silent, looping, about 0.5 MB per visitor (WebM, MP4 fallback); no section borders; white text over a dark tint; a still frame when motion is off or data saver is on. Files in src/assets/video/ |
 | BA-0004 | Saaz-owned car without a logbook | Already allowed via Admin, Saaz cars; pointer added on the sell form for admins |
 
+
+## Tasks worked on 25 Oct 2026
+| Task | Asked | Done |
+|---|---|---|
+| BA-0007 | Why only admins have the Build Assistant; others should have it | Asked James: A keep admins and developers, B trusted non-admin accounts, C a feedback inbox for signed-in users (visitors optional). B and C need database changes. Waiting on his answer |
+| BA-0008 | Smaller cards, fluid grid, photos framed with the tyres visible | Root cause: the photo's height didn't resolve in its frame, so photos taller than 4:3 were drawn from the top and lost their bottom. Photo pinned to the frame; photos far from 4:3 shown whole over a blurred copy. Fluid grid at 208 px minimum (5 a row at 1280, 4 in Admin, Cars). Smaller name and price, specs on 2 lines, demand in small type. Home shows two whole rows |
+| BA-0009 | Dropdowns crush into their borders | One dropdown style: own chevron with room, ellipsis for long choices; Admin, Cars Status field wider |

@@ -23,6 +23,14 @@
 label{display:grid;gap:var(--sp-2);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600;color:var(--ink)}
 label.inline{display:flex;gap:var(--sp-3);align-items:center;min-height:var(--control);font-weight:500}
 input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{height:var(--control);width:100%;min-width:0;padding:0 var(--sp-3);border:1px solid var(--field);border-radius:var(--radius-sm);background:var(--white);color:var(--ink);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md)}
+/* BA-0009 (25 Oct 2026): dropdowns drawn the same on every browser. The browser's own arrow is replaced by one chevron
+   with room of its own, so neither the text nor the arrow presses against the border; long choices end in an ellipsis. */
+select{-webkit-appearance:none;appearance:none;padding-right:calc(var(--sp-6) + var(--sp-2));text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%234A5C6A' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right var(--sp-3) center;background-size:var(--sp-4) var(--sp-4)}
+select:hover{border-color:var(--mut)}
+select::-ms-expand{display:none}
+select:disabled{cursor:not-allowed;background-color:var(--soft);color:var(--mut)}
 textarea{height:auto;min-height:calc(var(--control) * 2);padding-block:var(--sp-3);resize:vertical}
 input[type=checkbox],input[type=radio]{width:var(--sp-5);height:var(--sp-5);flex:none;accent-color:var(--navy)}
 input[readonly]{background:var(--soft);color:var(--mut)}

@@ -179,8 +179,9 @@
   .adminwrap{grid-template-columns:repeat(12,minmax(0,1fr))}
   .adminside{grid-column:1/span 3}
   .adminmain{grid-column:4/span 9}
-  .adminmain .cars>.car{grid-column:span 4}
   .adminmain .filters>*{grid-column:span 3}
+  .adminmain .filters>.wide{grid-column:span 4}
+  .adminmain .filters:has(>.wide)>label:has(input[name=max]){grid-column:span 2}
   .adminside{display:block;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-3)}
   .adminside .navgroup{padding:var(--sp-2) 0;border-bottom:1px solid var(--line)}
   .adminside .navgroup:last-child{border-bottom:0}

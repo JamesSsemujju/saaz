@@ -9,7 +9,7 @@
     opts = opts || {};
     var r = l.review || {}, pv = !!opts.preview, tag = opts.preview ? "div" : "a";
     var meta = [S.km(l.mileage), l.fuel, l.gearbox, l.region].filter(function (x) { return x !== "" && x != null; });
-    return "<" + tag + " class='car" + (pv ? " preview" : "") + "' data-ref='vehicle-card' data-ref-key='" + esc(l.ref || "") + "'" + (pv ? "" : " href='" + esc(opts.href || "#/car/" + l.ref) + "'") + "><div class='car-photo'>" +
+    return "<" + tag + " class='car" + (pv ? " preview" : "") + "' data-ref='vehicle-card' data-ref-key='" + esc(l.ref || "") + "'" + (pv ? "" : " href='" + esc(opts.href || "#/car/" + l.ref) + "'") + "><div class='car-photo'" + (l.photos && l.photos[0] ? " style='--bg:url(&quot;" + esc(S.photo(l.photos[0])) + "&quot;)'" : "") + ">" +
       (l.photos && l.photos[0] ? "<img src='" + esc(S.photo(l.photos[0])) + "' alt='' loading='lazy' decoding='async'>" : pv ? "<span class='phl'>Your photos go here</span>" : "") +
       (r.verdict ? "<span class='car-tag'><i></i>" + esc(S.label(r.verdict)) + " · " + r.score + "/100</span>" : (opts.tag || "")) +
       (opts.badge || (l.status === "reserved" ? "<span class='car-tag right'>Reserved</span>" : "")) + "</div>" +
@@ -19,6 +19,31 @@
       (pv ? "" : "<div class='demand'><span>" + l.views_7d + " views this week</span><span>" + l.saves + " saves</span><span>" + l.offers + " offers</span></div>") + "</" + tag + ">";
   }
   S.card = card;
+  // BA-0008: frame each card photo by its real shape. A photo close to the 4:3 frame fills it (at most a thin edge is cropped).
+  // A portrait, square or very wide photo is shown whole (class 'whole': contain over a blurred copy), so tyres and bumpers
+  // are never cut off and nothing is stretched. Runs once per photo when it loads; until then (and without JavaScript) it fills.
+  var FRAME = 4 / 3;
+  function fitPhoto(img) {
+    var box = img.parentNode; if (!box || !box.classList || !box.classList.contains("car-photo") || !img.naturalWidth) return;
+    var r = (img.naturalWidth / img.naturalHeight) / FRAME;   // 1 = exactly 4:3; below 1 taller, above 1 wider
+    box.classList.toggle("whole", r < 0.92 || r > 1.2);
+  }
+  S.fitPhoto = fitPhoto;
+  document.addEventListener("load", function (e) { if (e.target && e.target.tagName === "IMG") fitPhoto(e.target); }, true);
+  // a photo already in the browser's memory can be complete before its load event reaches us: frame those as cards appear
+  new MutationObserver(function () {
+    Array.prototype.forEach.call(document.querySelectorAll(".car-photo img"), function (i) { if (i.complete) fitPhoto(i); });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  // BA-0008: the home "Latest" grid shows whole rows only: two rows of as many cards as fit (all of them, one per row, on phones).
+  function trimRows(grid) {
+    if (!grid) return;
+    var cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length || 1, show = cols > 1 ? cols * 2 : 8;
+    Array.prototype.forEach.call(grid.children, function (c, i) { c.hidden = i >= show; });
+    var more = grid.nextElementSibling, total = +grid.getAttribute("data-total");
+    if (more && more.classList.contains("more")) more.hidden = total <= Math.min(show, grid.children.length);
+  }
+  var trimWait;
+  window.addEventListener("resize", function () { clearTimeout(trimWait); trimWait = setTimeout(function () { trimRows(S.$("[data-rows]")); }, 100); });
   // Admin card options: same card, with the stage on the photo when the car isn't live, opening the car's admin page
   S.adminCardOpts = function (l) { return { href: "#/admin/car/" + l.id, badge: l.status === "live" ? "" : "<span class='car-tag right" + (l.public ? "" : " priv") + "'>" + esc(S.label(l.status)) + "</span>" }; };
   // Viewing the marketplace as admin: every car at any stage, on the buyers' page. Nothing here changes a car's status.
@@ -67,7 +92,7 @@
     var pages = Math.max(1, Math.ceil(shown.length / PER_PAGE)), page = Math.min(pages, Math.max(1, +(q.get("page") || 1)));
     var slice = shown.slice((page - 1) * PER_PAGE, page * PER_PAGE);
     var html = "<div class='sechead'><h1>" + (saved ? "Saved cars" : "Cars with a Saaz inspection") + "</h1><p>Every car here was inspected in person by a certified garage, inside Saaz.</p></div>" +
-      "<form id='flt' class='filters' data-ref='filter-panel'>" + (opts.statusSelect ? "<label>Status" + opts.statusSelect + "</label>" : "") + searchFields(rows, make, body, max) +
+      "<form id='flt' class='filters' data-ref='filter-panel'>" + (opts.statusSelect ? "<label class='wide'>Status" + opts.statusSelect + "</label>" : "") + searchFields(rows, make, body, max) +
       (S.signedIn() && !opts.admin ? "<label class='inline'><input type='checkbox' name='saved' value='1'" + (saved ? " checked" : "") + "> Saved only</label>" : "") +
       "<button class='btn'>Show cars</button></form>" +
       "<p class='count'>" + shown.length + " car" + (shown.length === 1 ? "" : "s") + (pages > 1 ? " · page " + page + " of " + pages : "") +
@@ -107,8 +132,8 @@
       v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") + "<div class='videobg' data-ref='home-video'>" + homeVideo() + "<section class='hero' data-ref='home-hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
         "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form></div></div></section>" +
         "<section class='band' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
-        (rows.length ? "<div class='cars'>" + rows.slice(0, 8).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>" +
-          (rows.length > 8 ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
+        (rows.length ? "<div class='cars' data-rows='2' data-total='" + rows.length + "'>" + rows.slice(0, 10).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>" +
+          (rows.length ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
           : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell'>Sell your car on Saaz</a></span></div>") +
         "</div></section></div>" +
         "<section class='band white' data-ref='trust-section'><div class='wrap'><div class='sechead'><h2>Why you can trust a car on Saaz</h2></div><div class='trust'>" +
@@ -117,6 +142,7 @@
           "<div><b>No money through Saaz</b><p>Make an offer here. Contact details are shared once you and the seller agree.</p><a class='btn text' href='#/track'>Track an inspection</a></div>" +
         "</div></div></section>";
       S.$("#hs").onsubmit = function (e) { e.preventDefault(); goSearch(e.target, "#/browse"); };
+      trimRows(S.$("[data-rows]"));
       var bg = S.$(".videobg video");   // some browsers only autoplay when muted is set as a property, not just the attribute
       if (bg) { bg.muted = true; var pl = bg.play(); if (pl && pl.catch) pl.catch(function () {}); }
     });
