@@ -27,6 +27,9 @@ Don't add abstractions the pattern doesn't need, and don't duplicate a component
 | Scripts | Only from this site. Vendor a library into `src/scripts` (with its licence line) rather than loading it from a CDN | `browser_csp_test.py` |
 | Settings and keys | Only the Supabase anon key ships in the site. The service key lives in Supabase function secrets | Grep in the security report; never paste keys in chat |
 | Email links | Edge functions accept a redirect only back to the Saaz site | `invite-user/index.ts` |
+| Request limits | Every API write passes `check_request` (part 22). A new function people could repeat (messages, offers, invites, look-ups) gets its own row in `public.request_limits`; everything else falls under the general limit. A look-up that must be limited is marked volatile (read-only calls can't be counted) | `api_rate_limit_test.py` |
+| Error messages | Only Saaz's own `raise exception` messages (code P0001) reach the page; `S.friendly` replaces any other database or API error with a plain sentence. Edge functions never return internal errors | `browser_csp_test.py` |
+| Libraries | Pinned versions, checked with `npm audit` before each security pass; the edge function uses the same supabase-js version as the site | Security checklist |
 
 ## 3. Before saying fixed
 

@@ -27,6 +27,14 @@ with sync_playwright() as pw:
     pg.goto(SITE + "#/report/sample"); pg.wait_for_timeout(1500)
     check("sample report draws its QR code from the self-hosted library", pg.locator(".report canvas, .report img[src^='data:'], .qr canvas, .qr img").count() > 0)
     check("print button works without inline script", pg.locator("[data-print]").count() == 1 and pg.locator("[onclick]").count() == 0)
+    # Error messages: Saaz's own words pass through; internal database errors never reach the page
+    fr_ = pg.evaluate("""() => [Saaz.friendly({code: '23505', message: 'duplicate key value violates unique constraint "deals_pkey"'}),
+                               Saaz.friendly({code: 'P0001', message: 'You already have an open offer on this car.'}),
+                               Saaz.friendly({code: 'PT429', message: 'x'}), Saaz.friendly({code: '42501', message: 'permission denied for table listings'}),
+                               Saaz.friendly({code: 'PGRST202', message: 'Could not find the function public.x in the schema cache'})]""")
+    check("internal database errors are replaced by a plain sentence", "constraint" not in fr_[0] and "schema cache" not in fr_[4] and fr_[0].startswith("Something went wrong"), fr_)
+    check("Saaz's own messages are shown as written", fr_[1] == "You already have an open offer on this car.", fr_[1])
+    check("too many requests and no access read plainly", fr_[2].startswith("Too many requests") and fr_[3] == "You don't have access to do that.", fr_[2:4])
     # An outside script injected into the page is refused
     pg.goto(SITE + "#/browse"); pg.wait_for_timeout(800); blocked.clear()
     pg.evaluate("() => { const s = document.createElement('script'); s.src = 'https://example.com/x.js'; document.head.appendChild(s); }"); pg.wait_for_timeout(300)

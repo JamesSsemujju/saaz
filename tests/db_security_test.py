@@ -197,7 +197,7 @@ for who, uid in OUTSIDERS.items():
 
 # The pattern, not just today's instances: a visitor may call only these functions. A new function that visitors can
 # call fails this test until it is either locked down (revoke execute ... from public, anon) or added here on purpose.
-VISITOR_OK = {"browse_listings", "whats_selling", "listing_stats", "record_view", "review_document", "verify_review", "lookup_inspection",
+VISITOR_OK = {"check_request", "browse_listings", "whats_selling", "listing_stats", "record_view", "review_document", "verify_review", "lookup_inspection",
               "my_roles", "model_sales_public",
               # used inside row security policies, so the visitor's role must be able to run them; each answers only about the caller
               "is_admin", "is_full_admin", "my_garage_id", "my_garage_role", "my_team_garage", "garage_sees", "garage_sees_listing_work",
@@ -210,12 +210,25 @@ check("visitors can call only the agreed functions", not extra, extra)
 loose = su("select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in ('public','build') and p.prokind = 'f' and p.proconfig is null and p.prolang <> 13 and p.proname not like 'pgp%%' and p.proname not in ('rpt_age_band','rpt_price_band','rpt_status_group')")  # left inlinable on purpose (part 21 note)
 check("every function has a fixed search_path", not loose, loose)
 
-# Storage: uploads only into your own folder
+# Storage: uploads only into your own folder, only names the app makes, at most 300 per account (parts 4 and 22).
+# The local storage table has Supabase's columns and grants, so these reach the real policies.
 up = lambda uid, path: err(uid, "insert into storage.objects (bucket_id, name, owner) values ('car-photos', %s, auth.uid())", (path,))
 if su("select to_regclass('storage.objects')")[0][0]:
     S_ = su("select seller_id from listings limit 1")[0][0]
-    check("seller can't upload into another person's folder", up(P, f"{S_}/evil.webp") is not None)
-    check("visitor can't upload", up(None, f"{S_}/evil.webp") is not None)
+    check("seller can upload a photo into their own folder", up(P, f"{P}/mfz2k8abc12.webp") is None, up(P, f"{P}/mfz2k8abc13.webp"))
+    check("seller can't upload into another person's folder", up(P, f"{S_}/evil12345.webp") is not None)
+    check("visitor can't upload", up(None, f"{S_}/evil12345.webp") is not None)
+    if su("select count(*) from pg_policies where policyname='sellers upload own photos' and with_check like '%my_photo_count%'")[0][0]:
+        check("no path tricks: '..' refused", up(P, f"{P}/../{S_}/x12345.webp") is not None)
+        check("no sub-folders", up(P, f"{P}/a/b12345.webp") is not None)
+        check("no other file types (html, svg)", up(P, f"{P}/page12345.html") is not None and up(P, f"{P}/pic12345.svg") is not None)
+        check("no odd characters in names", up(P, f"{P}/x<script>.webp") is not None)
+        su("insert into storage.objects (bucket_id, name, owner_id) select 'car-photos', %s || '/bulk' || g || 'abcdef.webp', %s from generate_series(1, 300) g", (str(P), str(P)))
+        check("at most 300 photos per account", up(P, f"{P}/onemore123.webp") is not None)
+        su("delete from storage.objects where owner_id = %s", (str(P),))
+    su("insert into storage.objects (bucket_id, name, owner_id) values ('car-photos', %s, %s)", (f"{S_}/keepme12345.webp", str(S_)))
+    as_(E, "delete from storage.objects where bucket_id='car-photos'")
+    check("a buyer can't delete someone else's photos", su("select count(*) from storage.objects where name=%s", (f"{S_}/keepme12345.webp",))[0][0] == 1)
 
 print(f"\n{ok} passed, {bad} failed")
 sys.exit(1 if bad else 0)

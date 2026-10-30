@@ -74,7 +74,15 @@
     if (/Invalid login credentials/i.test(m)) return "Wrong email or password.";
     if (/Email not confirmed/i.test(m)) return "Confirm your email first: open the link Saaz sent you.";
     if (/JWT|token is expired/i.test(m)) return "Your session ended. Sign in again.";
-    if (/violates row-level security/i.test(m)) return "You don't have access to do that.";
+    if (/violates row-level security|permission denied/i.test(m)) return "You don't have access to do that.";
+    if (e && e.code === "42501") return m;   // Saaz's own access answers (Build Assistant: "Not found.", "switched off")
+    if (e && e.code === "PT429") return "Too many requests. Wait a few minutes and try again.";
+    // Database messages Saaz wrote itself (raise exception, code P0001) are meant for people. Any other database or API
+    // error (constraint names, types, internal paths) stays out of the page: logged for debugging, a plain sentence shown.
+    if (e && typeof e.code === "string" && /^([0-9A-Z]{5}|PGRST\d+)$/.test(e.code) && e.code !== "P0001") {
+      try { console.error("Saaz:", e.code, m); } catch (x) {}
+      return "Something went wrong. Try again, and tell Saaz if it keeps happening.";
+    }
     return m;
   };
   S.rpc = function (fn, args) {

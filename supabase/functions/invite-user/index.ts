@@ -1,10 +1,13 @@
 // invite-user: sends a Saaz invite email ("set your password") to someone added as a garage owner or member.
 // Called from the Saaz app. Runs on Supabase's servers; the service key never leaves them.
 // Allowed callers: an admin signed in with their authenticator, or the active owner of a certified garage the invite belongs to.
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.50.0";   // pinned (30 Oct 2026): same version as the site, past GHSA-8r88-6cj9-9fh5
 
+// 30 Oct 2026: browsers may call this only from the Saaz site (the token is still what authorises the call).
+const SITE = (Deno.env.get("SAAZ_SITE_URL") ?? "https://jamesssemujju.github.io/saaz/").replace(/\/?$/, "/");
 const cors = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": new URL(SITE).origin,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -49,8 +52,12 @@ Deno.serve(async (req: Request) => {
   if (!admin && !owner) return reply(403, { error: "Only an admin, or the owner of a certified garage, can send this invite." });
 
   // 30 Oct 2026 (security): the email link may only lead back to Saaz. Anything else is dropped and Supabase uses the Site URL.
-  const site = (Deno.env.get("SAAZ_SITE_URL") ?? "https://jamesssemujju.github.io/saaz/").replace(/\/?$/, "/");
-  const redirectTo = typeof body.redirectTo === "string" && body.redirectTo.startsWith(site) ? body.redirectTo : undefined;
+  const redirectTo = typeof body.redirectTo === "string" && body.redirectTo.startsWith(SITE) ? body.redirectTo : undefined;
+  // At most 20 invite emails an hour per person sending them (each one is a real email; Supabase also caps emails project-wide)
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  const { count: sentLastHour } = await server.from("audit_log").select("id", { count: "exact", head: true })
+    .eq("actor_id", who.user.id).in("action", ["invite email sent", "set-password email sent"]).gte("at", since);
+  if ((sentLastHour ?? 0) >= 20) return reply(429, { error: "Too many invites in the last hour. Try again later." });
   let kind = "invite";
   let { error } = await server.auth.admin.inviteUserByEmail(email, { data: { name: invite?.name ?? profile?.name ?? "" }, redirectTo });
   if (error && member && /already been registered|already exists/i.test(error.message)) {
@@ -60,7 +67,8 @@ Deno.serve(async (req: Request) => {
   }
   if (error) {
     const exists = /already been registered|already exists/i.test(error.message);
-    return reply(exists ? 409 : 500, { error: exists ? "This email already has a Saaz account. Ask them to sign in." : error.message });
+    if (!exists) console.error("invite-user:", error.message);   // details stay in the function logs, not in the page
+    return reply(exists ? 409 : 500, { error: exists ? "This email already has a Saaz account. Ask them to sign in." : "The invite email couldn't be sent. Try again in a few minutes." });
   }
   await server.from("audit_log").insert({ actor_id: who.user.id, actor_role: admin ? "admin" : "garage", entity: "member",
     entity_id: email, action: kind === "invite" ? "invite email sent" : "set-password email sent", detail: { garage: garageId } });
