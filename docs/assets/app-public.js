@@ -191,7 +191,7 @@
           "<li><span class='n'>1</span><b>Inspected in person</b><span>A certified garage checks the car inside Saaz: 12 checks, the body panels and the odometer.</span></li>" +
           "<li><span class='n'>2</span><b>A report with a code</b><span>The score and result are on every car. Anyone can confirm a report is real and unchanged.</span></li>" +
           "<li><span class='n'>3</span><b>No money through Saaz</b><span>Make an offer here. Contact details are shared once you and the seller agree.</span></li></ol>" +
-          "<a class='btn text' href='#/verify'>Verify a report</a></div></div></section>";
+          "<p class='paths-light'><a class='btn text' href='#/verify'>Verify a report</a> <a class='btn text' href='#/report/sample'>See a sample report</a></p></div></div></section>";
       S.$("#hs").onsubmit = function (e) { e.preventDefault(); goSearch(e.target, "#/browse"); };
       trimRows(S.$("[data-rows]"));
     });
@@ -290,7 +290,7 @@
   });
 
   S.route("/verify", function (v, m, q) {
-    v.innerHTML = "<div class='narrow'><h1>Verify a Saaz inspection</h1><p class='lead'>Type the code printed on the report, or scan its QR code.</p>" +
+    v.innerHTML = "<div class='narrow'><h1>Verify a Saaz inspection</h1><p class='lead'>Type the code printed on the report, or scan its QR code. Want to see what a report contains? <a href='#/report/sample'>Open the sample report</a>.</p>" +
       "<form id='f' class='check light'><label for='code'>Verification code</label><input id='code' name='code' placeholder='XXXX-XXXX-XXXX' autocapitalize='characters' required value='" + esc(q.get("code") || "") + "'><button>Verify</button></form><div id='out' aria-live='polite'></div></div>";
     function run(code) {
       S.rpc("verify_review", { p_code: code }).then(function (r) {
@@ -359,15 +359,48 @@
     var s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; s.onload = draw; document.head.appendChild(s);
   }
 
+  // 30 Oct 2026: #/report/sample is a complete sample report for demonstrations, drawn by the same code as real reports.
+  // Its data lives only here (SAMPLE_REPORT): nothing is read from or written to the database, and it can't be verified.
+  var SAMPLE_REPORT = {
+    status: "issued", intact: true, sample: true, scope: null,
+    review: { id: "sample", doc_no: "SZR-SAMPLE-000000", version: 1, score: 88, verdict: "conditional", verify_code: "SAMPLE",
+      fingerprint: "5aa2c0de1b7e4f39a8d26c51e09f7b3a4c8e2d61f0b9a7c35e1d4b8f2a6c9e07",
+      checks: { engine: "pass", gearbox: "pass", brakes: "advise", steering: "pass", tyres: "advise", electrics: "pass", body: "advise",
+                chassis: "pass", interior: "pass", test_drive: "pass", odometer: "pass", vin: "pass" },
+      panels: { front_bumper: "scratch", bonnet: "none", roof: "none", boot: "none", rear_bumper: "repaint", left_front: "none", left_rear: "dent", right_front: "none", right_rear: "none" },
+      odometer: 62400, member_name: "Sample Inspector", member_role: "inspector", member_id: "00000000-sample", garage_name: "Sample Garage (not a real garage)",
+      garage_certified_at: "2026-09-01T06:00:00Z", issued_at: "2026-10-28T09:40:00Z", valid_until: "2026-12-27",
+      notes: "SAMPLE REPORT. Every value here is invented to show what a full Saaz inspection looks like.\n\n" +
+        "Engine: 3.0 V6 petrol starts cleanly from cold, idles steady at 650 rpm. No oil leaks at the rocker covers or sump. Coolant clean, level correct. Diagnostic scan: no stored or pending fault codes.\n" +
+        "Gearbox: 9-speed automatic shifts smoothly up and down; no slip or flare on the test drive.\n" +
+        "Brakes (advise): front pads about 4 mm, discs lightly lipped. Pedal firm, car stops straight. Replace front pads within 5,000 km.\n" +
+        "Steering and suspension: no play at the wheel, no knocks over speed bumps, shock absorbers damp correctly at all four corners.\n" +
+        "Tyres (advise): fronts 3.5 mm, rears 5 mm, all four the same brand and size, no sidewall damage. Plan two front tyres within 3 months.\n" +
+        "Electrics and lights: all lights, windows, mirrors, central locking and the infotainment screen work. Battery tested at 12.6 V, charging 14.2 V.\n" +
+        "Body and paint (advise): light scratch on the front bumper; rear bumper repainted, colour match good; small dent on the left rear door. No sign of filler on the main panels.\n" +
+        "Chassis and rust: underbody inspected on a lift. No accident repair to the chassis rails, no structural rust, no fresh welding. Airbags present, no warning light.\n" +
+        "Interior and AC: seats, dashboard and headlining in good order. AC blows cold (6 °C at the vent).\n" +
+        "Test drive: 12 km mixed town and highway; straight line, no vibration up to 100 km/h.\n" +
+        "Odometer: 62,400 km, consistent with wear and the service book.\n" +
+        "VIN: matches the logbook and the plate on the car.\n\n" +
+        "Summary: a sound car with no structural or mechanical faults. Conditional only because of wear items.\n" +
+        "Recommendations: front brake pads within 5,000 km; two front tyres within 3 months; touch up the left rear dent if wanted. Estimated total UGX 1.4m to 1.9m at a partner garage (estimate, not a quote)." },
+    listing: { ref: "SZ-SAMPLE", make: "Mercedes-Benz", model: "CLS 400", year: 2016, plate: "UBX 000S (sample)", colour: "Silver", engine: "3.0 V6", fuel: "Petrol" },
+    vehicle: { vin: "WDD0000000SAMPLE0", source: "local", first_record_date: "2026-10-27" },
+    odometer: [{ at: "2026-10-27T08:00:00Z", km: 62100, source: "seller", flagged: "" }, { at: "2026-10-28T09:40:00Z", km: 62400, source: "inspection", flagged: "" }],
+    opinions: [{ at: "2026-10-28T12:00:00Z", stance: "support", reason: "Sample: Saaz checked the photos and the odometer reading and supports this report." }]
+  };
   S.route("/report/([A-Za-z0-9-]+)", function (v, m) {
-    return S.rpc("review_document", { p_code: m[0] }).then(function (d) {
+    if (m[0].toLowerCase() === "sample") return Promise.resolve(SAMPLE_REPORT).then(drawReport);
+    return S.rpc("review_document", { p_code: m[0] }).then(drawReport);
+    function drawReport(d) {
       if (!d) { v.innerHTML = "<div class='empty'><b>No Saaz inspection has this code</b><span><a href='#/verify'>Verify a code</a></span></div>"; return; }
       var r = d.review, l = d.listing, veh = d.vehicle, fp = r.fingerprint || "0".repeat(64);
-      var ribbon = { issued: "Valid until " + S.day(r.valid_until), superseded: "Superseded", void: "Void", expired: "Expired", draft: "Draft" }[d.status];
-      var verifyUrl = location.origin + location.pathname + "#/verify?code=" + r.verify_code;
+      var ribbon = d.sample ? "Sample: not a real car" : { issued: "Valid until " + S.day(r.valid_until), superseded: "Superseded", void: "Void", expired: "Expired", draft: "Draft" }[d.status];
+      var verifyUrl = location.origin + location.pathname + (d.sample ? "#/report/sample" : "#/verify?code=" + r.verify_code);
       var micro = ("SAAZ REVIEW " + r.doc_no + " " + fp + " ").repeat(6);
-      v.innerHTML = "<div class='docbar noprint'><a href='#/verify?code=" + esc(r.verify_code) + "'>Verify this report</a><button class='btn small' onclick='print()'>Print or save as PDF</button></div>" +
-        "<article class='report st-" + esc(d.status) + "'>" + (d.status !== "issued" ? "<div class='watermark' aria-hidden='true'>" + esc(ribbon.toUpperCase()) + "</div>" : "") +
+      v.innerHTML = "<div class='docbar noprint'>" + (d.sample ? "<span class='samplebar'>Sample report. Every value is invented; it shows what a full Saaz inspection contains.</span>" : "<a href='#/verify?code=" + esc(r.verify_code) + "'>Verify this report</a>") + "<button class='btn small' onclick='print()'>Print or save as PDF</button></div>" +
+        "<article class='report st-" + esc(d.status) + (d.sample ? " is-sample" : "") + "'>" + (d.sample ? "<div class='watermark' aria-hidden='true'>SAMPLE</div>" : d.status !== "issued" ? "<div class='watermark' aria-hidden='true'>" + esc(ribbon.toUpperCase()) + "</div>" : "") +
         "<div class='ribbon r-" + esc(d.status) + "'>" + esc(ribbon) + "</div>" + waves(fp) +
         "<header class='rhead'><div><img class='replogo' src='" + S.site + "assets/img/brand/saaz-wordmark-black-240.webp' width='120' height='34' alt='Saaz'><h1>Saaz " + (d.scope && d.scope.key !== "general" ? esc(d.scope.name.toLowerCase()) + " " : "") + "inspection report</h1><p>Inspection ID " + esc(r.doc_no) + " · version " + r.version + "</p></div>" +
         "<div class='score'>" + rosette(fp) + "<b>" + r.score + "</b><small>/100</small><span class='stamp v-" + esc(r.verdict) + "'>" + esc(S.label(r.verdict)) + "</span></div></header>" +
@@ -392,7 +425,7 @@
         "<p class='small'>A Saaz inspection is made inside the Saaz portal by a signed-in member of a certified garage, on a job arranged through Saaz. The fingerprint is a check value, not a cryptographic signature.</p></footer>" + waves(fp.split("").reverse().join("")) + "</article>";
       qr(S.$("#qr"), verifyUrl);
       var gr = S.$("#gr"); if (gr) gr.onsubmit = function (e) { e.preventDefault(); S.act(gr.querySelector("button"), function () { return S.rpc("garage_reply_opinion", { p_review: r.id, p_text: S.form(gr).t }); }, "Reply sent to Saaz."); };
-    });
+    }
   });
 
   // ---------- Track an inspection: lookup, then sign in, then the database decides what this person may see ----------

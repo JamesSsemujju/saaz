@@ -92,3 +92,4 @@
 .story h2 i{font-style:italic}
 .story .steps{margin-bottom:var(--sp-5)}
 @media(min-width:1024px){.story .wrap{grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;column-gap:var(--col-gap)}.story-pic{grid-column:1/span 7}.story .wrap>div{grid-column:9/span 4}}
+.paths-light{display:flex;flex-wrap:wrap;gap:0 var(--sp-5)}  /* two text links side by side (home story section) */

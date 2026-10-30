@@ -33,9 +33,12 @@
     });
   }
 
-  var PROGRESS = [["Listed", ["draft", "changes_requested"]], ["Saaz inspection", ["awaiting_review", "review_booked"]], ["Approved", ["awaiting_approval", "live", "re_review_due"]], ["Deal agreed", ["reserved"]], ["Sold", ["sold"]]];
+  // 30 Oct 2026: "now" is the step the car is waiting on; everything before it is done. A live car has passed Approved and waits
+  // for a deal; a sold car has every step done (before, a live car still showed Approved as the current step).
+  var PROGRESS = [["Listed"], ["Saaz inspection"], ["Approved"], ["Deal agreed"], ["Sold"]];
+  var AT = { draft: 0, changes_requested: 0, awaiting_review: 1, review_booked: 1, awaiting_approval: 2, re_review_due: 2, live: 3, reserved: 4, sold: 5 };
   function progress(status) {
-    var at = PROGRESS.findIndex(function (p) { return p[1].indexOf(status) >= 0; });
+    var at = status in AT ? AT[status] : -1;
     return "<ol class='progress'>" + PROGRESS.map(function (p, i) { return "<li class='" + (i < at ? "done" : i === at ? "now" : "") + "'>" + p[0] + "</li>"; }).join("") + "</ol>";
   }
   var STATUS_TEXT = { draft: "Draft. Only you can see it.", awaiting_review: "Waiting for a garage. Saaz puts one certified garage in play at a time.", review_booked: "Booked with a garage for its Saaz inspection.",
@@ -173,12 +176,15 @@
           fill.style.setProperty("--p", Math.max(0.06, doneN / files.length));
         };
         bar.hidden = false; bar.classList.remove("done"); inp.disabled = true; step();
-        Promise.all(files.map(function (file) {
+        // 30 Oct 2026: photos upload side by side but are added in the order the seller chose them, so the first one stays the card photo
+        var got = [];
+        Promise.all(files.map(function (file, i) {
           return shrink(file).then(function (blob) {
             var path = S.me().id + "/" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + ".webp";
-            return S.db.storage.from("car-photos").upload(path, blob, { contentType: "image/webp" }).then(function (r) { if (r.error) throw r.error; photos.push(path); });
+            return S.db.storage.from("car-photos").upload(path, blob, { contentType: "image/webp" }).then(function (r) { if (r.error) throw r.error; got[i] = path; });
           }).then(function () { doneN++; step(); return true; }, function (e3) { failed.push(e3); doneN++; step(); return false; });
         })).then(function () {
+          got.forEach(function (path) { if (path) photos.push(path); });
           drawThumbs(); keep(); inp.disabled = false; bar.classList.add("done");
           setTimeout(function () { if (bar.classList.contains("done")) bar.hidden = true; }, 1600);
           if (failed.length) S.toast(failed.length + " of " + files.length + " photo" + (files.length === 1 ? "" : "s") + " didn't upload. " + S.friendly(failed[0]) + " Add " + (failed.length === 1 ? "it" : "them") + " again.", true);
@@ -230,7 +236,7 @@
           fillStart(); box.innerHTML = ""; showForm(false);
         } else {
           var d = S.decode(vin); l = Object.assign(l, { make: d.make || "", model: d.model || "", year: d.year || "" });
-          lockedMsg = "<p class='box'>New to Saaz. " + (d.make ? "Partial decode from the " + esc(d.how) + ": " + esc([d.make, d.model, d.year].filter(Boolean).join(" ")) + ". Check it." : "The " + esc(d.how) + " gave nothing. Fill in the details.") +
+          lockedMsg = "<p class='box'>New to Saaz. " + (d.make ? "Partial decode from the " + esc(d.how) + ": " + esc([d.make, d.model, d.year].filter(Boolean).join(" ")) + ". Check it." : "Saaz couldn't read the make or model from this number. Fill in the details.") +
             " Importer unknown. This listing starts the car's Saaz record.</p>";
           fillStart(); box.innerHTML = ""; showForm(false);
         }
@@ -283,7 +289,7 @@
         "<figure class='samplereport' aria-label='Sample inspection report'><span class='sample'>Sample</span>" +
           "<div class='insp-card'><div class='insp-head'>" + S.chip("pass") + "<span>84/100</span><span>Report SZR-SAMPLE</span></div>" +
           "<ul class='findings'><li><span class='lvl attention'>Attention</span><div><b>Tyres</b><span>Front tyres at about 30% tread.</span></div></li><li><span class='lvl note'>Note</span><div><b>Body and paint</b><span>Small scratch on the rear bumper.</span></div></li></ul>" +
-          "<p class='note'>Each real report has a number, a score out of 100, the garage's notes, and a code anyone can use to <a href='#/verify'>check it is real and unchanged</a>.</p></div></figure>" +
+          "<p class='note'>Each real report has a number, a score out of 100, the garage's notes, and a code anyone can use to <a href='#/verify'>check it is real and unchanged</a>.</p><a class='btn text' href='#/report/sample'>See a full sample report</a></div></figure>" +
       "</div></div></section>" +
 
       "<section class='band soft' data-ref='sell-costs'><div class='wrap'><div class='sechead'><h2>What it costs</h2></div><dl class='costs'>" +

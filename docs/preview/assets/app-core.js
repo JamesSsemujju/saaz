@@ -261,7 +261,8 @@
   }
   S.areaOf = areaOf;
   function initials(p) {
-    var n = String(p.name || p.email || "?").trim().split(/\s+/);
+    var n = String(p.name || p.email || "?").trim().split(/\s+/).filter(function (w) { return /^[A-Za-z\u00C0-\u024F]/.test(w); });  // words that start with a letter: "Sam Seller (demo)" gives SS
+    if (!n.length) n = ["?"];
     return ((n[0] || "?")[0] + (n.length > 1 ? n[n.length - 1][0] : "")).toUpperCase();
   }
   function areas(r) {

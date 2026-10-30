@@ -76,10 +76,11 @@
 .appbody .thumbs button{position:absolute;top:var(--sp-1);right:var(--sp-1);border:0;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;width:24px;height:24px;cursor:pointer}
 .progress{list-style:none;display:flex;padding:0;margin:var(--sp-4) 0;gap:var(--sp-1);font-size:var(--fs-xs);counter-reset:p;line-height:var(--lh-xs)}
 .progress li{flex:1;text-align:center;padding-top:var(--sp-5);position:relative;color:var(--mut)}
-.progress li:before{content:"";position:absolute;top:var(--sp-2);left:0;right:0;height:6px;border-radius:3px;background:#D5DCE5}
-.progress li.done:before{background:#1E7B45}
-.progress li.now:before{background:var(--navy-2);opacity:.55}
-.progress li.now{color:var(--navy);font-weight:700}
+.progress li:before{content:"";position:absolute;top:var(--sp-2);left:0;right:0;height:2px;background:var(--line)}  /* 30 Oct 2026: hairlines in ink, no green */
+.progress li.done:before{background:var(--navy)}
+.progress li.now:before{background:var(--navy);height:var(--sp-1)}
+.progress li.now{color:var(--navy);font-weight:600}
+.progress li.done{color:var(--ink)}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)}
 @media(min-width:768px){.stats{grid-template-columns:repeat(5,minmax(0,1fr))}}
 .stats div{border-top:1px solid var(--line);padding:var(--sp-3) 0 0;display:grid;gap:var(--sp-1)}
@@ -349,3 +350,6 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .uptrack i{display:block;height:100%;background:var(--navy);transform-origin:left;transform:scaleX(var(--p,0));transition:transform 200ms cubic-bezier(0.165,0.84,0.44,1)}
 .upbar.done .uptrack i{background:var(--good)}
 @media(prefers-reduced-motion:reduce){.uptrack i{transition:none}}
+/* 30 Oct 2026: the sample report says it is a sample before anything else, and its ribbon is amber, never the green of a real report */
+.samplebar{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--warn-ink);font-weight:600}
+.report.is-sample .ribbon{background:var(--warn)}
