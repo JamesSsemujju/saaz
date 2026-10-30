@@ -226,7 +226,7 @@
           buy = "<p class='box'>You're viewing as admin, so offers and saves are off here. <a href='#/admin/car/" + l.id + "'>Manage this car in Admin</a></p>";
           var ex = S.$("#viewas-extra"); if (ex) ex.innerHTML = "<a class='back' href='#/admin/car/" + l.id + "'>Manage this car</a>";
         } else if (l.status === "live" && !mine) {
-          if (!S.signedIn()) buy = "<a class='btn wide' href='#/signin' onclick='Saaz.after=location.hash'>Sign in to make an offer</a>";
+          if (!S.signedIn()) buy = "<a class='btn wide' href='#/signin' data-after>Sign in to make an offer</a>";
           else if (open) buy = "<a class='btn wide' href='#/deals/" + open.id + "'>See your offer (" + S.label(open.status) + ")</a>";
           else buy = "<form id='offer' class='stack' data-ref='offer-form'><b>Make an offer</b><label>Your offer (" + l.currency + ")<input name='amount' type='number' inputmode='numeric' required min='1'></label>" +
             "<label class='inline'><input type='checkbox' name='trade_in' value='1'> Includes a trade-in car</label>" +
@@ -356,7 +356,7 @@
   function qr(el, text) { // QR code from cdnjs; the code is printed beside it either way
     function draw() { try { new window.QRCode(el, { text: text, width: 96, height: 96, correctLevel: window.QRCode.CorrectLevel.M }); } catch (e) {} }
     if (window.QRCode) return draw();
-    var s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; s.onload = draw; document.head.appendChild(s);
+    var s = document.createElement("script"); s.src = S.site + "assets/qrcode.min.js"; s.onload = draw; document.head.appendChild(s);
   }
 
   // 30 Oct 2026: #/report/sample is a complete sample report for demonstrations, drawn by the same code as real reports.
@@ -399,7 +399,7 @@
       var ribbon = d.sample ? "Sample: not a real car" : { issued: "Valid until " + S.day(r.valid_until), superseded: "Superseded", void: "Void", expired: "Expired", draft: "Draft" }[d.status];
       var verifyUrl = location.origin + location.pathname + (d.sample ? "#/report/sample" : "#/verify?code=" + r.verify_code);
       var micro = ("SAAZ REVIEW " + r.doc_no + " " + fp + " ").repeat(6);
-      v.innerHTML = "<div class='docbar noprint'>" + (d.sample ? "<span class='samplebar'>Sample report. Every value is invented; it shows what a full Saaz inspection contains.</span>" : "<a href='#/verify?code=" + esc(r.verify_code) + "'>Verify this report</a>") + "<button class='btn small' onclick='print()'>Print or save as PDF</button></div>" +
+      v.innerHTML = "<div class='docbar noprint'>" + (d.sample ? "<span class='samplebar'>Sample report. Every value is invented; it shows what a full Saaz inspection contains.</span>" : "<a href='#/verify?code=" + esc(r.verify_code) + "'>Verify this report</a>") + "<button class='btn small' data-print>Print or save as PDF</button></div>" +
         "<article class='report st-" + esc(d.status) + (d.sample ? " is-sample" : "") + "'>" + (d.sample ? "<div class='watermark' aria-hidden='true'>SAMPLE</div>" : d.status !== "issued" ? "<div class='watermark' aria-hidden='true'>" + esc(ribbon.toUpperCase()) + "</div>" : "") +
         "<div class='ribbon r-" + esc(d.status) + "'>" + esc(ribbon) + "</div>" + waves(fp) +
         "<header class='rhead'><div><img class='replogo' src='" + S.site + "assets/img/brand/saaz-wordmark-black-240.webp' width='120' height='34' alt='Saaz'><h1>Saaz " + (d.scope && d.scope.key !== "general" ? esc(d.scope.name.toLowerCase()) + " " : "") + "inspection report</h1><p>Inspection ID " + esc(r.doc_no) + " · version " + r.version + "</p></div>" +

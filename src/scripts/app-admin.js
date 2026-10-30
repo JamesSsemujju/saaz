@@ -19,7 +19,7 @@
       side += "<div class='navgroup'><b>" + g[0] + "</b>" + g[1].map(function (t) { return "<a href='#/admin" + (t[0] ? "/" + t[0] : "") + "'" + (t[0] === at ? " aria-current='page'" : "") + ">" + t[1] + "</a>"; }).join("") + "</div>";
       opts += "<optgroup label='" + g[0] + "'>" + g[1].map(function (t) { return "<option value='#/admin" + (t[0] ? "/" + t[0] : "") + "'" + (t[0] === at ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</optgroup>";
     });
-    return { side: "<nav class='adminside' data-ref='admin-menu' aria-label='Admin'>" + side + "</nav>", phone: "<label class='adminjump'>Go to<select onchange='location.hash=this.value'>" + opts + "</select></label>" };
+    return { side: "<nav class='adminside' data-ref='admin-menu' aria-label='Admin'>" + side + "</nav>", phone: "<label class='adminjump'>Go to<select data-jump>" + opts + "</select></label>" };
   }
   function page(v, at, html) { var t = tabs(at); v.innerHTML = "<h1 class='sr'>Admin</h1><div class='adminwrap'>" + t.side + "<div class='adminmain'>" + t.phone + html + "</div></div>"; }
   S.adminPage = page;  // the core uses it so a missing or failing Admin page still shows the Admin menu

@@ -22,7 +22,7 @@ How it fits together:
   src/scripts/*.js        copied to assets/
 The build stops with an error on any unknown {{placeholder}}, broken internal link, or size not taken from tokens.css.
 """
-import html, json, re, shutil, sys
+import base64, hashlib, html, json, re, shutil, sys
 from datetime import date
 from pathlib import Path
 MONO = ' class="mono"'
@@ -40,6 +40,19 @@ BUILD_STAMP = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M")  
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 def load(p): return json.loads((SRC / p).read_text(encoding="utf-8"))
+
+# 30 Oct 2026 (security): every page gets one Content Security Policy and referrer policy, stamped here in write(), so no page
+# can be built without it. Scripts only from this site; the few inline scripts are allowed by their hash, computed from the page.
+# GitHub Pages can't send headers, so frame-ancestors is not available here; app-core.js refuses to run inside a frame instead.
+def csp_meta(page, supabase_url):
+    sb = supabase_url.rstrip("/")
+    hashes = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(m.encode("utf-8")).digest()).decode()
+                      for m in re.findall(r"<script>(.*?)</script>", page, flags=re.S))
+    pol = ["default-src 'self'", ("script-src 'self' " + hashes).strip(), "style-src 'self' 'unsafe-inline'",
+           "img-src 'self' data: blob:" + (" " + sb if sb else ""), "font-src 'self'", "media-src 'self'",
+           "connect-src 'self'" + (" %s %s" % (sb, sb.replace("https://", "wss://").replace("http://", "ws://")) if sb else "") + " https://vpic.nhtsa.dot.gov",
+           "object-src 'none'", "base-uri 'self'", "form-action 'self'"]
+    return ('<meta http-equiv="Content-Security-Policy" content="%s">\n<meta name="referrer" content="strict-origin-when-cross-origin">' % "; ".join(pol))
 def esc(s): return html.escape(str(s), quote=True)
 
 site = load("data/site.json")
@@ -111,7 +124,7 @@ def build_site(out, base, cars, preview):
                    whatsapp_footer=f'<li><a href="{wa_url}">WhatsApp +{site["whatsapp"]}</a></li>' if wa else "",
                    partner_contact=(f'<a class="btn" href="{wa_url}?text=I%20run%20a%20garage%20in%20Kampala%20and%20want%20to%20be%20a%20Saaz%20partner.">Talk to us on WhatsApp</a>') if wa else "",
                    robots='\n<meta name="robots" content="noindex,nofollow">' if preview else "",
-                   saaz_config="<script>window.SAAZ=" + json.dumps({"build": BUILD_STAMP, "base": base, "supabaseUrl": "" if preview else site.get("supabaseUrl", ""), "supabaseAnonKey": "" if preview else site.get("supabaseAnonKey", ""), "whatsapp": site.get("whatsapp", "")}) + "</script>",
+                   saaz_config=f'<script src="{base}assets/config.js"></script>',
                    strip=("<b>Design preview.</b> Every car on these pages is an invented sample for reviewing the design. None is for sale.") if preview
                          else "<b>Preview.</b> Saaz is not trading yet. Nothing here can be bought, booked or paid for.")
         return ctx
@@ -119,6 +132,9 @@ def build_site(out, base, cars, preview):
     def write(rel, text):
         p = out / rel
         p.parent.mkdir(parents=True, exist_ok=True)
+        if rel.endswith(".html"):
+            if '<meta charset="utf-8">' not in text: sys.exit(f"{rel}: no <meta charset> to put the security policy after")
+            text = text.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + csp_meta(text, "" if preview else site.get("supabaseUrl", "")), 1)
         p.write_text(text, encoding="utf-8")
 
     def page(content, meta, active, extra=None):
@@ -185,6 +201,8 @@ def build_site(out, base, cars, preview):
     if out.exists() and out != DOCS / "preview": shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)
     (out / ".nojekyll").write_text("")
+    # Settings the scripts read (a file, not an inline script, so the security policy needs no exception for it)
+    write("assets/config.js", "window.SAAZ=" + json.dumps({"build": BUILD_STAMP, "base": base, "supabaseUrl": "" if preview else site.get("supabaseUrl", ""), "supabaseAnonKey": "" if preview else site.get("supabaseAnonKey", ""), "whatsapp": site.get("whatsapp", "")}) + ";\n")
     write("assets/saaz.css", "\n".join((SRC / "styles" / f).read_text(encoding="utf-8") for f in CSS_ORDER))
     for js in (SRC / "scripts").glob("*.js"):
         write(f"assets/{js.name}", js.read_text(encoding="utf-8"))

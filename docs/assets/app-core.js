@@ -1,6 +1,8 @@
 /* app-core.js: the Saaz marketplace app at /app/. Client, router, helpers, accounts, header.
    Every change goes through a database function (supabase/marketplace_*.sql). The page never decides who may do what. */
 (function () {
+  // 30 Oct 2026 (security): Saaz never runs inside another site's frame (clickjacking). GitHub Pages can't send frame headers.
+  if (window.top !== window.self) { try { window.top.location = window.self.location.href; } catch (e) {} document.documentElement.innerHTML = ""; return; }
   var C = window.SAAZ || {};
   // Links in Saaz emails (invite, password reset, email confirmation) arrive as #access_token=...&type=...
   // Read them before the Supabase client clears the address bar.
@@ -23,10 +25,20 @@
   var configured = C.supabaseUrl && C.supabaseAnonKey && window.supabase;
   S.db = configured ? window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
   S.site = C.base || "/";
+  // One handler for small page actions written into markup, so no page needs inline script (the security policy blocks it):
+  // data-after (remember where to come back to after signing in), data-print, data-jump (a select that changes page).
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("[data-after],[data-print]"); if (!a) return;
+    if (a.hasAttribute("data-print")) { e.preventDefault(); window.print(); return; }
+    S.after = a.getAttribute("data-after") || location.hash;
+  });
+  document.addEventListener("change", function (e) { var t = e.target; if (t && t.hasAttribute && t.hasAttribute("data-jump") && /^#\//.test(t.value)) location.hash = t.value; });
 
   // ---------- helpers ----------
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   S.esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+  // Links built from stored data go through here: only Saaz's own pages (#/...) are allowed, anything else becomes the fallback.
+  S.safeHref = function (h, fallback) { h = String(h == null ? "" : h); return /^#\/[^\s"'<>]*$/.test(h) ? h : (fallback || "#/"); };
   S.money = function (cur, n) { return n == null ? "" : (cur || "UGX") + " " + Number(n).toLocaleString("en-US"); };
   // Saaz runs on East Africa Time (Africa/Kampala), whatever the visitor's device is set to
   var EAT = { timeZone: "Africa/Kampala" };
@@ -566,7 +578,7 @@
     return S.q(S.db.from("notifications").select("*").eq("user_id", S.me().id).order("created_at", { ascending: false }).limit(100)).then(function (rows) {
       v.innerHTML = "<h1>Inbox</h1><p class='note'>Placeholder: email and SMS aren't connected yet, so every notice lands here.</p>" +
         (rows.length ? "<ul class='list'>" + rows.map(function (n) {
-          return "<li class='" + (n.read ? "" : "unread") + "'><a href='" + S.esc(n.link || "#/inbox") + "'>" + (n.read ? "<span>" + S.esc(n.body) + "</span>" : "<b>" + S.esc(n.body) + "</b><span class='new'>New</span>") + "<small>" + S.when(n.created_at) + " · " + S.esc(n.channels.join(", ")) + "</small></a></li>";
+          return "<li class='" + (n.read ? "" : "unread") + "'><a href='" + S.esc(S.safeHref(n.link, "#/inbox")) + "'>" + (n.read ? "<span>" + S.esc(n.body) + "</span>" : "<b>" + S.esc(n.body) + "</b><span class='new'>New</span>") + "<small>" + S.when(n.created_at) + " · " + S.esc(n.channels.join(", ")) + "</small></a></li>";
         }).join("") + "</ul>" : "<div class='empty'><b>No notices yet</b></div>");
       var unread = rows.filter(function (n) { return !n.read; }).map(function (n) { return n.id; });
       if (unread.length) S.rpc("mark_read", { p_ids: unread }).catch(function () {});

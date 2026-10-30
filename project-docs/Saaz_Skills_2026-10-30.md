@@ -15,6 +15,8 @@ Which skills every Saaz build session uses, and when. A skill only loads in a se
 | audit-suite (a11y, UX, design, frontend, performance, production readiness, repo maintainer) | already installed | UI and interaction changes | With every UI change |
 | skill-creator | already installed | Making or changing skills | When asked |
 
+Every session also follows `Saaz_EngineeringRules_2026-10-30.md` (fix the pattern, not just the instance; the security rules and their tests).
+
 Rules that still win over any skill: never push or deploy, no production database change without James's approval in a live chat, no secrets, nothing about Lemax–Saaz in public. Where a skill says commit, open a PR or create branches, Saaz instead hands James a zip.
 
 ## Dropped, and why

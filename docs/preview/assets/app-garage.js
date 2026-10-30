@@ -30,7 +30,7 @@
     v.innerHTML = "<div class='narrow wide'><h1>Become a certified Saaz garage</h1><p class='lead'>Garages and independent mechanics inspect cars inside Saaz. Saaz answers within " +
       "2 working days (assumption).</p><form id='f' class='stack'>" +
       (signed ? "" : "<h2>Your account</h2><div class='grid2'><label>Full name<input name='acc_name' required></label><label>Email<input name='acc_email' type='email' required></label>" +
-        "<label>Mobile<input name='acc_mobile' type='tel' required></label><label>Password<input name='acc_password' type='password' minlength='8' required></label></div><p class='note'>Already have an account? <a href='#/signin' onclick='Saaz.after=\"#/garage/apply\"'>Sign in first</a>.</p>") +
+        "<label>Mobile<input name='acc_mobile' type='tel' required></label><label>Password<input name='acc_password' type='password' minlength='8' required></label></div><p class='note'>Already have an account? <a href='#/signin' data-after='#/garage/apply'>Sign in first</a>.</p>") +
       "<h2>Your business</h2>" + garageFields() +
       "<label class='inline'><input type='checkbox' name='honest' required> I will only issue honest Saaz inspections, of cars I have seen in person, and never accept payment to change a result.</label>" +
       "<p class='err' id='err' role='alert'></p><button class='btn'>Send application</button></form></div>";

@@ -48,7 +48,9 @@ Deno.serve(async (req: Request) => {
   const owner = ownerRow && garage?.status === "certified";
   if (!admin && !owner) return reply(403, { error: "Only an admin, or the owner of a certified garage, can send this invite." });
 
-  const redirectTo = typeof body.redirectTo === "string" ? body.redirectTo : undefined;
+  // 30 Oct 2026 (security): the email link may only lead back to Saaz. Anything else is dropped and Supabase uses the Site URL.
+  const site = (Deno.env.get("SAAZ_SITE_URL") ?? "https://jamesssemujju.github.io/saaz/").replace(/\/?$/, "/");
+  const redirectTo = typeof body.redirectTo === "string" && body.redirectTo.startsWith(site) ? body.redirectTo : undefined;
   let kind = "invite";
   let { error } = await server.auth.admin.inviteUserByEmail(email, { data: { name: invite?.name ?? profile?.name ?? "" }, redirectTo });
   if (error && member && /already been registered|already exists/i.test(error.message)) {

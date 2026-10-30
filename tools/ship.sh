@@ -21,12 +21,16 @@ git pull --ff-only origin main
 # (unzipping on top kept old files, e.g. src/pages/admin.html, which then broke the build).
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 unzip -oq "$ZIP" -d "$TMP"
+# 30 Oct 2026: a zip of only the changed files would wipe the rest of each folder. Refuse it before anything is touched.
+for need in build.py src/data/site.json src/scripts/app-core.js supabase/marketplace_1_tables.sql tests/README.md; do
+  [ -f "$TMP/$need" ] || { echo "This zip is not the whole project ($need is missing). Nothing was changed. Ask for a full zip."; exit 1; }
+done
 for d in src supabase tools tests project-docs brand; do
   if [ -d "$TMP/$d" ]; then rm -rf "${REPO:?}/$d"; cp -R "$TMP/$d" "$REPO/$d"; fi
 done
-for f in build.py README.md; do if [ -f "$TMP/$f" ]; then cp "$TMP/$f" "$REPO/$f"; fi; done
+for f in build.py README.md CLAUDE.md; do if [ -f "$TMP/$f" ]; then cp "$TMP/$f" "$REPO/$f"; fi; done
 python3 build.py
-git add -A docs src supabase tools tests project-docs brand build.py README.md
+git add -A docs src supabase tools tests project-docs brand build.py README.md $( [ -f CLAUDE.md ] && echo CLAUDE.md )
 
 if git diff --cached --quiet; then
   ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)

@@ -35,10 +35,11 @@ with sync_playwright() as pw:
     br = pw.chromium.launch(); errors = []
     def ctx(name, touch=False):
         c = br.new_context(viewport={"width": W, "height": 900 if W >= 768 else 844}, has_touch=touch, is_mobile=touch); pg = c.new_page()
-        pg.on("pageerror", lambda e: errors.append(f"{name}: {e}")); return pg
+        pg.on("pageerror", lambda e: errors.append(f"{name}: {e}"))
+        pg.on("console", lambda m: errors.append(f"{name} blocked by the security policy: {m.text}") if m.type == "error" and "Content Security Policy" in m.text else None); return pg
     def go(pg, h, wait=1300): pg.goto("about:blank"); pg.goto(APP + h); pg.wait_for_timeout(wait)
     def toast(pg): pg.wait_for_selector(".toast.show", timeout=8000); t = pg.inner_text("#toast"); pg.wait_for_timeout(300); return t
-    def calm(pg): pg.wait_for_function("!document.querySelector('#toast').classList.contains('show')", timeout=9000)
+    def calm(pg): pg.wait_for_selector("#toast:not(.show)", state="attached", timeout=9000)
     def shot(pg, name, full=True): pg.wait_for_timeout(300); pg.screenshot(path=os.path.join(SHOTS, f"{name}_{W}.png"), full_page=full); step_log.append(name)
     def signup(pg, name, email, sell=False):
         go(pg, "#/signup"); pg.fill("input[name=name]", name); pg.fill("input[name=email]", email); pg.fill("input[name=mobile]", "+256 700 123 456")

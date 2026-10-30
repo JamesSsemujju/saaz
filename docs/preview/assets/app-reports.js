@@ -73,7 +73,7 @@
     var rail = "<nav class='adminside' data-ref='report-menu' aria-label='Reports'><div class='navgroup'><a href='#/admin'>‹ Admin</a></div><div class='navgroup'><b>Reports</b>" +
       REPORTS.map(function (r) { return "<a href='#/admin/reports/" + r.id + (qs ? "?" + qs : "") + "'" + (r.id === at ? " aria-current='page'" : "") + ">" + r.name + "</a>"; }).join("") +
       "</div><div class='navgroup'><a href='#/admin/reports/glossary" + (qs ? "?" + qs : "") + "'" + (at === "glossary" ? " aria-current='page'" : "") + ">Glossary</a></div></nav>";
-    var phone = "<label class='adminjump'>Report<select onchange='location.hash=this.value'>" + REPORTS.map(function (r) { return [r.id, r.name]; }).concat([["glossary", "Glossary"]]).map(function (r) {
+    var phone = "<label class='adminjump'>Report<select data-jump>" + REPORTS.map(function (r) { return [r.id, r.name]; }).concat([["glossary", "Glossary"]]).map(function (r) {
       return "<option value='#/admin/reports/" + r[0] + (qs ? "?" + qs : "") + "'" + (r[0] === at ? " selected" : "") + ">" + r[1] + "</option>"; }).join("") + "<option value='#/admin'>Back to Admin</option></select></label>";
     v.innerHTML = "<div class='adminwrap'>" + rail + "<div class='adminmain'>" + phone + html + "</div></div>";
   }
