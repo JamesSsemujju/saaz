@@ -65,7 +65,6 @@
 .trust b{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
 .trust p{color:var(--mut)}
 .trust .btn.text{justify-self:start}
-.more{margin-top:var(--sp-6);display:flex;justify-content:center}
 
 
 /* ---------- 29 Oct 2026 (approved): the home hero is Saaz's own car photo ----------

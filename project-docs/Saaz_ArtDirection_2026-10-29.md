@@ -17,6 +17,12 @@ How decisions were made: each part was built in many versions and rendered on a 
 | Numbered steps | The number in the serif, no circle, no line | One pattern for the home story, how-it-works and service pages |
 | Notes and empty states | Text with a rule, not a grey or dashed box | Every container must earn its place |
 | Pages, account menu, shortcuts | Plain numbers (current one underlined), no outline round the account menu, shortcuts as arrow links | No pills |
+| Lists (inbox, offers, my cars, team, past jobs) | Rows under hairlines; no card per row. Unread is bold with NEW in small capitals | Added 30 Oct 2026 after James found the inbox in boxes and red |
+| Sections inside app pages (account, Build Assistant, garage, admin) | A hairline and a serif title, no white panel. Figures (demand, reports) are serif numbers over a hairline, not tiles | Same rule as notes and empty states |
+| Admin side menu | No panel; the current page is bold with a bar on its left | The black block was a second solid bar competing with the real action |
+| Look-up fields (VIN, Verify) | The field over a hairline and the arrow link (Look up, Verify) | Same as the home search |
+| Required mark (*) | Muted, not red. Red only when something is wrong | Colour only for attention |
+| Kept as containers | Dropdown lists, the account menu, the chat thread, the QR code frame, the sticky toolbar, the car page price panel, the inspection report document | Each one does a job a hairline can't (floats over content, scrolls, frames a code, or is the approved panel) |
 
 ## The card (home, results, Admin, Cars, /cars/, previews)
 
@@ -35,3 +41,7 @@ The title in the serif. Under the price, after a hairline: the score large in th
 ## Left out on purpose
 
 Score rings and bars, cards inside cards, a dark band after the dark hero, pills and dots, white button blocks on photos, text over car photos.
+
+## Fix, 30 Oct 2026
+
+A CSS rule in app.css was cut short in the 19 Oct Reports update. The browser joined it to the next rule (required fields), so every list link on the site turned red for a month. Restored, and `tools/check_layout.py` now stops the build when a selector list breaks onto a new line without a comma. `tests/browser_artdirection_test.py` checks the inbox (rows, no boxes, no red) and that a page with nothing wrong has no red text.

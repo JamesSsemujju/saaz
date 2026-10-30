@@ -89,7 +89,8 @@ Runbook for a session:
 3. `select build_agent_context('<task id>');` Run `python3 tools/build_refs.py <each name>`. A missing name means the component was renamed or removed: move to needs_clarification and ask. Never apply it to a different element.
 4. If `related_open` shows another open task on the same element that pulls the other way, move to blocked and say which tasks conflict.
 5. Acknowledge with an understanding, work, mark implemented with the files, run the test suites, mark verified with the checks (or failed with why).
-6. Hand the change to James for screenshots and approval. He ships.
+   Skills (30 Oct 2026, project-docs/Saaz_Skills_2026-10-30.md): karpathy-guidelines while working; systematic-debugging when a check fails or the task reports a bug; security-audit (guidance mode) when the task touches sign-in, admin access, row rules, database functions, storage or Build Assistant access; verification-before-completion before marking verified.
+6. Before the zip: blast-radius on the change. Then hand it to James for screenshots and approval. He ships.
 
 ## The switch (Admin, System, Build Assistant)
 

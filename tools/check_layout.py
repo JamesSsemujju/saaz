@@ -70,8 +70,24 @@ def scan_inline():
                         out.append(f"{p.relative_to(ROOT)}:{i}: inline {prop}:{val.strip()}")
     return out
 
+def scan_cut_selectors(path):
+    """A selector list that runs onto a new line without a comma is a rule cut short: the browser joins it to the next rule
+    (on 19 Oct 2026 this turned every list link red for a month). Comments are blanked first."""
+    out = []
+    text = re.sub(r"/\*.*?\*/", lambda m: " " * len(m.group(0)), path.read_text(encoding="utf-8"), flags=re.S)
+    pos = 0
+    for m in re.finditer(r"([^{}]*)\{", text):
+        sel = m.group(1)
+        if "@" in sel or ":" in sel.split(",")[-1] and sel.strip().endswith(")"): continue
+        lines = [l for l in sel.split("\n") if l.strip()]
+        for a in lines[:-1]:
+            if not a.rstrip().endswith(","):
+                out.append(f"{path.relative_to(ROOT)}:{text.count(chr(10), 0, m.start(1) + sel.find(a)) + 1}: selector cut short (line ends without a comma): {a.strip()[:60]}")
+    return out
+
 def main():
     found = []
+    for p in sorted(STY.glob("*.css")): found += scan_cut_selectors(p)
     for p in sorted(STY.glob("*.css")):
         if p.name != "tokens.css": found += scan_css(p)
     found += scan_inline()

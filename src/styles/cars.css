@@ -1,6 +1,6 @@
 /* cars.css: the one car card, the results page and the listing page.
    Result colours are for inspection results only: pass green, attention amber, note grey. */
-:root{--pass:var(--good);--pass-bg:var(--good-bg);--att:var(--warn);--att-bg:var(--warn-bg);--fail:var(--bad)}
+:root{--pass-bg:var(--good-bg);--att:var(--warn);--att-bg:var(--warn-bg);--fail:var(--bad)}
 
 /* ---------- the one card ----------
    Same parts in the same order everywhere (home, results, admin, /cars/): photo 4:3, the inspection line, price, name, specs.
@@ -94,7 +94,7 @@
 .car-title{font-size:var(--fs-3xl);line-height:var(--lh-3xl);color:var(--navy);letter-spacing:-.3px}
 .car-sub,.car-area{color:var(--mut)}
 .car-bigprice{font-size:var(--fs-3xl);line-height:var(--lh-3xl);font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
-.insp-card{background:var(--soft);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-2)}
+.insp-card{border-left:2px solid var(--line);padding:var(--sp-2) 0 var(--sp-2) var(--sp-4);display:grid;gap:var(--sp-2)}  /* 30 Oct 2026: no grey box inside a section */
 .insp-card>*{margin:0}
 .insp-head{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut)}
 .insp-card .btn.text{justify-self:start;color:var(--navy)}

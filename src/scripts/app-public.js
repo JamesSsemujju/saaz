@@ -82,8 +82,6 @@
     if (!grid) return;
     var cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length || 1, show = cols > 1 ? cols * 2 : 8;
     Array.prototype.forEach.call(grid.children, function (c, i) { c.hidden = i >= show; });
-    var more = grid.nextElementSibling, total = +grid.getAttribute("data-total");
-    if (more && more.classList.contains("more")) more.hidden = total <= Math.min(show, grid.children.length);
   }
   var trimWait;
   window.addEventListener("resize", function () { clearTimeout(trimWait); trimWait = setTimeout(function () { trimRows(S.$("[data-rows]")); }, 100); });
@@ -185,7 +183,7 @@
         "<h1 class='display'>Inspected <i>before</i><br>you buy.</h1><p class='lede'>Used cars in Uganda, checked by a certified garage inside Saaz before they are listed. Read the report, then make an offer.</p>" +
         "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn go'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form>" + quick(rows) + "</div></div></section>" +
         "<section class='band white' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected</h2>" + (rows.length ? "<a class='btn text' href='#/browse'>See all " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</a>" : "") + "</div>" +
-        (rows.length ? "<div class='cars' data-rows='2' data-total='" + rows.length + "'>" + rows.slice(0, 10).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>"
+        (rows.length ? "<div class='cars' data-rows='2'>" + rows.slice(0, 10).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>"
           : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a class='btn text' href='#/sell'>Sell your car on Saaz</a></span></div>") +
         "</div></section>" +
         "<section class='band white story' data-ref='trust-section'><div class='wrap'><figure class='story-pic'><img src='" + S.site + "assets/img/inspections-640.webp' srcset='" + S.site + "assets/img/inspections-640.webp 640w, " + S.site + "assets/img/inspections-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' alt='An engine bay opened for a Saaz inspection'></figure><div>" +

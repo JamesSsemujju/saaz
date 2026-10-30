@@ -92,6 +92,17 @@ with sync_playwright() as p:
     check("phones: every search control and quick search is at least 44 px tall", min(hts) >= 44, hts)
     check("phones: no sideways scroll", ph.evaluate("() => document.documentElement.scrollWidth <= innerWidth"))
 
+    # 30 Oct 2026: the inbox (and every list of rows) follows the same rules: rows under hairlines, no boxes, no red text
+    sql("insert into notifications (user_id, kind, body, link) values (%s,'offer_received','New offer on SZ-00001: UGX 90,000,000','#/inbox'),(%s,'listing_live','SZ-00001 is live on Saaz.','#/inbox')", (SEL, SEL))
+    ib = page(1280); go(ib, "#/signin"); ib.check("input[name=as][value=seller]"); ib.fill("input[name=email]", "seller@x.test"); ib.fill("input[name=password]", "demo1234"); ib.click("form button"); ib.wait_for_timeout(1500)
+    go(ib, "#/inbox")
+    rows = ib.evaluate("""() => [...document.querySelectorAll('.list li')].map(li => { const cs = getComputedStyle(li), t = li.querySelector('b, span');
+      return { bg: cs.backgroundColor, radius: cs.borderTopLeftRadius, left: cs.borderLeftWidth, color: getComputedStyle(t).color, newLabel: (li.querySelector('.new') || {}).className && getComputedStyle(li.querySelector('.new')).backgroundColor }; })""")
+    check("inbox: every notice is a row, no box (no fill, no rounded border)", len(rows) == 2 and all(r["bg"] in ("rgba(0, 0, 0, 0)", "transparent") and r["radius"] == "0px" and r["left"] == "0px" for r in rows), rows)
+    check("inbox: notices are in ink, not red", all(r["color"] not in ("rgb(180, 35, 24)", "rgb(138, 28, 18)") for r in rows), rows)
+    check("inbox: 'New' is a word, not a filled pill", all(r["newLabel"] in (None, "rgba(0, 0, 0, 0)", "transparent") for r in rows), rows)
+    red = ib.evaluate("() => [...document.querySelectorAll('#view a, #view b, #view span, #view li')].filter(e => getComputedStyle(e).color === 'rgb(180, 35, 24)' && !e.closest('.err, .att')).map(e => e.innerText.slice(0, 40))")
+    check("no red text on a page with nothing wrong", not red, red[:3])
     check("no script errors", not errors, errors[:3])
     br.close()
 print(f"\n{ok} passed, {bad} failed")

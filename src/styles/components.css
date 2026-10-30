@@ -18,8 +18,8 @@
 a.btn::after,.btn.go::after{content:"";width:var(--sp-3);height:var(--sp-3);flex:none;background:currentColor;
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
-.dark .btn,.hero .btn,.phero .btn,.videobg .btn{background:none;border:0;border-radius:0;padding:0;color:var(--ivory);justify-content:flex-start;box-shadow:inset 0 -1px 0 rgba(233,227,216,.55)}
-.dark .btn:hover,.hero .btn:hover,.phero .btn:hover,.videobg .btn:hover{background:none;box-shadow:inset 0 -2px 0 var(--ivory)}
+.dark .btn,.hero .btn,.phero .btn{background:none;border:0;border-radius:0;padding:0;color:var(--ivory);justify-content:flex-start;box-shadow:inset 0 -1px 0 rgba(233,227,216,.55)}
+.dark .btn:hover,.hero .btn:hover,.phero .btn:hover{background:none;box-shadow:inset 0 -2px 0 var(--ivory)}
 .btn.small{min-height:var(--control-sm);padding:var(--sp-2) var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .btn.wide{width:100%}
 .btn:disabled,.btn[aria-disabled=true]{background:var(--line);border-color:var(--line);color:var(--mut);cursor:not-allowed}
@@ -51,11 +51,13 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .err{color:var(--bad);font-weight:600;min-height:var(--lh-md)}
 
 /* one-field form (VIN check, verify code): input and button side by side, one height */
-.check{display:flex;gap:var(--sp-2);max-width:var(--narrow);padding:var(--sp-2);background:var(--white);border-radius:var(--radius);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.check{display:flex;align-items:end;gap:var(--sp-5);max-width:var(--narrow)}  /* 30 Oct 2026: the field over a hairline and the arrow link, like the home search */
 .check label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.check input:not([type=checkbox]){flex:1;border:0;letter-spacing:.5px}
-.check button{height:var(--control);border:0;border-radius:var(--radius-sm);padding:0 var(--sp-4);font:inherit;font-weight:800;background:var(--line);color:var(--accent-ink);white-space:nowrap;cursor:pointer}
-.check.light{box-shadow:none;border:1px solid var(--line);margin-top:var(--sp-5)}
+.check input:not([type=checkbox]){flex:1;letter-spacing:.5px}
+.check button{display:inline-flex;align-items:center;gap:var(--sp-2);height:var(--control);border:0;border-radius:0;padding:0;font:inherit;font-weight:500;background:none;color:var(--navy);white-space:nowrap;cursor:pointer;box-shadow:inset 0 -1px 0 currentColor}
+.check button::after{content:"";width:var(--sp-3);height:var(--sp-3);background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
+.dark .check button,.hero .check button,.phero .check button{color:var(--ivory)}
+.check.light{margin-top:var(--sp-5)}
 .checknote{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut-on-dark);margin-top:var(--sp-3)}
 
 /* ---------- the one badge: a short label in a pill. Colour is the only variant. ----------
@@ -118,7 +120,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 
 /* coverage tiles */
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--col-gap);margin-top:var(--sp-6)}
-.tiles div{background:var(--white);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-3);box-shadow:0 1px 2px rgba(var(--shade),.06)}
+.tiles div{border-top:1px solid var(--line);padding:var(--sp-4) 0 0;display:grid;gap:var(--sp-3)}
 .tiles .icon{color:var(--navy)}
 .tiles b{font-size:var(--fs-md);color:var(--navy);line-height:var(--lh-md)}
 @media(min-width:768px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -160,7 +162,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .empty b{color:var(--navy);font-size:var(--fs-lg);line-height:var(--lh-lg)}
 .empty span{color:var(--mut)}
 .facets{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)}
-.facets span{border:1px solid var(--line);border-radius:999px;padding:var(--sp-2) var(--sp-3);font-size:var(--fs-sm);color:var(--mut);line-height:var(--lh-sm)}
+.facets span{padding:var(--sp-2) 0;font-size:var(--fs-sm);color:var(--mut);line-height:var(--lh-sm)}
 
 /* fixed design image slot */
 .figure{border-radius:20px;overflow:hidden;aspect-ratio:4/3;background:var(--navy-2);max-width:100%}
@@ -173,7 +175,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .split{display:grid;gap:var(--sp-7) var(--col-gap)}
 @media(min-width:1024px){.split{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}  /* 6 + 6 columns */
 .chips{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-4)}
-.chips span{background:var(--soft);border-radius:999px;padding:var(--sp-1) var(--sp-3);font-size:var(--fs-sm);color:var(--navy);font-weight:600;line-height:var(--lh-sm)}
+.chips span{padding:var(--sp-1) 0;font-size:var(--fs-sm);color:var(--navy);font-weight:600;line-height:var(--lh-sm)}
 .services.single{grid-template-columns:1fr;margin-top:var(--sp-2)}
 .services.single li:nth-child(2){border-top:0}
 .band.closing{border-top:1px solid var(--line)}
@@ -185,9 +187,9 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 @media(min-width:768px){.services{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.services.single{grid-template-columns:minmax(0,1fr)}.services a{grid-template-columns:52px minmax(0,1fr) 24px}}
 
 /* VIN decoder */
-.check button:not(:disabled){background:var(--accent);color:var(--navy)}
+.check button:disabled{opacity:.5;cursor:not-allowed}  /* 30 Oct 2026: the look-up action is the arrow link; disabled until a code is typed */
 .vinresult{margin-top:var(--sp-5);max-width:var(--measure)}
-.vin-msg{border-radius:12px;padding:var(--sp-4) var(--sp-4);display:grid;gap:var(--sp-1);background:var(--soft)}
+.vin-msg{border-left:2px solid var(--line);padding:var(--sp-2) var(--sp-4);display:grid;gap:var(--sp-1)}
 .vin-msg b{color:var(--navy)}
 .vin-msg span{color:var(--mut)}
 .vin-msg.warn{background:#FBEEDD}
@@ -218,7 +220,7 @@ label:has(>.dd){position:relative}
 .dd li.act{background:var(--soft)}
 .dd li[aria-selected=true]{font-weight:600;box-shadow:inset 2px 0 0 var(--navy)}
 .dd li svg{width:var(--sp-4);height:var(--sp-4);flex:none}
-.videobg .dd,.hero .dd{background:var(--navy-2);border-color:rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.45);color:var(--ivory)}
-.videobg .dd li+li,.hero .dd li+li{border-top-color:rgba(255,255,255,.06)}
-.videobg .dd li.act,.hero .dd li.act{background:rgba(255,255,255,.06)}
-.videobg .dd li[aria-selected=true],.hero .dd li[aria-selected=true]{box-shadow:inset 2px 0 0 var(--ivory)}
+.hero .dd{background:var(--navy-2);border-color:rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.45);color:var(--ivory)}
+.hero .dd li+li{border-top-color:rgba(255,255,255,.06)}
+.hero .dd li.act{background:rgba(255,255,255,.06)}
+.hero .dd li[aria-selected=true]{box-shadow:inset 2px 0 0 var(--ivory)}

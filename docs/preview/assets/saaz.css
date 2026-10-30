@@ -145,7 +145,7 @@ p,li,dd{text-wrap:pretty}
 .appnav a:hover,.appright>a:hover{color:var(--white)}
 .appnav a[aria-current],.appright>a[aria-current]{color:var(--white);box-shadow:inset 0 -2px 0 var(--white)}
 .appright{margin-left:auto;display:flex;align-items:center;gap:var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm);min-width:0;height:var(--header)}
-.appright .inbox b{display:inline-block;background:var(--accent);color:var(--navy);border-radius:var(--radius-pill);padding:0 var(--sp-2);margin-left:var(--sp-1);font-size:var(--fs-xs);line-height:var(--lh-xs)}
+.appright .inbox b{display:inline-block;color:var(--white);font-weight:600;margin-left:var(--sp-1);font-size:var(--fs-xs);line-height:var(--lh-xs)}
 /* 29 Oct 2026: Sell a car is a link like the rest of the bar, in white so sellers find it. No pill: nothing else in the bar is a box. */
 .appright>a.sellbtn{color:var(--white);font-weight:500}
 .appright>a.sellbtn:hover{box-shadow:inset 0 -1px 0 var(--white)}
@@ -222,8 +222,8 @@ p,li,dd{text-wrap:pretty}
 a.btn::after,.btn.go::after{content:"";width:var(--sp-3);height:var(--sp-3);flex:none;background:currentColor;
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
-.dark .btn,.hero .btn,.phero .btn,.videobg .btn{background:none;border:0;border-radius:0;padding:0;color:var(--ivory);justify-content:flex-start;box-shadow:inset 0 -1px 0 rgba(233,227,216,.55)}
-.dark .btn:hover,.hero .btn:hover,.phero .btn:hover,.videobg .btn:hover{background:none;box-shadow:inset 0 -2px 0 var(--ivory)}
+.dark .btn,.hero .btn,.phero .btn{background:none;border:0;border-radius:0;padding:0;color:var(--ivory);justify-content:flex-start;box-shadow:inset 0 -1px 0 rgba(233,227,216,.55)}
+.dark .btn:hover,.hero .btn:hover,.phero .btn:hover{background:none;box-shadow:inset 0 -2px 0 var(--ivory)}
 .btn.small{min-height:var(--control-sm);padding:var(--sp-2) var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .btn.wide{width:100%}
 .btn:disabled,.btn[aria-disabled=true]{background:var(--line);border-color:var(--line);color:var(--mut);cursor:not-allowed}
@@ -255,11 +255,13 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .err{color:var(--bad);font-weight:600;min-height:var(--lh-md)}
 
 /* one-field form (VIN check, verify code): input and button side by side, one height */
-.check{display:flex;gap:var(--sp-2);max-width:var(--narrow);padding:var(--sp-2);background:var(--white);border-radius:var(--radius);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.check{display:flex;align-items:end;gap:var(--sp-5);max-width:var(--narrow)}  /* 30 Oct 2026: the field over a hairline and the arrow link, like the home search */
 .check label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.check input:not([type=checkbox]){flex:1;border:0;letter-spacing:.5px}
-.check button{height:var(--control);border:0;border-radius:var(--radius-sm);padding:0 var(--sp-4);font:inherit;font-weight:800;background:var(--line);color:var(--accent-ink);white-space:nowrap;cursor:pointer}
-.check.light{box-shadow:none;border:1px solid var(--line);margin-top:var(--sp-5)}
+.check input:not([type=checkbox]){flex:1;letter-spacing:.5px}
+.check button{display:inline-flex;align-items:center;gap:var(--sp-2);height:var(--control);border:0;border-radius:0;padding:0;font:inherit;font-weight:500;background:none;color:var(--navy);white-space:nowrap;cursor:pointer;box-shadow:inset 0 -1px 0 currentColor}
+.check button::after{content:"";width:var(--sp-3);height:var(--sp-3);background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
+.dark .check button,.hero .check button,.phero .check button{color:var(--ivory)}
+.check.light{margin-top:var(--sp-5)}
 .checknote{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut-on-dark);margin-top:var(--sp-3)}
 
 /* ---------- the one badge: a short label in a pill. Colour is the only variant. ----------
@@ -322,7 +324,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 
 /* coverage tiles */
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--col-gap);margin-top:var(--sp-6)}
-.tiles div{background:var(--white);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-3);box-shadow:0 1px 2px rgba(var(--shade),.06)}
+.tiles div{border-top:1px solid var(--line);padding:var(--sp-4) 0 0;display:grid;gap:var(--sp-3)}
 .tiles .icon{color:var(--navy)}
 .tiles b{font-size:var(--fs-md);color:var(--navy);line-height:var(--lh-md)}
 @media(min-width:768px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -364,7 +366,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .empty b{color:var(--navy);font-size:var(--fs-lg);line-height:var(--lh-lg)}
 .empty span{color:var(--mut)}
 .facets{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)}
-.facets span{border:1px solid var(--line);border-radius:999px;padding:var(--sp-2) var(--sp-3);font-size:var(--fs-sm);color:var(--mut);line-height:var(--lh-sm)}
+.facets span{padding:var(--sp-2) 0;font-size:var(--fs-sm);color:var(--mut);line-height:var(--lh-sm)}
 
 /* fixed design image slot */
 .figure{border-radius:20px;overflow:hidden;aspect-ratio:4/3;background:var(--navy-2);max-width:100%}
@@ -377,7 +379,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .split{display:grid;gap:var(--sp-7) var(--col-gap)}
 @media(min-width:1024px){.split{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}  /* 6 + 6 columns */
 .chips{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-4)}
-.chips span{background:var(--soft);border-radius:999px;padding:var(--sp-1) var(--sp-3);font-size:var(--fs-sm);color:var(--navy);font-weight:600;line-height:var(--lh-sm)}
+.chips span{padding:var(--sp-1) 0;font-size:var(--fs-sm);color:var(--navy);font-weight:600;line-height:var(--lh-sm)}
 .services.single{grid-template-columns:1fr;margin-top:var(--sp-2)}
 .services.single li:nth-child(2){border-top:0}
 .band.closing{border-top:1px solid var(--line)}
@@ -389,9 +391,9 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 @media(min-width:768px){.services{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.services.single{grid-template-columns:minmax(0,1fr)}.services a{grid-template-columns:52px minmax(0,1fr) 24px}}
 
 /* VIN decoder */
-.check button:not(:disabled){background:var(--accent);color:var(--navy)}
+.check button:disabled{opacity:.5;cursor:not-allowed}  /* 30 Oct 2026: the look-up action is the arrow link; disabled until a code is typed */
 .vinresult{margin-top:var(--sp-5);max-width:var(--measure)}
-.vin-msg{border-radius:12px;padding:var(--sp-4) var(--sp-4);display:grid;gap:var(--sp-1);background:var(--soft)}
+.vin-msg{border-left:2px solid var(--line);padding:var(--sp-2) var(--sp-4);display:grid;gap:var(--sp-1)}
 .vin-msg b{color:var(--navy)}
 .vin-msg span{color:var(--mut)}
 .vin-msg.warn{background:#FBEEDD}
@@ -422,10 +424,10 @@ label:has(>.dd){position:relative}
 .dd li.act{background:var(--soft)}
 .dd li[aria-selected=true]{font-weight:600;box-shadow:inset 2px 0 0 var(--navy)}
 .dd li svg{width:var(--sp-4);height:var(--sp-4);flex:none}
-.videobg .dd,.hero .dd{background:var(--navy-2);border-color:rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.45);color:var(--ivory)}
-.videobg .dd li+li,.hero .dd li+li{border-top-color:rgba(255,255,255,.06)}
-.videobg .dd li.act,.hero .dd li.act{background:rgba(255,255,255,.06)}
-.videobg .dd li[aria-selected=true],.hero .dd li[aria-selected=true]{box-shadow:inset 2px 0 0 var(--ivory)}
+.hero .dd{background:var(--navy-2);border-color:rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.45);color:var(--ivory)}
+.hero .dd li+li{border-top-color:rgba(255,255,255,.06)}
+.hero .dd li.act{background:rgba(255,255,255,.06)}
+.hero .dd li[aria-selected=true]{box-shadow:inset 2px 0 0 var(--ivory)}
 
 /* pages.css: page heroes. One dark band with the headline; on the home page the search sits directly under it. */
 .hero,.phero{background:var(--navy);color:var(--white)}
@@ -494,7 +496,6 @@ label:has(>.dd){position:relative}
 .trust b{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
 .trust p{color:var(--mut)}
 .trust .btn.text{justify-self:start}
-.more{margin-top:var(--sp-6);display:flex;justify-content:center}
 
 
 /* ---------- 29 Oct 2026 (approved): the home hero is Saaz's own car photo ----------
@@ -525,7 +526,7 @@ label:has(>.dd){position:relative}
 
 /* cars.css: the one car card, the results page and the listing page.
    Result colours are for inspection results only: pass green, attention amber, note grey. */
-:root{--pass:var(--good);--pass-bg:var(--good-bg);--att:var(--warn);--att-bg:var(--warn-bg);--fail:var(--bad)}
+:root{--pass-bg:var(--good-bg);--att:var(--warn);--att-bg:var(--warn-bg);--fail:var(--bad)}
 
 /* ---------- the one card ----------
    Same parts in the same order everywhere (home, results, admin, /cars/): photo 4:3, the inspection line, price, name, specs.
@@ -619,7 +620,7 @@ label:has(>.dd){position:relative}
 .car-title{font-size:var(--fs-3xl);line-height:var(--lh-3xl);color:var(--navy);letter-spacing:-.3px}
 .car-sub,.car-area{color:var(--mut)}
 .car-bigprice{font-size:var(--fs-3xl);line-height:var(--lh-3xl);font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
-.insp-card{background:var(--soft);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-2)}
+.insp-card{border-left:2px solid var(--line);padding:var(--sp-2) 0 var(--sp-2) var(--sp-4);display:grid;gap:var(--sp-2)}  /* 30 Oct 2026: no grey box inside a section */
 .insp-card>*{margin:0}
 .insp-head{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut)}
 .insp-card .btn.text{justify-self:start;color:var(--navy)}
@@ -662,8 +663,8 @@ label:has(>.dd){position:relative}
 .appbody .pad{padding-block:var(--section-compact) var(--section)}
 .appbody h1{margin-bottom:var(--sp-2)}
 .appbody h3{font-size:var(--fs-md);line-height:var(--lh-md);margin:var(--sp-4) 0 var(--sp-2)}
-.appbody .pad section{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-5);margin-top:var(--sp-5)}
-.appbody .pad section h2{font-size:var(--fs-xl);line-height:var(--lh-xl);margin-bottom:var(--sp-3)}
+.appbody .pad section{border-top:1px solid var(--line);padding:var(--sp-5) 0 0;margin-top:var(--sp-6)}  /* 30 Oct 2026: approved rules on every page: no box where a hairline and a title do the job */
+.appbody .pad section h2{font-size:var(--fs-2xl);line-height:var(--lh-2xl);margin-bottom:var(--sp-3)}
 .appbody .pad section section{border:0;padding:0}
 .appbody .lead{font-size:var(--fs-md);line-height:var(--lh-md);margin:0 0 var(--sp-4)}
 .appbody .loading{color:var(--mut)}
@@ -686,7 +687,7 @@ label:has(>.dd){position:relative}
 .appbody .seg legend{width:100%}
 .appbody .seg label{display:block}
 .appbody .seg input{position:absolute;opacity:0}
-.appbody .seg span{display:inline-block;padding:var(--sp-2) var(--sp-4);border:1px solid #C7D0DB;border-radius:999px;background:var(--white);cursor:pointer;font-weight:600}
+.appbody .seg span{display:inline-flex;align-items:center;min-height:var(--control);padding:0 var(--sp-4);border:1px solid var(--field);border-radius:2px;background:none;cursor:pointer;font-weight:500;font-size:var(--fs-sm);line-height:var(--lh-sm);letter-spacing:0;text-transform:none;color:var(--ink)}  /* square options, like the one solid bar */
 .appbody .seg input:checked+span{background:var(--navy);color:var(--white);border-color:var(--navy)}
 .appbody .seg input:focus-visible+span{outline:3px solid var(--focus)}
 .appbody .seg input:checked+span.m-pass{background:#1E7B45;border-color:#1E7B45}
@@ -718,12 +719,12 @@ label:has(>.dd){position:relative}
 .appbody .tabs{display:flex;gap:var(--sp-1);overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:var(--sp-4)}
 .appbody .tabs a{padding:var(--sp-3) var(--sp-3);color:var(--mut);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;font-weight:600;font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .appbody .tabs a[aria-current=page]{color:var(--navy);border-bottom-color:var(--navy)}
-.appbody .list{list-style:none;padding:0;margin:0;display:grid;gap:var(--sp-2)}
-.appbody .list li{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:var(--sp-3) var(--sp-4);display:flex;gap:var(--sp-3);align-items:center;justify-content:space-between}
-.appbody .list li .new{display:inline-block;font-size:var(--fs-xs);font-weight:700;color:#fff;background:var(--navy);border-radius:999px;padding:var(--sp-1) var(--sp-2);margin-left:var(--sp-2);vertical-align:2px;line-height:var(--lh-xs)}
+.appbody .list{list-style:none;padding:0;margin:0;display:grid;border-top:1px solid var(--line)}  /* 30 Oct 2026: approved rules on every page: no box where a hairline and a title do the job */
+.appbody .list li{border-bottom:1px solid var(--line);padding:var(--sp-3) 0;display:flex;gap:var(--sp-3);align-items:center;justify-content:space-between}
+.appbody .list li .new{font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}
 .appbody .list a{color:var(--ink);text-decoration:none;display:grid;gap:var(--sp-1);flex:1;justify-items:start;align-content:center;min-height:var(--control-sm)}
-.appbody .rows{list-style:none;padding:0;margin:0;display:grid;gap:var(--sp-3)}
-.appbody .rows a{display:flex;gap:var(--sp-3);background:var(--white);border:1px solid var(--line);border-radius:14px;padding:var(--sp-3);color:var(--ink);text-decoration:none}
+.appbody .rows{list-style:none;padding:0;margin:0;display:grid;border-top:1px solid var(--line)}
+.appbody .rows a{display:flex;gap:var(--sp-3);border-bottom:1px solid var(--line);padding:var(--sp-3) 0;color:var(--ink);text-decoration:none}
 .appbody .rows small{display:block;margin-top:var(--sp-1)}
 .appbody .thumb{width:84px;height:63px;border-radius:10px;background:#E6EBF2;flex:none;overflow:hidden}
 .appbody .thumb img{width:100%;height:100%;object-fit:cover}
@@ -740,8 +741,8 @@ label:has(>.dd){position:relative}
 .progress li.now{color:var(--navy);font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)}
 @media(min-width:768px){.stats{grid-template-columns:repeat(5,minmax(0,1fr))}}
-.stats div{background:var(--soft);border-radius:12px;padding:var(--sp-3);display:grid;gap:var(--sp-1)}
-.stats b{font-size:var(--fs-xl);color:var(--navy);font-variant-numeric:tabular-nums;line-height:var(--lh-xl)}
+.stats div{border-top:1px solid var(--line);padding:var(--sp-3) 0 0;display:grid;gap:var(--sp-1)}
+.stats b{font-family:var(--display);font-weight:400;font-size:var(--fs-3xl);color:var(--navy);font-variant-numeric:tabular-nums;line-height:var(--lh-3xl)}
 .stats span{font-size:var(--fs-xs);color:var(--mut);line-height:var(--lh-xs)}
 .bars{display:flex;align-items:flex-end;gap:var(--sp-1);height:110px;padding-top:var(--sp-2)}
 .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:var(--sp-1)}
@@ -759,14 +760,14 @@ label:has(>.dd){position:relative}
 .msg.them{background:#EEF2F7}
 .chat .send{display:flex;gap:var(--sp-2);padding:var(--sp-3);border-top:1px solid var(--line)}
 .chat .note{padding:0 var(--sp-3) var(--sp-3);margin:0}
-.appbody .tablewrap{overflow-x:auto;background:var(--white);border:1px solid var(--line);border-radius:12px}
+.appbody .tablewrap{overflow-x:auto;border-top:1px solid var(--line)}
 .appbody .tbl{border-collapse:collapse;width:100%;font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .appbody .tbl th,.appbody .tbl td{padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .appbody .tbl th{font-size:var(--fs-xs);color:var(--mut);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;line-height:var(--lh-xs)}
 .appbody .tbl pre{white-space:pre-wrap;font-size:var(--fs-xs);max-width:420px;line-height:var(--lh-xs)}
 .appbody .hint{font-style:italic}
 .switch{display:inline-flex!important;align-items:center;gap:var(--sp-2);font-weight:500!important}
-.sticky{position:sticky;top:0;z-index:5;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-2) var(--sp-3);display:flex;gap:var(--sp-3);align-items:center}
+.sticky{position:sticky;top:0;z-index:5;background:var(--white);border-bottom:1px solid var(--line);padding:var(--sp-2) var(--sp-3);display:flex;gap:var(--sp-3);align-items:center}
 .checklist{display:grid;gap:var(--sp-3)}
 @media(min-width:768px){.checklist{grid-template-columns:1fr 1fr}}
 .mapwrap{display:grid;gap:var(--sp-4);align-items:start}
@@ -823,9 +824,11 @@ label:has(>.dd){position:relative}
 }
 
 /* Long unbroken values wrap inside their box (names, emails, references, VINs) */
-.appbody .grid2>*,.appbody .stats>div,.appbody .rows .grow,.appbody .list a,.appbody .list li>div,.appbody .chathead,.appbody 
+.appbody .grid2>*,.appbody .stats>div,.appbody .rows .grow,.appbody .list a,.appbody .list li>div,.appbody .chathead,.appbody .demand span,
+.appbody .pagehead h1,.appbody .pagehead h2,.appbody .box,.appbody .verdict,.appbody .timeline li,.appbody .lead,.appbody .crumbs,
+.appbody .checks li span,.appbody .sigs p,.appbody .verify p,.appbody .rhead>div,.appbody .buybox>*{min-width:0;overflow-wrap:anywhere}  /* restored 30 Oct 2026: cut short on 19 Oct, which turned every list link red */
 /* required fields */
-.appbody .req{color:#B42318;font-weight:700}
+.appbody .req{color:var(--mut);font-weight:600}  /* a required mark is not an alarm: no red until something is wrong */
 
 /* admin layout: grouped side menu (wide screens), "Go to" menu (phones) */
 .adminwrap{display:grid;gap:var(--col-gap);grid-template-columns:minmax(0,1fr)}
@@ -840,13 +843,13 @@ label:has(>.dd){position:relative}
   .adminmain .filters>*{grid-column:span 3}
   .adminmain .filters>.wide{grid-column:span 4}
   .adminmain .filters:has(>.wide)>label:has(input[name=max]){grid-column:span 2}
-  .adminside{display:block;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-3)}
+  .adminside{display:block;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start;padding:0 var(--sp-3) 0 0;border-right:1px solid var(--line)}
   .adminside .navgroup{padding:var(--sp-2) 0;border-bottom:1px solid var(--line)}
   .adminside .navgroup:last-child{border-bottom:0}
   .adminside b{display:block;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.8px;color:var(--mut);padding:var(--sp-1) var(--sp-2);line-height:var(--lh-xs)}
-  .adminside a{display:flex;align-items:center;min-height:var(--control-sm);padding:0 var(--sp-2);border-radius:var(--radius-sm);color:var(--ink);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm)}
-  .adminside a:hover{background:var(--soft)}
-  .adminside a[aria-current=page]{background:var(--navy);color:var(--white);font-weight:700}
+  .adminside a{display:flex;align-items:center;min-height:var(--control-sm);padding:0 var(--sp-3);border-radius:0;color:var(--ink);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm)}
+  .adminside a:hover{color:var(--navy)}
+  .adminside a[aria-current=page]{color:var(--navy);font-weight:600;box-shadow:inset 2px 0 0 var(--navy)}
   .appbody .adminjump{display:none}
 }
 
@@ -873,7 +876,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 /* admin acting for a seller or buyer */
 .appbody .actfor{border-color:var(--field);background:var(--soft)}
 .appbody .actfor .actitems{display:grid;gap:var(--sp-3);margin-top:var(--sp-3)}
-.appbody .actfor .actitems form{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:var(--sp-3)}
+.appbody .actfor .actitems form{border-top:1px solid var(--line);padding:var(--sp-3) 0}
 .acctmenu a.adminentry{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
 .acctmenu a.adminentry small{color:var(--mut);font-size:var(--fs-xs);line-height:var(--lh-xs)}
 
@@ -883,7 +886,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 /* Admin, Reports: the same parts as every admin page; only the pieces below are report-specific */
 .rkpis{grid-template-columns:repeat(auto-fit,minmax(var(--sp-9),1fr));margin-block:var(--sp-5)}
 @media(min-width:768px){.rkpis{grid-template-columns:repeat(auto-fit,minmax(var(--sp-9),1fr))}}
-.rkpis a{display:grid;align-content:start;gap:var(--sp-1);min-height:var(--control);background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-3);color:var(--ink);text-decoration:none}
+.rkpis a{display:grid;align-content:start;gap:var(--sp-1);min-height:var(--control);border-top:1px solid var(--line);padding:var(--sp-3);color:var(--ink);text-decoration:none}
 .rkpis a:hover{border-color:var(--navy)}
 .rkpis a[aria-current]{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
 .rkpis b{font-size:var(--fs-xl);line-height:var(--lh-xl);color:var(--navy);font-variant-numeric:tabular-nums}
@@ -891,7 +894,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .rkpis small{font-size:var(--fs-xs);line-height:var(--lh-xs)}
 .rtrend{display:grid;gap:var(--col-gap);margin-bottom:var(--sp-5)}
 @media(min-width:768px){.rtrend{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.rchart{margin:0;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-4)}
+.rchart{margin:0;border-top:1px solid var(--line);padding:var(--sp-4) 0 0}
 .rchart figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2);font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .rlegend{display:flex;align-items:center;gap:var(--sp-2);color:var(--mut)}
 .rlegend i{display:inline-block;width:var(--sp-5);height:0;border-top:2px solid var(--navy)}
@@ -915,7 +918,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .appbody .tbl th a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;min-height:var(--control-sm)}
 .appbody .tbl td{font-variant-numeric:tabular-nums}
 .rgloss{display:grid;gap:var(--sp-3);max-width:var(--doc)}
-.rgloss div{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-4)}
+.rgloss div{border-top:1px solid var(--line);padding:var(--sp-4) 0}
 .rgloss dt{font-weight:700;color:var(--navy)}
 .rgloss dd{color:var(--mut);margin-top:var(--sp-1)}
 /* phones: each table row becomes a card, every value labelled */
@@ -923,7 +926,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
   .appbody .tablewrap:has(.tbl.cards){background:none;border:0;overflow:visible}
   .appbody .tbl.cards thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .appbody .tbl.cards,.appbody .tbl.cards tbody,.appbody .tbl.cards tr,.appbody .tbl.cards td{display:block;width:100%}
-  .appbody .tbl.cards tr{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-2) var(--sp-4);margin-bottom:var(--sp-3)}
+  .appbody .tbl.cards tr{border-bottom:1px solid var(--line);padding:var(--sp-2) 0;margin-bottom:var(--sp-3)}
   .appbody .tbl.cards td{display:flex;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-2) 0;border-bottom:1px solid var(--line);text-align:right}
   .appbody .tbl.cards td:last-child{border-bottom:0}
   .appbody .tbl.cards td:before{content:attr(data-label);color:var(--mut);font-size:var(--fs-xs);line-height:var(--lh-xs);text-align:left;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
@@ -951,7 +954,6 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .car.preview{cursor:default}
 .car.preview:hover .car-name{color:inherit}
 .car.preview:hover .car-photo,.car.preview:hover .car-photo img{transform:none;box-shadow:none}
-.car-tag.pending{background:var(--white);color:var(--mut);border:1px dashed var(--field)}
 .ghosttext{color:var(--mut);font-weight:400}
 .sellpage .minihead{font-size:var(--fs-lg);line-height:var(--lh-lg);margin-top:var(--sp-6);color:var(--navy)}
 .checkgrid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2) var(--sp-4);margin-top:var(--sp-3)}
