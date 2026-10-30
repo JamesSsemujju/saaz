@@ -9,16 +9,59 @@
     opts = opts || {};
     var r = l.review || {}, pv = !!opts.preview, tag = opts.preview ? "div" : "a";
     var meta = [S.km(l.mileage), l.fuel, l.gearbox, l.region].filter(function (x) { return x !== "" && x != null; });
+    // 29 Oct 2026 (approved card): the photo stays clean; under it one quiet line says the inspection, then the price,
+    // the name (it may take two lines) and the specs. Colour only when the result needs attention.
+    var insp = r.verdict ? "Inspected <b>" + r.score + "</b>/100 · " + (r.verdict === "pass" ? esc(S.label(r.verdict)) : "<span class='att'>" + esc(S.label(r.verdict)) + "</span>")
+      : (opts.tag ? opts.tag : "");
+    if (l.saaz_owned) insp += (insp ? " · " : "") + "Saaz car";
     return "<" + tag + " class='car" + (pv ? " preview" : "") + "' data-ref='vehicle-card' data-ref-key='" + esc(l.ref || "") + "'" + (pv ? "" : " href='" + esc(opts.href || "#/car/" + l.ref) + "'") + "><div class='car-photo'" + (l.photos && l.photos[0] ? " style='--bg:url(&quot;" + esc(S.photo(l.photos[0])) + "&quot;)'" : "") + ">" +
       (l.photos && l.photos[0] ? "<img src='" + esc(S.photo(l.photos[0])) + "' alt='' loading='lazy' decoding='async'>" : pv ? "<span class='phl'>Your photos go here</span>" : "") +
-      (r.verdict ? "<span class='car-tag'><i></i>" + esc(S.label(r.verdict)) + " · " + r.score + "/100</span>" : (opts.tag || "")) +
       (opts.badge || (l.status === "reserved" ? "<span class='car-tag right'>Reserved</span>" : "")) + "</div>" +
-      "<div class='car-name'>" + (pv && !(l.make || l.model) ? "<span class='ghosttext'>Year, make and model</span>" : esc(S.name(l))) + (l.saaz_owned ? " <span class='src'>Saaz car</span>" : "") + "</div>" +
-      "<div class='car-meta'>" + (meta.length ? meta.map(esc).join(" · ") : pv ? "<span class='ghosttext'>Mileage, fuel, gearbox, region</span>" : "") + "</div>" +
+      "<div class='car-insp'>" + insp + "</div>" +
       "<div class='car-price'><b>" + (pv && !l.price ? "<span class='ghosttext'>Your asking price</span>" : S.money(l.currency, l.price)) + "</b></div>" +
-      (pv ? "" : "<div class='demand'><span>" + l.views_7d + " views this week</span><span>" + l.saves + " saves</span><span>" + l.offers + " offers</span></div>") + "</" + tag + ">";
+      "<div class='car-name'>" + (pv && !(l.make || l.model) ? "<span class='ghosttext'>Year, make and model</span>" : esc(S.name(l))) + "</div>" +
+      "<div class='car-meta'>" + (meta.length ? meta.map(esc).join(" · ") : pv ? "<span class='ghosttext'>Mileage, fuel, gearbox, region</span>" : "") + "</div>" +
+      "</" + tag + ">";
   }
   S.card = card;
+  // 29 Oct 2026: the open list of a search or filter dropdown. On a mouse screen Saaz draws it (no system blue); phones and
+  // tablets keep their own picker, which suits thumbs. The <select> stays the real field: value, form and change events as before.
+  var TICK = "<svg viewBox='0 0 16 16' aria-hidden='true'><path d='M3 8.5l3.2 3L13 5' fill='none' stroke='currentColor' stroke-width='1.6'/></svg>";
+  function listbox(sel) {
+    var lab = sel.closest("label") || sel.parentNode, list = null, act = 0;
+    function close() { if (list) { list.remove(); list = null; sel.setAttribute("aria-expanded", "false"); } }
+    function draw() { Array.prototype.forEach.call(list.children, function (li, i) { li.classList.toggle("act", i === act); }); }
+    function pick(i) { if (sel.selectedIndex !== i) { sel.selectedIndex = i; sel.dispatchEvent(new Event("change", { bubbles: true })); } close(); sel.focus(); }
+    function open() {
+      document.querySelectorAll(".dd").forEach(function (d) { d.remove(); });
+      list = document.createElement("ul"); list.className = "dd"; list.setAttribute("role", "listbox"); act = Math.max(0, sel.selectedIndex);
+      Array.prototype.forEach.call(sel.options, function (o, i) {
+        var li = document.createElement("li"); li.setAttribute("role", "option"); li.setAttribute("aria-selected", i === sel.selectedIndex ? "true" : "false");
+        li.innerHTML = "<span>" + esc(o.text) + "</span>" + (i === sel.selectedIndex ? TICK : "");
+        li.onmouseenter = function () { act = i; draw(); }; li.onmousedown = function (e) { e.preventDefault(); pick(i); }; list.appendChild(li);
+      });
+      lab.appendChild(list); sel.setAttribute("aria-expanded", "true"); draw();
+      var a = list.children[act]; if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" });
+    }
+    sel.setAttribute("aria-haspopup", "listbox"); sel.setAttribute("aria-expanded", "false");
+    sel.addEventListener("mousedown", function (e) { e.preventDefault(); sel.focus(); if (list) close(); else open(); });
+    sel.addEventListener("keydown", function (e) {
+      var k = e.key;
+      if (!list) { if (k === "ArrowDown" || k === "Enter" || k === " ") { e.preventDefault(); open(); } return; }
+      if (k === "ArrowDown") { e.preventDefault(); act = Math.min(act + 1, sel.options.length - 1); draw(); }
+      else if (k === "ArrowUp") { e.preventDefault(); act = Math.max(act - 1, 0); draw(); }
+      else if (k === "Enter" || k === " ") { e.preventDefault(); pick(act); }
+      else if (k === "Escape") { e.preventDefault(); close(); }
+      else if (k === "Tab") close();
+    });
+    sel.addEventListener("blur", function () { setTimeout(close, 120); });
+  }
+  S.listbox = listbox;
+  if (window.matchMedia && matchMedia("(pointer:fine)").matches) {
+    new MutationObserver(function () {
+      document.querySelectorAll(".homesearch select:not([aria-haspopup]),.filters select:not([aria-haspopup])").forEach(listbox);
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
   // BA-0008: frame each card photo by its real shape. A photo close to the 4:3 frame fills it (at most a thin edge is cropped).
   // A portrait, square or very wide photo is shown whole (class 'whole': contain over a blurred copy), so tyres and bumpers
   // are never cut off and nothing is stretched. Runs once per photo when it loads; until then (and without JavaScript) it fills.
@@ -94,12 +137,12 @@
     var html = "<div class='sechead'><h1>" + (saved ? "Saved cars" : "Cars with a Saaz inspection") + "</h1><p>Every car here was inspected in person by a certified garage, inside Saaz.</p></div>" +
       "<form id='flt' class='filters' data-ref='filter-panel'>" + (opts.statusSelect ? "<label class='wide'>Status" + opts.statusSelect + "</label>" : "") + searchFields(rows, make, body, max) +
       (S.signedIn() && !opts.admin ? "<label class='inline'><input type='checkbox' name='saved' value='1'" + (saved ? " checked" : "") + "> Saved only</label>" : "") +
-      "<button class='btn'>Show cars</button></form>" +
+      "<button class='btn go'>Show cars</button></form>" +
       "<p class='count'>" + shown.length + " car" + (shown.length === 1 ? "" : "s") + (pages > 1 ? " · page " + page + " of " + pages : "") +
         (model ? " · " + esc(make + " " + model) + " <a href='" + route + "'>clear</a>" : "") + "</p>" +
       (slice.length ? "<div class='cars' data-ref='results-grid'>" + slice.map(function (l) { return card(l, opts.cardOpts ? opts.cardOpts(l) : null); }).join("") + "</div>" + pager(route, q, page, pages)
         : "<div class='empty' data-ref='no-cars'><b>" + (rows.length ? "No cars match these filters" : "No cars listed yet") + "</b><span>" +
-          (rows.length ? "<a href='" + route + "'>Clear the filters</a>" : "Cars appear here once they pass a Saaz inspection. <a href='#/sell'>Sell your car on Saaz</a>") + "</span></div>");
+          (rows.length ? "<a class='btn text' href='" + route + "'>Clear the filters</a>" : "Cars appear here once they pass a Saaz inspection. <a class='btn text' href='#/sell'>Sell your car on Saaz</a>") + "</span></div>");
     return { html: html, wire: function () {
       S.$("#flt").onsubmit = function (e) { e.preventDefault(); goSearch(e.target, route); };
     } };
@@ -113,15 +156,20 @@
     });
   });
 
-  // BA-0006: the hero and the latest cars sit together on one video background (James's road video, turned -90 degrees).
-  // Phones get the portrait version, which matches the tall shape of the two sections there. No sound, loops silently.
-  // Motion turned off on the device, or data saver on: the still frame only, and the video is never downloaded.
-  function homeVideo() {
-    var tall = window.matchMedia("(max-width: 767px)").matches, name = tall ? "home-road-tall" : "home-road-wide", base = S.site + "assets/video/" + name;
-    var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches || (navigator.connection && navigator.connection.saveData);
-    return "<div class='videobg-media' aria-hidden='true'>" + (still ? "<img src='" + base + ".jpg' alt=''>"
-      : "<video muted autoplay loop playsinline disablepictureinpicture preload='auto' poster='" + base + ".jpg'>" +
-        "<source src='" + base + ".webm' type='video/webm'><source src='" + base + ".mp4' type='video/mp4'></video>") + "</div>";
+  // 29 Oct 2026: quick searches under the home search. Each is a shortcut into the same filters, built from the cars there are:
+  // the two most common bodies, then two price ceilings (UGX 40m and 80m, chosen by Saaz, edit here) shown only if they narrow the list.
+  var QUICK_PRICES = [40000000, 80000000];
+  function quick(rows) {
+    var n = {}, out = [];
+    rows.forEach(function (l) { if (l.body) n[l.body] = (n[l.body] || 0) + 1; });
+    Object.keys(n).sort(function (a, b) { return n[b] - n[a] || (a < b ? -1 : 1); }).slice(0, 2).forEach(function (b) {
+      if (n[b] < rows.length) out.push("<a class='btn text' href='#/browse?body=" + encodeURIComponent(b) + "'>" + esc(b) + "</a>");
+    });
+    QUICK_PRICES.forEach(function (m) {
+      var c = rows.filter(function (l) { return l.price <= m; }).length;
+      if (c && c < rows.length) out.push("<a class='btn text' href='#/browse?max=" + m + "'>Under UGX " + (m / 1000000) + "m</a>");
+    });
+    return out.length ? "<nav class='quick' data-ref='quick-search' aria-label='Quick search'><span>Quick search</span>" + out.join("") + "</nav>" : "";
   }
   // Home: headline, search under it, the latest cars, one trust section. The footer follows on every page.
   S.homePage = function (v) {
@@ -129,25 +177,36 @@
     var asAdmin = S.inAdmin();
     return S.rpc(asAdmin ? "admin_listings" : "browse_listings", asAdmin ? { p_status: "" } : { p_country: "UG" }).then(function (rows) {
       rows = rows || [];
-      v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") + "<div class='videobg' data-ref='home-video'>" + homeVideo() + "<section class='hero' data-ref='home-hero'><div class='wrap'><div><h1 class='display'>Used cars in Uganda, inspected before you buy.</h1>" +
-        "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form></div></div></section>" +
-        "<section class='band' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected cars</h2></div>" +
-        (rows.length ? "<div class='cars' data-rows='2' data-total='" + rows.length + "'>" + rows.slice(0, 10).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>" +
-          (rows.length ? "<div class='more'><a class='btn ghost' href='#/browse'>See all " + rows.length + " cars</a></div>" : "")
-          : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a href='#/sell'>Sell your car on Saaz</a></span></div>") +
-        "</div></section></div>" +
-        "<section class='band white' data-ref='trust-section'><div class='wrap'><div class='sechead'><h2>Why you can trust a car on Saaz</h2></div><div class='trust'>" +
-          "<div><b>Inspected in person</b><p>A certified garage checks every car inside Saaz before it is listed. The score and result are on the photo.</p></div>" +
-          "<div><b>A report you can check</b><p>Each report has a code. Anyone can confirm it is real and unchanged.</p><a class='btn text' href='#/verify'>Verify a report</a></div>" +
-          "<div><b>No money through Saaz</b><p>Make an offer here. Contact details are shared once you and the seller agree.</p><a class='btn text' href='#/track'>Track an inspection</a></div>" +
-        "</div></div></section>";
+      // 29 Oct 2026 (approved design): the car first (Saaz's own photo), the promise in the title face, the search on the picture,
+      // the latest cars on white, then why a car on Saaz can be trusted, told with the engine bay. The road video (BA-0006) is kept in
+      // assets/video but no longer used here: James approved the photo hero on 29 Oct 2026.
+      v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") +
+        "<section class='hero photo' data-ref='home-hero'><div class='hero-bg' aria-hidden='true'><img src='" + S.site + "assets/img/home-hero-640.webp' srcset='" + S.site + "assets/img/home-hero-640.webp 640w, " + S.site + "assets/img/home-hero-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' alt=''></div><div class='wrap'><div>" +
+        "<h1 class='display'>Inspected <i>before</i><br>you buy.</h1><p class='lede'>Used cars in Uganda, checked by a certified garage inside Saaz before they are listed. Read the report, then make an offer.</p>" +
+        "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn go'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form>" + quick(rows) + "</div></div></section>" +
+        "<section class='band white' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected</h2>" + (rows.length ? "<a class='btn text' href='#/browse'>See all " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</a>" : "") + "</div>" +
+        (rows.length ? "<div class='cars' data-rows='2' data-total='" + rows.length + "'>" + rows.slice(0, 10).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>"
+          : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a class='btn text' href='#/sell'>Sell your car on Saaz</a></span></div>") +
+        "</div></section>" +
+        "<section class='band white story' data-ref='trust-section'><div class='wrap'><figure class='story-pic'><img src='" + S.site + "assets/img/inspections-640.webp' srcset='" + S.site + "assets/img/inspections-640.webp 640w, " + S.site + "assets/img/inspections-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' alt='An engine bay opened for a Saaz inspection'></figure><div>" +
+          "<h2>Every car is opened up <i>before</i> it is listed.</h2><ol class='steps one'>" +
+          "<li><span class='n'>1</span><b>Inspected in person</b><span>A certified garage checks the car inside Saaz: 12 checks, the body panels and the odometer.</span></li>" +
+          "<li><span class='n'>2</span><b>A report with a code</b><span>The score and result are on every car. Anyone can confirm a report is real and unchanged.</span></li>" +
+          "<li><span class='n'>3</span><b>No money through Saaz</b><span>Make an offer here. Contact details are shared once you and the seller agree.</span></li></ol>" +
+          "<a class='btn text' href='#/verify'>Verify a report</a></div></div></section>";
       S.$("#hs").onsubmit = function (e) { e.preventDefault(); goSearch(e.target, "#/browse"); };
       trimRows(S.$("[data-rows]"));
-      var bg = S.$(".videobg video");   // some browsers only autoplay when muted is set as a property, not just the attribute
-      if (bg) { bg.muted = true; var pl = bg.play(); if (pl && pl.catch) pl.catch(function () {}); }
     });
   };
 
+  // 29 Oct 2026: the checks behind the score, counted from the issued report (pass, advise, fail). Nothing shown if they aren't there.
+  function checksLine(c) {
+    if (!c || typeof c !== "object") return "";
+    var v = Object.keys(c).map(function (k) { return c[k]; }), n = v.length, p = v.filter(function (x) { return x === "pass"; }).length,
+        a = v.filter(function (x) { return x === "advise"; }).length, f = v.filter(function (x) { return x === "fail"; }).length;
+    if (!n) return "";
+    return "<p class='insp-checks'>" + p + " of " + n + " checks passed" + (a ? ". " + a + " advised" : "") + (f ? ". " + f + " failed" : "") + ".</p>";
+  }
   S.route("/car/([A-Z0-9-]+)", function (v, m) {
     var ref = m[0];
     return S.q(S.db.from("listings").select("*").eq("ref", ref).limit(1)).then(function (rows) {
@@ -156,7 +215,7 @@
       if (!S.isAdmin()) S.rpc("record_view", { p_listing: l.id, p_device: S.device() }).catch(function () {});  // Saaz staff looking don't count as demand
       return Promise.all([
         S.rpc("listing_stats", { p_listing: l.id }),
-        l.current_review_id ? S.q(S.db.from("reviews").select("verdict,score,verify_code,valid_until,garage_name,issued_at,doc_no,status").eq("id", l.current_review_id)) : [],
+        l.current_review_id ? S.q(S.db.from("reviews").select("verdict,score,verify_code,valid_until,garage_name,issued_at,doc_no,status,checks").eq("id", l.current_review_id)) : [],
         S.signedIn() ? S.q(S.db.from("saves").select("listing_id").eq("listing_id", l.id).eq("user_id", S.me().id)) : [],
         S.signedIn() ? S.q(S.db.from("deals").select("id,status,amount").eq("listing_id", l.id).eq("buyer_id", S.me().id).in("status", ["negotiating", "agreed", "on_hold"])) : []
       ]).then(function (res) {
@@ -184,7 +243,10 @@
           "<div class='listing'>" + gallery + "<aside class='buybox' data-ref='price-panel' aria-label='Price and contact'>" +
           "<h1 class='car-title'>" + esc(S.name(l)) + "</h1><p class='car-sub'>" + S.km(l.mileage) + " · " + esc(l.fuel) + " · " + esc(l.gearbox) + " · " + esc(l.body) + "</p>" +
           "<p class='car-bigprice'>" + S.money(l.currency, l.price) + "</p><p class='car-area'>" + esc(l.region) + ", " + S.COUNTRY[l.country] + (l.saaz_owned ? " · Sold by Saaz" : "") + "</p>" +
-          (r ? "<div class='insp-card' data-ref='inspection-card'><div class='insp-head'>" + S.chip(r.verdict) + "<span>" + r.score + "/100</span></div><p>Saaz inspection " + esc(r.doc_no) + " by " + esc(r.garage_name) + ", " + S.day(r.issued_at) + ". Valid until " + S.day(r.valid_until) + ".</p><a class='btn text' href='#/report/" + esc(r.verify_code) + "'>Read the inspection report</a></div>" : "") +
+          (r ? "<div class='insp-card' data-ref='inspection-card'><div class='insp-head'><span class='insp-score'><b>" + r.score + "</b>/100</span>" +
+            "<span class='insp-verdict" + (r.verdict === "pass" ? "" : " att") + "'>" + esc(S.label(r.verdict)) + "</span></div>" + checksLine(r.checks) +
+            "<p>Inspected in person by " + esc(r.garage_name) + " on " + S.day(r.issued_at) + ". Valid until " + S.day(r.valid_until) + ". Report " + esc(r.doc_no) + ".</p>" +
+            "<a class='btn text' href='#/report/" + esc(r.verify_code) + "'>Read the inspection report</a></div>" : "") +
           buy +
           (S.signedIn() && !mine && !asAdmin ? "<button class='btn ghost wide' id='save'>" + (saved ? "Saved" : "Save this car") + "</button>" : "") +
           (mine ? "<a class='btn ghost wide' href='#/my/cars/" + l.id + "'>Manage this car</a>" : "") +

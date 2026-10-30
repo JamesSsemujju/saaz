@@ -1,37 +1,49 @@
 /* components.css: reusable pieces used across pages */
 
-/* ---------- the one button set: primary (.btn), secondary (.btn.ghost), text (.btn.text) ----------
+/* ---------- the one button set (29 Oct 2026, approved): primary (.btn) is a solid navy bar with square corners;
+   secondary (.btn.ghost) and text (.btn.text) are the same text link: a hairline underline, an arrow when it goes somewhere.
+   On dark sections and pictures there are no solid bars: every action is the text link, in ivory.
    Sizes are modifiers: .small (dense rows), .wide (full width). Every button and input in a row shares one height. */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:var(--control);max-width:100%;padding:var(--sp-2) var(--sp-5);text-align:center;border:1px solid var(--navy);border-radius:var(--radius-pill);background:var(--navy);color:var(--white);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:700;text-decoration:none;cursor:pointer}  /* a long label wraps and the button grows; one line is always exactly --control */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-4);min-height:var(--control);max-width:100%;padding:var(--sp-2) var(--sp-5);text-align:center;border:1px solid var(--navy);border-radius:2px;background:var(--navy);color:var(--white);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:500;text-decoration:none;cursor:pointer}  /* a long label wraps and the button grows; one line is always exactly --control */
 .btn:hover{background:var(--navy-2)}
 .btn{transition-property:background-color,border-color,color,transform;transition-duration:150ms,150ms,150ms,100ms;transition-timing-function:ease,ease,ease,cubic-bezier(0.165,0.84,0.44,1)}
-.btn:active:not(:disabled){transform:scale(.97)}  /* a press you can feel */
+.btn:active:not(:disabled){transform:scale(.98)}  /* a press you can feel */
 @media(prefers-reduced-motion:reduce){.btn{transition-property:background-color,border-color,color}.btn:active:not(:disabled){transform:none}}
-.btn.ghost{background:var(--white);color:var(--navy)}
-.btn.ghost:hover{background:var(--soft)}
-.btn.text{background:none;border-color:transparent;color:var(--accent-ink);padding:0;text-decoration:underline}
-.btn.text:hover{background:none;color:var(--navy)}
+.btn.ghost,.btn.text,.btn.go{background:none;border:0;border-radius:0;color:var(--navy);padding:0;min-height:var(--control);font-weight:500;text-decoration:none;box-shadow:inset 0 -1px 0 currentColor;justify-content:flex-start}
+.btn.ghost:hover,.btn.text:hover,.btn.go:hover{background:none;box-shadow:inset 0 -2px 0 currentColor}
+.btn.ghost.wide,.btn.text.wide{width:auto}
+/* (the text link is defined with .btn.ghost above) */
+
+/* 29 Oct 2026: the one text link. Underlined with a hairline; a link that takes you somewhere ends in the arrow (from the quick search). */
+a.btn::after,.btn.go::after{content:"";width:var(--sp-3);height:var(--sp-3);flex:none;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
+.dark .btn,.hero .btn,.phero .btn,.videobg .btn{background:none;border:0;border-radius:0;padding:0;color:var(--ivory);justify-content:flex-start;box-shadow:inset 0 -1px 0 rgba(233,227,216,.55)}
+.dark .btn:hover,.hero .btn:hover,.phero .btn:hover,.videobg .btn:hover{background:none;box-shadow:inset 0 -2px 0 var(--ivory)}
 .btn.small{min-height:var(--control-sm);padding:var(--sp-2) var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .btn.wide{width:100%}
 .btn:disabled,.btn[aria-disabled=true]{background:var(--line);border-color:var(--line);color:var(--mut);cursor:not-allowed}
-/* on dark backgrounds the same buttons invert */
-.dark .btn,.hero .btn,.phero .btn{background:var(--white);border-color:var(--white);color:var(--navy)}
-.dark .btn.ghost,.hero .btn.ghost,.phero .btn.ghost{background:transparent;border-color:var(--mut-on-dark);color:var(--white)}
-.soon{display:inline-flex;align-items:center;height:var(--control-sm);color:var(--mut-on-dark);border:1px solid var(--accent-ink);border-radius:var(--radius-pill);padding:0 var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+/* on dark backgrounds: see the text link rule above */
+
+
+.soon{display:inline-flex;align-items:center;min-height:var(--control-sm);color:var(--mut-on-dark);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.16em;text-transform:uppercase}
 
 /* ---------- the one input: text, number, email, select, textarea ---------- */
-label{display:grid;gap:var(--sp-2);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600;color:var(--ink)}
-label.inline{display:flex;gap:var(--sp-3);align-items:center;min-height:var(--control);font-weight:500}
-input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{height:var(--control);width:100%;min-width:0;padding:0 var(--sp-3);border:1px solid var(--field);border-radius:var(--radius-sm);background:var(--white);color:var(--ink);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md)}
+/* labels: form questions in sentence case (they can be long); search and filter fields use small capitals (cars.css, pages.css) */
+label{display:grid;gap:var(--sp-1);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500;color:var(--mut)}
+label.inline{display:flex;gap:var(--sp-3);align-items:center;min-height:var(--control);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink)}
+/* 29 Oct 2026 (approved): the one input is its value over one hairline, no box. Textareas keep a hairline frame (several lines need an edge). */
+input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{height:var(--control);width:100%;min-width:0;padding:0;border:0;border-bottom:1px solid var(--field);border-radius:0;background:transparent;color:var(--ink);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:500;letter-spacing:0;text-transform:none}
+input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,select:focus,textarea:focus{border-color:var(--navy)}
 /* BA-0009 (25 Oct 2026): dropdowns drawn the same on every browser. The browser's own arrow is replaced by one chevron
    with room of its own, so neither the text nor the arrow presses against the border; long choices end in an ellipsis. */
-select{-webkit-appearance:none;appearance:none;padding-right:calc(var(--sp-6) + var(--sp-2));text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%234A5C6A' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right var(--sp-3) center;background-size:var(--sp-4) var(--sp-4)}
-select:hover{border-color:var(--mut)}
+select{-webkit-appearance:none;appearance:none;padding-right:var(--sp-6);text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%234A5C6A' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 0 center;background-size:var(--sp-3) var(--sp-3)}
+select:hover{border-color:var(--ink)}
 select::-ms-expand{display:none}
-select:disabled{cursor:not-allowed;background-color:var(--soft);color:var(--mut)}
-textarea{height:auto;min-height:calc(var(--control) * 2);padding-block:var(--sp-3);resize:vertical}
+select:disabled{cursor:not-allowed;color:var(--mut)}
+textarea{height:auto;min-height:calc(var(--control) * 2);padding:var(--sp-3);border:1px solid var(--field);border-radius:2px;resize:vertical}
 input[type=checkbox],input[type=radio]{width:var(--sp-5);height:var(--sp-5);flex:none;accent-color:var(--navy)}
 input[readonly]{background:var(--soft);color:var(--mut)}
 fieldset{border:0;padding:0;margin:0}
@@ -48,10 +60,10 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 
 /* ---------- the one badge: a short label in a pill. Colour is the only variant. ----------
    .chip (statuses), .car-tag (on a photo), .src, .result, .lvl, .sample and .status are names for this one badge. */
-.badge,.chip,.car-tag,.src,.result,.lvl,.sample,.status{display:inline-flex;align-items:center;gap:var(--sp-1);height:var(--sp-5);padding:0 var(--sp-2);border-radius:var(--radius-pill);background:var(--grey-bg);color:var(--grey-ink);font-size:var(--fs-xs);line-height:var(--lh-xs);font-weight:700;white-space:nowrap;vertical-align:middle;max-width:100%}
-.chip.s-accepted,.chip.s-live,.chip.s-agreed,.chip.s-certified,.chip.s-issued,.chip.s-active,.chip.s-pass,.chip.s-completed,.result.pass,.lvl.clear,.status.live{background:var(--good-bg);color:var(--good-ink)}
-.chip.s-conditional,.chip.s-awaiting_approval,.chip.s-in_play,.chip.s-review_booked,.chip.s-awaiting_review,.chip.s-reserved,.chip.s-negotiating,.chip.s-applied,.chip.s-invited,.chip.s-re_review_due,.lvl.attention,.sample{background:var(--warn-bg);color:var(--warn-ink)}
-.chip.s-fail,.chip.s-rejected,.chip.s-suspended,.chip.s-void,.chip.s-auto_rejected,.chip.s-cancelled,.chip.s-flag,.chip.s-changes_requested,.chip.s-more_info,.chip.s-timed_out{background:var(--bad-bg);color:var(--bad-ink)}
+.badge,.chip,.car-tag,.src,.result,.lvl,.sample,.status{display:inline-flex;align-items:center;gap:var(--sp-1);padding:0;border-radius:0;background:none;color:var(--ink);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:600;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;vertical-align:baseline;max-width:100%}
+.chip.s-accepted,.chip.s-live,.chip.s-agreed,.chip.s-certified,.chip.s-issued,.chip.s-active,.chip.s-pass,.chip.s-completed,.result.pass,.lvl.clear,.status.live{color:var(--ink)}
+.chip.s-conditional,.chip.s-awaiting_approval,.chip.s-in_play,.chip.s-review_booked,.chip.s-awaiting_review,.chip.s-reserved,.chip.s-negotiating,.chip.s-applied,.chip.s-invited,.chip.s-re_review_due,.lvl.attention,.sample{color:var(--warn-ink)}
+.chip.s-fail,.chip.s-rejected,.chip.s-suspended,.chip.s-void,.chip.s-auto_rejected,.chip.s-cancelled,.chip.s-flag,.chip.s-changes_requested,.chip.s-more_info,.chip.s-timed_out{color:var(--bad-ink)}
 .src{background:var(--navy);color:var(--white)}
 .status:before{content:"";width:var(--sp-2);height:var(--sp-2);border-radius:50%;background:currentColor}
 .dark .status{background:var(--navy-2);color:var(--mut-on-dark)}
@@ -78,25 +90,16 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
   .svc-go{display:block}
 }
 
-/* steps */
-.steps{list-style:none;display:grid;gap:var(--sp-6);margin-top:var(--sp-6);position:relative}
-.steps li{display:grid;grid-template-columns:36px 1fr;gap:var(--sp-4);align-content:start}
-.steps .n{width:36px;height:36px;border-radius:50%;background:var(--navy);color:var(--white);font-weight:800;display:grid;place-items:center;font-size:var(--fs-md);line-height:var(--lh-md)}
-.dark .steps .n{background:var(--accent);color:var(--navy)}
-.steps b{display:block;font-size:var(--fs-lg);color:var(--navy);margin-bottom:var(--sp-1);line-height:var(--lh-lg)}
+/* steps (29 Oct 2026, approved): the number in the title face, no circle and no connecting line; the same everywhere */
+.steps{list-style:none;display:grid;gap:var(--sp-6);margin-top:var(--sp-6)}
+.steps li{display:grid;grid-template-columns:var(--sp-7) 1fr;column-gap:var(--sp-3);align-content:start}
+.steps .n{grid-row:span 3;font-family:var(--display);font-weight:400;font-size:var(--fs-3xl);line-height:var(--lh-3xl);color:var(--field)}
+.dark .steps .n{color:var(--mut-on-dark)}
+.steps b{display:block;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:600;color:var(--navy);margin-bottom:var(--sp-1)}
 .dark .steps b{color:var(--white)}
-.steps span{color:var(--mut);font-size:var(--fs-md);line-height:var(--lh-md)}
-.dark .steps span{color:var(--mut-on-dark)}
-@media(min-width:768px){
-  .steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}
-  .steps:before{content:"";position:absolute;top:var(--sp-4);left:var(--sp-6);right:15%;height:2px;background:var(--line)}
-  .dark .steps:before{background:rgba(255,255,255,.15)}
-  .steps li{grid-template-columns:1fr;position:relative}
-  .steps .n{box-shadow:0 0 0 8px var(--white)}
-  .dark .steps .n{box-shadow:0 0 0 8px var(--navy)}
-  .soft .steps .n{box-shadow:0 0 0 8px var(--soft)}
-}
-
+.steps span:not(.n){color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.dark .steps span:not(.n){color:var(--mut-on-dark)}
+@media(min-width:768px){.steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}}
 /* tick list */
 .ticks{list-style:none;display:grid;gap:var(--sp-3);margin-top:var(--sp-5)}
 .ticks li{display:grid;grid-template-columns:24px 1fr;gap:var(--sp-3);align-items:start}
@@ -152,7 +155,8 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 @media(min-width:768px){.road{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}.stop{grid-template-columns:1fr;gap:var(--sp-4);padding-bottom:0}.stop:before{left:var(--sp-6);right:calc(-1*var(--sp-5));top:var(--sp-3);bottom:auto;width:auto;height:2px}}
 
 /* empty state: shown where real data will appear */
-.empty{border:2px dashed var(--line);border-radius:var(--radius);padding:var(--sp-6);display:grid;gap:var(--sp-2);justify-items:start;margin-top:var(--sp-6)}
+/* 29 Oct 2026: an empty state is words under a hairline, not a dashed box */
+.empty{border-top:1px solid var(--line);padding:var(--sp-5) 0 0;display:grid;gap:var(--sp-2);justify-items:start;margin-top:var(--sp-6)}
 .empty b{color:var(--navy);font-size:var(--fs-lg);line-height:var(--lh-lg)}
 .empty span{color:var(--mut)}
 .facets{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)}
@@ -202,3 +206,19 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .svc-line{display:block}
 .measure-wrap>*{max-width:var(--measure)}
 .phero h1{margin-top:var(--sp-4)}
+
+/* 29 Oct 2026: the open list of a search or filter dropdown (mouse screens; phones use their own picker). Light by default,
+   dark on the home picture. The chosen line has a bar and a tick; no system blue. */
+label:has(>.dd){position:relative}
+.dd{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:var(--sp-1);padding:var(--sp-1) 0;list-style:none;max-height:calc(var(--control) * 7);overflow:auto;
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:0 16px 40px rgba(var(--shade),.18);
+  font-size:var(--fs-md);line-height:var(--lh-md);font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink)}
+.dd li{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:var(--control);padding:0 var(--sp-4);cursor:pointer}
+.dd li+li{border-top:1px solid var(--soft)}
+.dd li.act{background:var(--soft)}
+.dd li[aria-selected=true]{font-weight:600;box-shadow:inset 2px 0 0 var(--navy)}
+.dd li svg{width:var(--sp-4);height:var(--sp-4);flex:none}
+.videobg .dd,.hero .dd{background:var(--navy-2);border-color:rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.45);color:var(--ivory)}
+.videobg .dd li+li,.hero .dd li+li{border-top-color:rgba(255,255,255,.06)}
+.videobg .dd li.act,.hero .dd li.act{background:rgba(255,255,255,.06)}
+.videobg .dd li[aria-selected=true],.hero .dd li[aria-selected=true]{box-shadow:inset 2px 0 0 var(--ivory)}

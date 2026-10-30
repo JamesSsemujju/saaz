@@ -12,10 +12,11 @@
 .appnav a[aria-current],.appright>a[aria-current]{color:var(--white);box-shadow:inset 0 -2px 0 var(--white)}
 .appright{margin-left:auto;display:flex;align-items:center;gap:var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm);min-width:0;height:var(--header)}
 .appright .inbox b{display:inline-block;background:var(--accent);color:var(--navy);border-radius:var(--radius-pill);padding:0 var(--sp-2);margin-left:var(--sp-1);font-size:var(--fs-xs);line-height:var(--lh-xs)}
-.appright>a.sellbtn{min-height:var(--control-sm);background:var(--accent);color:var(--navy);font-weight:700;border-radius:var(--radius-pill);padding:0 var(--sp-4);box-shadow:none}
-.appright>a.sellbtn:hover{background:var(--white);color:var(--navy)}
+/* 29 Oct 2026: Sell a car is a link like the rest of the bar, in white so sellers find it. No pill: nothing else in the bar is a box. */
+.appright>a.sellbtn{color:var(--white);font-weight:500}
+.appright>a.sellbtn:hover{box-shadow:inset 0 -1px 0 var(--white)}
 .acct{position:relative}
-.acct summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--sp-1);height:var(--control-sm);color:var(--white);border:1px solid var(--accent-ink);border-radius:var(--radius-pill);padding:0 var(--sp-3) 0 var(--sp-1)}
+.acct summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--sp-1);height:var(--control-sm);color:var(--white);padding:0}  /* 29 Oct 2026: no outline round the account menu; the initials circle is enough */
 .acct summary::-webkit-details-marker{display:none}
 .acct .av{display:grid;place-items:center;width:var(--sp-6);height:var(--sp-6);border-radius:var(--radius-pill);background:var(--navy-2);font-weight:700;font-size:var(--fs-xs);line-height:var(--lh-xs)}
 .acctmenu{position:absolute;right:0;top:calc(100% + var(--sp-2));width:260px;background:var(--white);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 14px 40px rgba(0,0,0,.18);padding:var(--sp-2);display:grid;z-index:30}

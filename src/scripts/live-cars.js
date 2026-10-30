@@ -26,11 +26,10 @@
       var rv = l.review || {}, photo = l.photos && l.photos[0] ? C.supabaseUrl + "/storage/v1/object/public/car-photos/" + l.photos[0] : "";
       return "<a class='car' href='" + app + "#/car/" + encodeURIComponent(l.ref) + "' data-make='" + esc(l.make) + "' data-body='" + esc(l.body) + "' data-fuel='" + esc(l.fuel) +
         "' data-gearbox='" + esc(l.gearbox) + "' data-price='" + (l.currency === "UGX" ? l.price : 0) + "' data-year='" + l.year + "' data-km='" + l.mileage + "' data-date='" + esc(l.live_at || "") + "'>" +
-        "<div class='car-photo'>" + (photo ? "<img src='" + esc(photo) + "' alt='' loading='lazy' decoding='async'>" : "") +
-        (rv.verdict ? "<span class='car-tag'><i></i>" + esc(rv.verdict.charAt(0).toUpperCase() + rv.verdict.slice(1)) + " · " + rv.score + "/100</span>" : "") + "</div>" +
-        "<div class='car-name'>" + esc(l.year + " " + l.make + " " + l.model) + "</div><div class='car-meta'>" + Number(l.mileage).toLocaleString("en-US") + " km · " + esc(l.fuel) + " · " + esc(l.gearbox) + "</div>" +
-        "<div class='car-price'><b>" + money(l.currency, l.price) + "</b><small>" + esc(l.region) + "</small></div>" +
-        "<div class='demand'><span>" + l.views_7d + " views this week</span><span>" + l.saves + " saves</span><span>" + l.offers + " offers</span></div></a>";
+        "<div class='car-photo'>" + (photo ? "<img src='" + esc(photo) + "' alt='' loading='lazy' decoding='async'>" : "") + "</div>" +
+        "<div class='car-insp'>" + (rv.verdict ? "Inspected <b>" + rv.score + "</b>/100 · " + (rv.verdict === "pass" ? "Pass" : "<span class='att'>" + esc(rv.verdict.charAt(0).toUpperCase() + rv.verdict.slice(1)) + "</span>") : "") + "</div>" +
+        "<div class='car-price'><b>" + money(l.currency, l.price) + "</b></div>" +
+        "<div class='car-name'>" + esc(l.year + " " + l.make + " " + l.model) + "</div><div class='car-meta'>" + Number(l.mileage).toLocaleString("en-US") + " km · " + esc(l.fuel) + " · " + esc(l.gearbox) + " · " + esc(l.region) + "</div></a>";
     }).join(""));
     var empty = document.getElementById("carsempty"); if (empty) empty.hidden = true;
     ["make", "body", "fuel", "gearbox"].forEach(function (k) {

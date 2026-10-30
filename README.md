@@ -28,7 +28,7 @@ src/layouts/module.html  the template for every service page
 src/modules/<slug>.html  extra sections for one service page
 src/pages/*.html         homepage, how it works, buying safely, questions, about, privacy
 src/partials/            header, footer, icon set, car illustration
-src/styles/*.css         tokens (the only place sizes are set), base, layout (the one header and footer), components, pages, cars, app. Joined into one file. The build stops if any spacing, type or container value is not a token (tools/check_layout.py). Rules: project-docs/Saaz_LayoutSystem_2026-10-18.md
+src/styles/*.css         tokens (the only place sizes are set; fonts in src/assets/fonts, rules in project-docs/Saaz_ArtDirection_2026-10-29.md), base, layout (the one header and footer), components, pages, cars, app. Joined into one file. The build stops if any spacing, type or container value is not a token (tools/check_layout.py). Rules: project-docs/Saaz_LayoutSystem_2026-10-18.md
 src/assets/img/          your fixed images go here
 src/lib/money-parser.js  the "40m" / UGX / KES parser from the old site. Kept, not used yet
 docs/                    built output. Never edit by hand

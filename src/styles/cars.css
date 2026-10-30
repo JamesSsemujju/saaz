@@ -3,14 +3,14 @@
 :root{--pass:var(--good);--pass-bg:var(--good-bg);--att:var(--warn);--att-bg:var(--warn-bg);--fail:var(--bad)}
 
 /* ---------- the one card ----------
-   Same parts in the same order everywhere (home, results, admin): photo 4:3, name (2 lines held), specs (1 line), price, demand (1 line).
-   Each part has a fixed height, so cards in a row are equal and their prices sit on one line. */
+   Same parts in the same order everywhere (home, results, admin, /cars/): photo 4:3, the inspection line, price, name, specs.
+   29 Oct 2026 (approved, 216 versions compared): the inspection line and price have fixed heights, so prices line up across a row;
+   the name comes after the price and may take two lines, so no card holds an empty line for a short name. */
 .cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(var(--card),100%),1fr));gap:var(--sp-5) var(--col-gap)}
 /* BA-0008 (25 Oct 2026): fluid grid. The width decides the column count (1 on phones, 3 at 768, 5 at 1280 on the full page);
    auto-fill keeps empty tracks, so a short list never stretches its cards. */
-@media(min-width:768px){.cars .car-name{height:calc(2 * var(--lh-md))}}  /* cards side by side: the name always takes 2 lines so prices line up */
-.car{display:grid;grid-template-rows:auto;align-content:start;row-gap:var(--sp-1);text-decoration:none;color:inherit;min-width:0}
-.car-photo{position:relative;aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:linear-gradient(160deg,var(--accent-ink),var(--navy));display:grid;place-items:center;color:var(--mut-on-dark);margin-bottom:var(--sp-2)}
+.car{display:flex;flex-direction:column;text-decoration:none;color:inherit;min-width:0}
+.car-photo{position:relative;aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:linear-gradient(160deg,var(--accent-ink),var(--navy));display:grid;place-items:center;color:var(--mut-on-dark)}
 /* BA-0008 root cause: the photo's height:100% didn't resolve inside the grid frame, so a photo taller than 4:3 was drawn at its
    full height from the top and the frame cut off its bottom (the tyres). Pinned to the frame, object-fit now does the framing. */
 .car-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -20,21 +20,21 @@
 .car-photo.whole:before{content:"";position:absolute;inset:0;background:var(--bg) center/cover no-repeat;filter:blur(16px) brightness(.75);transform:scale(1.15)}
 .car-photo .ph{width:72%;height:auto;aspect-ratio:600/240}
 .car-photo .phl{position:absolute;bottom:var(--sp-3);right:var(--sp-3);font-size:var(--fs-xs);line-height:var(--lh-xs);color:var(--mut-on-dark)}
-.car-photo .car-tag{position:absolute;top:var(--sp-3);left:var(--sp-3);background:var(--white);color:var(--ink)}
+/* a stage or Reserved on the photo (admin stage, BA-0003): small capitals on a white tag with square corners */
+.car-photo .car-tag{position:absolute;top:var(--sp-3);left:var(--sp-3);background:var(--white);color:var(--ink);padding:var(--sp-1) var(--sp-2);border-radius:2px}
 .car-photo .car-tag.right{left:auto;right:var(--sp-3)}
-.car-photo .car-tag.priv{background:var(--warn-bg);color:var(--warn-ink)}
-.car-tag i{width:var(--sp-2);height:var(--sp-2);border-radius:50%;background:var(--pass)}
+.car-photo .car-tag.priv{color:var(--warn-ink)}
 .car-photo .sample{position:absolute;bottom:var(--sp-3);left:var(--sp-3)}
 .car-photo:has(.sample) .phl{display:none}
-.car-name{font-size:var(--fs-md);line-height:var(--lh-md);max-height:calc(2 * var(--lh-md));font-weight:800;color:var(--navy);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.car-meta,.car .demand{font-size:var(--fs-sm);line-height:var(--lh-sm);height:var(--lh-sm);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.car .demand{display:flex;gap:var(--sp-2);margin:0;font-size:var(--fs-xs);line-height:var(--lh-xs);height:var(--lh-xs)}
-/* BA-0008: narrower cards side by side, so the specs may take 2 lines (held, so rows stay equal) instead of losing the region */
-@media(min-width:768px){.cars .car-meta{white-space:normal;height:calc(2 * var(--lh-sm));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}}
-.car-price{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);height:var(--lh-lg);overflow:hidden}
-.car-price b{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.car-insp{margin-top:var(--sp-3);min-height:var(--lh-2xs);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.car-insp b{font-weight:600;color:var(--navy)}
+.car-insp .att{color:var(--warn-ink)}
+.car-name{margin-top:var(--sp-1);font-size:var(--fs-md);line-height:var(--lh-md);font-weight:600;color:var(--navy)}
+.car-meta{margin-top:var(--sp-1);font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut)}
+.car-price{margin-top:var(--sp-1);display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);height:var(--lh-lg);overflow:hidden}
+.car-price b{font-size:var(--fs-lg);line-height:var(--lh-lg);font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
 .car-price small{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.car:hover .car-name{color:var(--accent-ink)}
+.car:hover .car-name{box-shadow:inset 0 -1px 0 currentColor}
 .car:hover .car-photo{box-shadow:0 12px 28px rgba(var(--shade),.18)}
 /* BA-0001: on hover (mouse) or keyboard focus the card's photo comes forward and zooms slightly; the text stays as it is */
 .car .car-photo{transition:transform .2s ease,box-shadow .2s ease}
@@ -58,12 +58,14 @@
 /* BA-0009: a field with long choices (Admin, Cars: Status) gets a wider column, the price field gives up one, so the row still fits */
 .filters>.wide{grid-column:span 4}
 @media(min-width:768px){.filters>.wide{grid-column:span 4}.filters:has(>.wide)>label:has(input[name=max]){grid-column:span 2}}
-.filters label{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.filters label{font-size:var(--fs-2xs);line-height:var(--lh-2xs);letter-spacing:.14em;text-transform:uppercase}  /* short filter labels: small capitals, like the home search */
 .count{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);margin-bottom:var(--sp-4)}
 .pager{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-7)}
-.pager a,.pager span{display:inline-flex;align-items:center;justify-content:center;min-width:var(--control);height:var(--control);padding:0 var(--sp-3);border:1px solid var(--line);border-radius:var(--radius-pill);background:var(--white);color:var(--ink);text-decoration:none;font-weight:600}
-.pager [aria-current]{background:var(--navy);border-color:var(--navy);color:var(--white)}
-.pager span.gap{border:0;background:none;min-width:0}
+/* 29 Oct 2026: pages are plain numbers; the current one is underlined (no circles) */
+.pager a,.pager span{display:inline-flex;align-items:center;justify-content:center;min-width:var(--control);height:var(--control);padding:0 var(--sp-2);color:var(--mut);text-decoration:none;font-weight:500}
+.pager a:hover{color:var(--navy)}
+.pager [aria-current]{color:var(--navy);box-shadow:inset 0 -2px 0 var(--navy)}
+.pager span.gap{min-width:0;box-shadow:none}
 
 /* ---------- the listing page ----------
    Gallery, then specs and description (8 columns) beside a sticky price and contact panel (4 columns).
@@ -89,14 +91,14 @@
 .buybox{display:grid;gap:var(--sp-4);align-content:start;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-5)}
 .buybox>*{margin:0}
 .buybox .demand{border-top:1px solid var(--line);padding-top:var(--sp-4)}
-.car-title{font-size:var(--fs-2xl);line-height:var(--lh-2xl);color:var(--navy);letter-spacing:-.3px}
+.car-title{font-size:var(--fs-3xl);line-height:var(--lh-3xl);color:var(--navy);letter-spacing:-.3px}
 .car-sub,.car-area{color:var(--mut)}
 .car-bigprice{font-size:var(--fs-3xl);line-height:var(--lh-3xl);font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
 .insp-card{background:var(--soft);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-2)}
 .insp-card>*{margin:0}
 .insp-head{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut)}
 .insp-card .btn.text{justify-self:start;color:var(--navy)}
-.details{display:grid;gap:var(--sp-7)}
+.details{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp-7)}  /* a long value wraps instead of widening the page */
 .details h2{margin-bottom:var(--sp-4)}
 .specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--col-gap);border-top:1px solid var(--line)}
 @media(min-width:768px){.specs{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -110,6 +112,21 @@
 .findings b{display:block;color:var(--navy)}
 .findings span{color:var(--mut)}
 /* in a row of fields the button keeps one line, like the fields beside it */
-.filters .btn,.homesearch .btn{white-space:nowrap;padding-inline:var(--sp-4)}
+.filters .btn,.homesearch .btn{white-space:nowrap}
+.filters .btn.go{justify-self:start}  /* searching is the arrow link, as on the home picture; solid bars are for offers and saving */
 /* a hairline inside every car photo so light photos don't melt into the page (23 Oct 2026) */
 .car-photo:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(var(--shade),.08);pointer-events:none}
+
+/* 29 Oct 2026 (approved): on the car page the inspection is part of the price panel, under a hairline: the score large in the
+   title face, the verdict in words (colour only when it needs attention), the checks, who inspected it and when, the report link. */
+.buybox .insp-card{background:none;border-radius:0;padding:var(--sp-5) 0 0;border-top:1px solid var(--line);gap:var(--sp-2)}
+.insp-head{display:flex;align-items:baseline;gap:var(--sp-3)}
+.insp-score{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.insp-score b{font-family:var(--display);font-weight:400;font-size:var(--fs-5xl);line-height:var(--lh-5xl);color:var(--navy);letter-spacing:-.5px}
+.insp-verdict{font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.insp-verdict.att{color:var(--warn-ink)}
+.insp-checks{color:var(--navy);font-weight:500;font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.insp-card p{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.car-title{font-family:var(--display);font-weight:400}
+.btn.wide{justify-content:space-between}
+@media(min-width:768px) and (max-width:1023px){.filters>.btn.go{grid-column:span 3}}  /* the arrow link needs a little more room than a 2-column button at 768 */

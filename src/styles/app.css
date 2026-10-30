@@ -37,14 +37,14 @@
 .appbody .checks2{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4)}
 
 /* boxes */
-.appbody .box{background:var(--info-bg);border-radius:12px;padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0 0}
+.appbody .box{background:none;border-left:2px solid var(--line);border-radius:0;padding:var(--sp-2) var(--sp-4);margin:var(--sp-4) 0 0}  /* 29 Oct 2026: a note is text with a rule, not a grey box */
 .appbody .box.good{background:#E6F5EC}
 .appbody .box.warn{background:#FFF1D6}
 .appbody .box.spaced{margin:var(--sp-4) 0}
 .appbody .verdict{display:grid;gap:var(--sp-1);border-radius:12px;padding:var(--sp-4);margin:var(--sp-4) 0}
 .appbody .verdict.good{background:#E6F5EC;color:#14532D}
 .appbody .verdict.bad{background:#FDE2E0;color:#8A1C12}
-.appbody .empty{background:var(--white)}
+.appbody .empty{background:none}
 .toast{visibility:hidden;position:fixed;left:50%;bottom:var(--sp-5);transform:translate(-50%,120px);background:var(--navy);color:var(--white);padding:var(--sp-3) var(--sp-4);border-radius:12px;max-width:calc(100% - 32px);transition:transform .25s;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .toast.show{visibility:visible;transform:translate(-50%,0)}
 .toast.bad{background:#8A1C12}

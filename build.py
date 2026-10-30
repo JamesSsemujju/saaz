@@ -134,8 +134,7 @@ def build_site(out, base, cars, preview):
         inner = (f'<img src="{base}assets/img/cars/{esc(c["photos"][0])}" alt="" loading="lazy" decoding="async">' if c["photos"]
                  else '<svg class="ph" aria-hidden="true"><use href="#i-carside"/></svg><span class="phl">Photo from the inspection</span>')
         n = len(c["inspection"]["findings"])
-        t = (f'<span class="car-tag"><i></i>{esc(c["inspection"]["result"])} · {n} finding{"s" if n != 1 else ""}</span>' if tag else "")
-        return f'<div class="{cls}">{inner}{t}{sample_tag}</div>'
+        return f'<div class="{cls}">{inner}{sample_tag}</div>'
 
     def name(c): return f'{c["year"]} {c["make"]} {c["model"]}'
     def slug(c): return c["ref"].lower()
@@ -144,9 +143,9 @@ def build_site(out, base, cars, preview):
         return (f'<a class="car" href="{base}cars/{slug(c)}/" data-make="{esc(c["make"])}" data-body="{esc(c["body"])}" '
                 f'data-fuel="{esc(c["fuel"])}" data-gearbox="{esc(c["gearbox"])}" data-price="{c["price_ugx"]}" '
                 f'data-year="{c["year"]}" data-km="{c["km"]}" data-date="{c["inspection"]["date"]}">'
-                f'{photo(c)}<div class="car-name">{esc(name(c))}</div>'
-                f'<div class="car-meta">{km(c["km"])} · {esc(c["fuel"])} · {esc(c["gearbox"])} · {esc(c["drive"])}</div>'
-                f'<div class="car-price"><b>{ugx(c["price_ugx"])}</b><small>{esc(c["area"])}</small></div></a>')
+                f'{photo(c)}<div class="car-insp">Inspected · {esc(c["inspection"]["result"])} · {len(c["inspection"]["findings"])} finding{"s" if len(c["inspection"]["findings"]) != 1 else ""}</div>'
+                f'<div class="car-price"><b>{ugx(c["price_ugx"])}</b></div><div class="car-name">{esc(name(c))}</div>'
+                f'<div class="car-meta">{km(c["km"])} · {esc(c["fuel"])} · {esc(c["gearbox"])} · {esc(c["area"])}</div></a>')
 
     def counts(key):
         d = {}
@@ -195,6 +194,8 @@ def build_site(out, base, cars, preview):
             shutil.copy2(SRC / "assets/img" / f"{f}-{wdt}.webp", out / "assets/img" / f"{f}-{wdt}.webp")
     if (SRC / "assets/video").exists():  # BA-0006: the home page background video (mp4 and its still frames)
         shutil.copytree(SRC / "assets/video", out / "assets/video", dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.md"))
+    if (SRC / "assets/fonts").exists():  # 29 Oct 2026: Instrument Serif (titles) and Instrument Sans (everything else), self-hosted, SIL OFL
+        shutil.copytree(SRC / "assets/fonts", out / "assets/fonts", dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.md"))
     for sub in ("brand", "social"):  # logo and icons (brand kit); social icons for emails
         if (SRC / "assets/img" / sub).exists():
             shutil.copytree(SRC / "assets/img" / sub, out / "assets/img" / sub, dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.md"))

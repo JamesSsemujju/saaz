@@ -17,13 +17,18 @@
   --bad:#B42318; --bad-bg:#FDE2E0; --bad-ink:#8A1C12;
   --info-bg:#E8EEF0; --grey-bg:#E3E7E7; --grey-ink:#253745;
   --shade:6,20,27;   /* the darkest slate as r,g,b, for shadows and overlays: rgba(var(--shade),.2) */
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  /* type families (29 Oct 2026): Instrument Serif for titles (page, section, the car's own name), Instrument Sans for everything else.
+     Same type foundry, drawn to pair. Self-hosted in assets/fonts (SIL OFL), about 108 KB for all five files. */
+  --font:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --display:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --ivory:#E9E3D8;   /* text on the dark hero: softer than white, so the car stays brighter than the words */
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 
   /* spacing scale: 4 8 12 16 24 32 48 64 96. Every margin, padding, gap and offset is one of these. */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px; --sp-9:96px;
 
   /* type: size and line height in pairs. Every line height is a multiple of 4, so text sits on the spacing scale. */
+  --fs-2xs:10px; --lh-2xs:16px;  /* small tracked capitals only (field labels on the hero) */
   --fs-xs:12px; --lh-xs:16px;
   --fs-sm:14px; --lh-sm:20px;
   --fs-md:16px; --lh-md:24px;
@@ -33,6 +38,8 @@
   --fs-3xl:32px; --lh-3xl:40px;
   --fs-4xl:40px; --lh-4xl:48px;
   --fs-5xl:56px; --lh-5xl:64px;
+  --fs-6xl:72px; --lh-6xl:72px;  /* page headlines on wide screens */
+  --fs-7xl:96px; --lh-7xl:96px;  /* the home headline on wide screens (approved 29 Oct 2026) */
   --fs-micro:6px; --lh-micro:8px;  /* security microprint on the printed report only */
   --fs-mark:96px; --lh-mark:96px;  /* VOID watermark across a report */
 
@@ -59,10 +66,16 @@
 }
 
 /* base.css: reset, type, the container, the 12/4 column grid, sections. Values come from tokens.css only. */
+/* fonts: swap, so text shows at once in the fallback and changes when the file arrives (slow data) */
+@font-face{font-family:"Instrument Sans";src:url(fonts/instrument-sans-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Instrument Sans";src:url(fonts/instrument-sans-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Instrument Sans";src:url(fonts/instrument-sans-latin-600-normal.woff2) format("woff2");font-weight:600 900;font-display:swap}
+@font-face{font-family:"Instrument Serif";src:url(fonts/instrument-serif-latin-400-normal.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Instrument Serif";src:url(fonts/instrument-serif-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic;font-display:swap}
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:var(--sp-4)}
 @media(min-width:1024px){html{scroll-padding-top:calc(var(--header) + var(--sp-4))}}
-body{font-family:var(--font);color:var(--ink);background:var(--white);font-size:var(--fs-md);line-height:var(--lh-md);overflow-wrap:break-word;overflow-x:hidden}
+body{font-family:var(--font);-webkit-font-smoothing:antialiased;color:var(--ink);background:var(--white);font-size:var(--fs-md);line-height:var(--lh-md);overflow-wrap:break-word;overflow-x:hidden}
 /* Long unbroken values (VINs, emails, references) wrap inside their box */
 .specs>div,.specs dt,.specs dd,.features>div,.steps>li,.split>*,.car-name,.car-meta,.car-price,.insp-card,.vinresult *{min-width:0;overflow-wrap:anywhere}
 a{color:inherit}
@@ -87,8 +100,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .band.dark{background:var(--navy);color:var(--white)}
 
 /* type: each size uses its own line height from the scale */
-h1{font-size:var(--fs-2xl);line-height:var(--lh-2xl);letter-spacing:-.5px;font-weight:800;color:var(--navy);text-wrap:balance}
-h2{font-size:var(--fs-2xl);line-height:var(--lh-2xl);letter-spacing:-.3px;font-weight:800;color:var(--navy);text-wrap:balance}
+h1{font-family:var(--display);font-size:var(--fs-3xl);line-height:var(--lh-3xl);letter-spacing:-.3px;font-weight:400;color:var(--navy);text-wrap:balance}
+h2{font-family:var(--display);font-size:var(--fs-3xl);line-height:var(--lh-3xl);letter-spacing:-.2px;font-weight:400;color:var(--navy);text-wrap:balance}
 h3{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
 .dark h1,.dark h2{color:var(--white)}
 .kicker{color:var(--accent-ink);font-weight:700;font-size:var(--fs-xs);line-height:var(--lh-xs);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:var(--sp-2)}
@@ -102,8 +115,8 @@ h3{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
 .prose p,.prose li{color:var(--mut)}
 .prose ul{padding-left:var(--sp-5);display:grid;gap:var(--sp-2)}
 @media(min-width:768px){
-  h1{font-size:var(--fs-3xl);line-height:var(--lh-3xl)}
-  h2{font-size:var(--fs-3xl);line-height:var(--lh-3xl)}
+  h1{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}
+  h2{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}
 }
 
 /* the one section heading: title, optional line under it, optional link at the right edge */
@@ -114,7 +127,7 @@ h3{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--navy)}
 
 /* ---------- Polish (23 Oct 2026, from make-interfaces-feel-better and web-animation-design) ---------- */
 body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-h1,h2,h3{text-wrap:balance}
+h1,h2,h3{text-wrap:balance;overflow-wrap:anywhere}  /* long unbroken values (a 40-character model name) wrap instead of widening the page */
 p,li,dd{text-wrap:pretty}
 /* prices and counts don't jiggle as they change */
 .car-price,.stats b,.rkpis b,.upbar b,.price,.money,.demand{font-variant-numeric:tabular-nums}
@@ -133,10 +146,11 @@ p,li,dd{text-wrap:pretty}
 .appnav a[aria-current],.appright>a[aria-current]{color:var(--white);box-shadow:inset 0 -2px 0 var(--white)}
 .appright{margin-left:auto;display:flex;align-items:center;gap:var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm);min-width:0;height:var(--header)}
 .appright .inbox b{display:inline-block;background:var(--accent);color:var(--navy);border-radius:var(--radius-pill);padding:0 var(--sp-2);margin-left:var(--sp-1);font-size:var(--fs-xs);line-height:var(--lh-xs)}
-.appright>a.sellbtn{min-height:var(--control-sm);background:var(--accent);color:var(--navy);font-weight:700;border-radius:var(--radius-pill);padding:0 var(--sp-4);box-shadow:none}
-.appright>a.sellbtn:hover{background:var(--white);color:var(--navy)}
+/* 29 Oct 2026: Sell a car is a link like the rest of the bar, in white so sellers find it. No pill: nothing else in the bar is a box. */
+.appright>a.sellbtn{color:var(--white);font-weight:500}
+.appright>a.sellbtn:hover{box-shadow:inset 0 -1px 0 var(--white)}
 .acct{position:relative}
-.acct summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--sp-1);height:var(--control-sm);color:var(--white);border:1px solid var(--accent-ink);border-radius:var(--radius-pill);padding:0 var(--sp-3) 0 var(--sp-1)}
+.acct summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--sp-1);height:var(--control-sm);color:var(--white);padding:0}  /* 29 Oct 2026: no outline round the account menu; the initials circle is enough */
 .acct summary::-webkit-details-marker{display:none}
 .acct .av{display:grid;place-items:center;width:var(--sp-6);height:var(--sp-6);border-radius:var(--radius-pill);background:var(--navy-2);font-weight:700;font-size:var(--fs-xs);line-height:var(--lh-xs)}
 .acctmenu{position:absolute;right:0;top:calc(100% + var(--sp-2));width:260px;background:var(--white);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 14px 40px rgba(0,0,0,.18);padding:var(--sp-2);display:grid;z-index:30}
@@ -190,38 +204,50 @@ p,li,dd{text-wrap:pretty}
 
 /* components.css: reusable pieces used across pages */
 
-/* ---------- the one button set: primary (.btn), secondary (.btn.ghost), text (.btn.text) ----------
+/* ---------- the one button set (29 Oct 2026, approved): primary (.btn) is a solid navy bar with square corners;
+   secondary (.btn.ghost) and text (.btn.text) are the same text link: a hairline underline, an arrow when it goes somewhere.
+   On dark sections and pictures there are no solid bars: every action is the text link, in ivory.
    Sizes are modifiers: .small (dense rows), .wide (full width). Every button and input in a row shares one height. */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:var(--control);max-width:100%;padding:var(--sp-2) var(--sp-5);text-align:center;border:1px solid var(--navy);border-radius:var(--radius-pill);background:var(--navy);color:var(--white);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:700;text-decoration:none;cursor:pointer}  /* a long label wraps and the button grows; one line is always exactly --control */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-4);min-height:var(--control);max-width:100%;padding:var(--sp-2) var(--sp-5);text-align:center;border:1px solid var(--navy);border-radius:2px;background:var(--navy);color:var(--white);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:500;text-decoration:none;cursor:pointer}  /* a long label wraps and the button grows; one line is always exactly --control */
 .btn:hover{background:var(--navy-2)}
 .btn{transition-property:background-color,border-color,color,transform;transition-duration:150ms,150ms,150ms,100ms;transition-timing-function:ease,ease,ease,cubic-bezier(0.165,0.84,0.44,1)}
-.btn:active:not(:disabled){transform:scale(.97)}  /* a press you can feel */
+.btn:active:not(:disabled){transform:scale(.98)}  /* a press you can feel */
 @media(prefers-reduced-motion:reduce){.btn{transition-property:background-color,border-color,color}.btn:active:not(:disabled){transform:none}}
-.btn.ghost{background:var(--white);color:var(--navy)}
-.btn.ghost:hover{background:var(--soft)}
-.btn.text{background:none;border-color:transparent;color:var(--accent-ink);padding:0;text-decoration:underline}
-.btn.text:hover{background:none;color:var(--navy)}
+.btn.ghost,.btn.text,.btn.go{background:none;border:0;border-radius:0;color:var(--navy);padding:0;min-height:var(--control);font-weight:500;text-decoration:none;box-shadow:inset 0 -1px 0 currentColor;justify-content:flex-start}
+.btn.ghost:hover,.btn.text:hover,.btn.go:hover{background:none;box-shadow:inset 0 -2px 0 currentColor}
+.btn.ghost.wide,.btn.text.wide{width:auto}
+/* (the text link is defined with .btn.ghost above) */
+
+/* 29 Oct 2026: the one text link. Underlined with a hairline; a link that takes you somewhere ends in the arrow (from the quick search). */
+a.btn::after,.btn.go::after{content:"";width:var(--sp-3);height:var(--sp-3);flex:none;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
+.dark .btn,.hero .btn,.phero .btn,.videobg .btn{background:none;border:0;border-radius:0;padding:0;color:var(--ivory);justify-content:flex-start;box-shadow:inset 0 -1px 0 rgba(233,227,216,.55)}
+.dark .btn:hover,.hero .btn:hover,.phero .btn:hover,.videobg .btn:hover{background:none;box-shadow:inset 0 -2px 0 var(--ivory)}
 .btn.small{min-height:var(--control-sm);padding:var(--sp-2) var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm)}
 .btn.wide{width:100%}
 .btn:disabled,.btn[aria-disabled=true]{background:var(--line);border-color:var(--line);color:var(--mut);cursor:not-allowed}
-/* on dark backgrounds the same buttons invert */
-.dark .btn,.hero .btn,.phero .btn{background:var(--white);border-color:var(--white);color:var(--navy)}
-.dark .btn.ghost,.hero .btn.ghost,.phero .btn.ghost{background:transparent;border-color:var(--mut-on-dark);color:var(--white)}
-.soon{display:inline-flex;align-items:center;height:var(--control-sm);color:var(--mut-on-dark);border:1px solid var(--accent-ink);border-radius:var(--radius-pill);padding:0 var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+/* on dark backgrounds: see the text link rule above */
+
+
+.soon{display:inline-flex;align-items:center;min-height:var(--control-sm);color:var(--mut-on-dark);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.16em;text-transform:uppercase}
 
 /* ---------- the one input: text, number, email, select, textarea ---------- */
-label{display:grid;gap:var(--sp-2);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600;color:var(--ink)}
-label.inline{display:flex;gap:var(--sp-3);align-items:center;min-height:var(--control);font-weight:500}
-input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{height:var(--control);width:100%;min-width:0;padding:0 var(--sp-3);border:1px solid var(--field);border-radius:var(--radius-sm);background:var(--white);color:var(--ink);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md)}
+/* labels: form questions in sentence case (they can be long); search and filter fields use small capitals (cars.css, pages.css) */
+label{display:grid;gap:var(--sp-1);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500;color:var(--mut)}
+label.inline{display:flex;gap:var(--sp-3);align-items:center;min-height:var(--control);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink)}
+/* 29 Oct 2026 (approved): the one input is its value over one hairline, no box. Textareas keep a hairline frame (several lines need an edge). */
+input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{height:var(--control);width:100%;min-width:0;padding:0;border:0;border-bottom:1px solid var(--field);border-radius:0;background:transparent;color:var(--ink);font:inherit;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:500;letter-spacing:0;text-transform:none}
+input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,select:focus,textarea:focus{border-color:var(--navy)}
 /* BA-0009 (25 Oct 2026): dropdowns drawn the same on every browser. The browser's own arrow is replaced by one chevron
    with room of its own, so neither the text nor the arrow presses against the border; long choices end in an ellipsis. */
-select{-webkit-appearance:none;appearance:none;padding-right:calc(var(--sp-6) + var(--sp-2));text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%234A5C6A' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right var(--sp-3) center;background-size:var(--sp-4) var(--sp-4)}
-select:hover{border-color:var(--mut)}
+select{-webkit-appearance:none;appearance:none;padding-right:var(--sp-6);text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%234A5C6A' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 0 center;background-size:var(--sp-3) var(--sp-3)}
+select:hover{border-color:var(--ink)}
 select::-ms-expand{display:none}
-select:disabled{cursor:not-allowed;background-color:var(--soft);color:var(--mut)}
-textarea{height:auto;min-height:calc(var(--control) * 2);padding-block:var(--sp-3);resize:vertical}
+select:disabled{cursor:not-allowed;color:var(--mut)}
+textarea{height:auto;min-height:calc(var(--control) * 2);padding:var(--sp-3);border:1px solid var(--field);border-radius:2px;resize:vertical}
 input[type=checkbox],input[type=radio]{width:var(--sp-5);height:var(--sp-5);flex:none;accent-color:var(--navy)}
 input[readonly]{background:var(--soft);color:var(--mut)}
 fieldset{border:0;padding:0;margin:0}
@@ -238,10 +264,10 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 
 /* ---------- the one badge: a short label in a pill. Colour is the only variant. ----------
    .chip (statuses), .car-tag (on a photo), .src, .result, .lvl, .sample and .status are names for this one badge. */
-.badge,.chip,.car-tag,.src,.result,.lvl,.sample,.status{display:inline-flex;align-items:center;gap:var(--sp-1);height:var(--sp-5);padding:0 var(--sp-2);border-radius:var(--radius-pill);background:var(--grey-bg);color:var(--grey-ink);font-size:var(--fs-xs);line-height:var(--lh-xs);font-weight:700;white-space:nowrap;vertical-align:middle;max-width:100%}
-.chip.s-accepted,.chip.s-live,.chip.s-agreed,.chip.s-certified,.chip.s-issued,.chip.s-active,.chip.s-pass,.chip.s-completed,.result.pass,.lvl.clear,.status.live{background:var(--good-bg);color:var(--good-ink)}
-.chip.s-conditional,.chip.s-awaiting_approval,.chip.s-in_play,.chip.s-review_booked,.chip.s-awaiting_review,.chip.s-reserved,.chip.s-negotiating,.chip.s-applied,.chip.s-invited,.chip.s-re_review_due,.lvl.attention,.sample{background:var(--warn-bg);color:var(--warn-ink)}
-.chip.s-fail,.chip.s-rejected,.chip.s-suspended,.chip.s-void,.chip.s-auto_rejected,.chip.s-cancelled,.chip.s-flag,.chip.s-changes_requested,.chip.s-more_info,.chip.s-timed_out{background:var(--bad-bg);color:var(--bad-ink)}
+.badge,.chip,.car-tag,.src,.result,.lvl,.sample,.status{display:inline-flex;align-items:center;gap:var(--sp-1);padding:0;border-radius:0;background:none;color:var(--ink);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:600;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;vertical-align:baseline;max-width:100%}
+.chip.s-accepted,.chip.s-live,.chip.s-agreed,.chip.s-certified,.chip.s-issued,.chip.s-active,.chip.s-pass,.chip.s-completed,.result.pass,.lvl.clear,.status.live{color:var(--ink)}
+.chip.s-conditional,.chip.s-awaiting_approval,.chip.s-in_play,.chip.s-review_booked,.chip.s-awaiting_review,.chip.s-reserved,.chip.s-negotiating,.chip.s-applied,.chip.s-invited,.chip.s-re_review_due,.lvl.attention,.sample{color:var(--warn-ink)}
+.chip.s-fail,.chip.s-rejected,.chip.s-suspended,.chip.s-void,.chip.s-auto_rejected,.chip.s-cancelled,.chip.s-flag,.chip.s-changes_requested,.chip.s-more_info,.chip.s-timed_out{color:var(--bad-ink)}
 .src{background:var(--navy);color:var(--white)}
 .status:before{content:"";width:var(--sp-2);height:var(--sp-2);border-radius:50%;background:currentColor}
 .dark .status{background:var(--navy-2);color:var(--mut-on-dark)}
@@ -268,25 +294,16 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
   .svc-go{display:block}
 }
 
-/* steps */
-.steps{list-style:none;display:grid;gap:var(--sp-6);margin-top:var(--sp-6);position:relative}
-.steps li{display:grid;grid-template-columns:36px 1fr;gap:var(--sp-4);align-content:start}
-.steps .n{width:36px;height:36px;border-radius:50%;background:var(--navy);color:var(--white);font-weight:800;display:grid;place-items:center;font-size:var(--fs-md);line-height:var(--lh-md)}
-.dark .steps .n{background:var(--accent);color:var(--navy)}
-.steps b{display:block;font-size:var(--fs-lg);color:var(--navy);margin-bottom:var(--sp-1);line-height:var(--lh-lg)}
+/* steps (29 Oct 2026, approved): the number in the title face, no circle and no connecting line; the same everywhere */
+.steps{list-style:none;display:grid;gap:var(--sp-6);margin-top:var(--sp-6)}
+.steps li{display:grid;grid-template-columns:var(--sp-7) 1fr;column-gap:var(--sp-3);align-content:start}
+.steps .n{grid-row:span 3;font-family:var(--display);font-weight:400;font-size:var(--fs-3xl);line-height:var(--lh-3xl);color:var(--field)}
+.dark .steps .n{color:var(--mut-on-dark)}
+.steps b{display:block;font-size:var(--fs-md);line-height:var(--lh-md);font-weight:600;color:var(--navy);margin-bottom:var(--sp-1)}
 .dark .steps b{color:var(--white)}
-.steps span{color:var(--mut);font-size:var(--fs-md);line-height:var(--lh-md)}
-.dark .steps span{color:var(--mut-on-dark)}
-@media(min-width:768px){
-  .steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}
-  .steps:before{content:"";position:absolute;top:var(--sp-4);left:var(--sp-6);right:15%;height:2px;background:var(--line)}
-  .dark .steps:before{background:rgba(255,255,255,.15)}
-  .steps li{grid-template-columns:1fr;position:relative}
-  .steps .n{box-shadow:0 0 0 8px var(--white)}
-  .dark .steps .n{box-shadow:0 0 0 8px var(--navy)}
-  .soft .steps .n{box-shadow:0 0 0 8px var(--soft)}
-}
-
+.steps span:not(.n){color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.dark .steps span:not(.n){color:var(--mut-on-dark)}
+@media(min-width:768px){.steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}}
 /* tick list */
 .ticks{list-style:none;display:grid;gap:var(--sp-3);margin-top:var(--sp-5)}
 .ticks li{display:grid;grid-template-columns:24px 1fr;gap:var(--sp-3);align-items:start}
@@ -342,7 +359,8 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 @media(min-width:768px){.road{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}.stop{grid-template-columns:1fr;gap:var(--sp-4);padding-bottom:0}.stop:before{left:var(--sp-6);right:calc(-1*var(--sp-5));top:var(--sp-3);bottom:auto;width:auto;height:2px}}
 
 /* empty state: shown where real data will appear */
-.empty{border:2px dashed var(--line);border-radius:var(--radius);padding:var(--sp-6);display:grid;gap:var(--sp-2);justify-items:start;margin-top:var(--sp-6)}
+/* 29 Oct 2026: an empty state is words under a hairline, not a dashed box */
+.empty{border-top:1px solid var(--line);padding:var(--sp-5) 0 0;display:grid;gap:var(--sp-2);justify-items:start;margin-top:var(--sp-6)}
 .empty b{color:var(--navy);font-size:var(--fs-lg);line-height:var(--lh-lg)}
 .empty span{color:var(--mut)}
 .facets{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)}
@@ -393,6 +411,22 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .measure-wrap>*{max-width:var(--measure)}
 .phero h1{margin-top:var(--sp-4)}
 
+/* 29 Oct 2026: the open list of a search or filter dropdown (mouse screens; phones use their own picker). Light by default,
+   dark on the home picture. The chosen line has a bar and a tick; no system blue. */
+label:has(>.dd){position:relative}
+.dd{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:var(--sp-1);padding:var(--sp-1) 0;list-style:none;max-height:calc(var(--control) * 7);overflow:auto;
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:0 16px 40px rgba(var(--shade),.18);
+  font-size:var(--fs-md);line-height:var(--lh-md);font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink)}
+.dd li{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:var(--control);padding:0 var(--sp-4);cursor:pointer}
+.dd li+li{border-top:1px solid var(--soft)}
+.dd li.act{background:var(--soft)}
+.dd li[aria-selected=true]{font-weight:600;box-shadow:inset 2px 0 0 var(--navy)}
+.dd li svg{width:var(--sp-4);height:var(--sp-4);flex:none}
+.videobg .dd,.hero .dd{background:var(--navy-2);border-color:rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.45);color:var(--ivory)}
+.videobg .dd li+li,.hero .dd li+li{border-top-color:rgba(255,255,255,.06)}
+.videobg .dd li.act,.hero .dd li.act{background:rgba(255,255,255,.06)}
+.videobg .dd li[aria-selected=true],.hero .dd li[aria-selected=true]{box-shadow:inset 2px 0 0 var(--ivory)}
+
 /* pages.css: page heroes. One dark band with the headline; on the home page the search sits directly under it. */
 .hero,.phero{background:var(--navy);color:var(--white)}
 .hero{padding-block:var(--section)}
@@ -400,15 +434,18 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .hero .wrap,.phero .wrap{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:var(--sp-5) var(--col-gap);align-items:center}
 .hero .wrap>*,.phero .wrap>*{grid-column:1/-1;min-width:0}
 .hero h1,.phero h1{color:var(--white)}
-.display{font-size:var(--fs-3xl);line-height:var(--lh-3xl);letter-spacing:-1px}
+.display{font-size:var(--fs-4xl);line-height:var(--lh-4xl);letter-spacing:-.5px}
+.display i{font-style:italic}
 .eyebrow{color:var(--accent);font-weight:700;font-size:var(--fs-sm);line-height:var(--lh-sm);letter-spacing:1.5px;text-transform:uppercase}
 .hero p.sub,.phero p.sub{color:var(--mut-on-dark);font-size:var(--fs-lg);line-height:var(--lh-lg);max-width:var(--measure);margin-top:var(--sp-4)}
 .hero .check{margin-top:var(--sp-5)}
 .phero .top{display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:center}
 .phero .meta{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5);color:var(--mut-on-dark);font-size:var(--fs-sm);line-height:var(--lh-sm);margin-top:var(--sp-4)}
 .phero .meta b{color:var(--white);font-weight:600}
-.paths{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)}
-.paths a{display:inline-flex;align-items:center;height:var(--control-sm);color:var(--white);text-decoration:none;border:1px solid var(--accent-ink);border-radius:var(--radius-pill);padding:0 var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600}
+.paths{display:flex;flex-wrap:wrap;gap:0 var(--sp-5);margin-top:var(--sp-5)}
+/* 29 Oct 2026: shortcuts are text links with the arrow, like the home quick search */
+.paths a{display:inline-flex;align-items:center;gap:var(--sp-2);min-height:var(--control);color:var(--ivory);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500;box-shadow:inset 0 -1px 0 rgba(233,227,216,.35)}
+.paths a::after{content:"";width:var(--sp-3);height:var(--sp-3);background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
 .paths a:hover{background:var(--navy-2)}
 .hero-car{width:100%;height:auto}
 .hero-car .scan{animation:scan 4.5s ease-in-out infinite}
@@ -421,19 +458,34 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .promise div{display:flex;gap:var(--sp-3);align-items:flex-start;color:var(--ice)}
 .promise .icon{color:var(--accent)}
 .phero h1{font-size:var(--fs-3xl);line-height:var(--lh-3xl)}
-@media(min-width:768px){.phero h1{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}.display{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}.promise{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}}
+@media(min-width:768px){.phero h1{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}.display{font-size:var(--fs-5xl);line-height:var(--lh-5xl)}.promise{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}}
 @media(min-width:1024px){
-  .display{font-size:var(--fs-5xl);line-height:var(--lh-5xl)}
+  .display{font-size:var(--fs-6xl);line-height:var(--lh-6xl)}
   .hero .wrap>.hero-text,.phero .wrap.has-figure>:first-child{grid-column:1/span 6}
   .hero .wrap>.hero-art,.phero .wrap.has-figure>:last-child{grid-column:7/span 6}
 }
 
 /* home search: directly under the headline. Fields and the button share one height and one row. */
-.homesearch{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:var(--sp-3) var(--col-gap);align-items:end;margin-top:var(--sp-5);padding:var(--sp-4);background:var(--white);border-radius:var(--radius);color:var(--ink)}
+.homesearch{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));column-gap:var(--col-gap);align-items:end;margin-top:var(--sp-6);color:var(--ivory)}
+/* 29 Oct 2026: no white panel. The search sits on the picture: each field is its label and its value over one hairline,
+   the value in ivory (softer than white), the action is the same arrow link as the quick searches. Chosen from 100 rendered versions. */
 .homesearch>*{grid-column:1/-1;min-width:0}
-@media(min-width:768px){.homesearch>*{grid-column:span 3}}
-.homesearch label{color:var(--ink)}
-.homesearch .btn{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.homesearch label{gap:0;padding-top:var(--sp-3);box-shadow:inset 0 -1px 0 rgba(255,255,255,.22);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.homesearch label:focus-within{box-shadow:inset 0 -1px 0 rgba(255,255,255,.7)}
+.homesearch select,.homesearch input:not([type=checkbox]):not([type=radio]):not([type=file]){height:var(--control);border:0;border-radius:0;background-color:transparent;padding-left:0;color:var(--ivory);font-weight:500;letter-spacing:0;text-transform:none}
+.homesearch select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23E9E3D8' stroke-opacity='.6' stroke-width='1.25' stroke-linecap='round'/%3E%3C/svg%3E");background-position:right 0 center;background-size:var(--sp-3) var(--sp-3);padding-right:var(--sp-5)}
+.homesearch select:hover{border-color:transparent}
+.homesearch select option{color:var(--navy)}
+.homesearch input::placeholder{color:rgba(233,227,216,.6)}
+.homesearch select:focus-visible,.homesearch input:focus-visible{outline:0}
+.homesearch .btn.go{justify-self:start;margin-top:var(--sp-4);background:none;border:0;border-radius:0;padding:0;color:var(--white);font-weight:500;box-shadow:inset 0 -1px 0 rgba(255,255,255,.6)}
+.homesearch .btn.go:hover{box-shadow:inset 0 -2px 0 var(--white)}
+@media(min-width:768px){.homesearch>*{grid-column:span 3}.homesearch .btn.go{margin-top:0;justify-self:end}}
+/* quick searches: real shortcuts into the same filters, only ones that return cars */
+.quick{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-5);margin-top:var(--sp-4)}
+.quick>span{font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.quick .btn.text{font-size:var(--fs-sm);line-height:var(--lh-sm);box-shadow:inset 0 -1px 0 rgba(233,227,216,.35)}
+.quick .btn.text:hover{box-shadow:inset 0 -1px 0 var(--ivory)}
 
 /* one trust section: three points on the grid */
 .trust{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:var(--sp-6) var(--col-gap)}
@@ -444,33 +496,46 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .trust .btn.text{justify-self:start}
 .more{margin-top:var(--sp-6);display:flex;justify-content:center}
 
-/* BA-0006: the hero and the latest cars lie on one video background. No borders between them; everything in them sits in front.
-   A dark tint over the video keeps white text readable (about 10:1 over the brightest part of the road). */
-.videobg{position:relative;isolation:isolate;background:var(--navy);color:var(--white)}
-.videobg-media{position:absolute;inset:0;z-index:-1;overflow:hidden}
-.videobg-media video,.videobg-media img{display:block;width:100%;height:100%;object-fit:cover}
-.videobg-media::after{content:"";position:absolute;inset:0;background:rgba(var(--shade),.72)}
-.videobg .hero,.videobg .band{background:transparent;border:0;color:var(--white)}
-.videobg .sechead h2,.videobg .car-name,.videobg .car-price b{color:var(--white)}
-.videobg .car-meta,.videobg .car .demand,.videobg .car-price small{color:var(--mut-on-dark)}
-.videobg .car:hover .car-name{color:var(--accent)}
-.videobg .empty,.appbody .videobg .empty{border:0;background:transparent;color:var(--white);padding-inline:0}
-.videobg .empty a,.videobg .band a:not(.btn):not(.car){color:var(--white)}
-.videobg .band .btn.ghost{background:transparent;border-color:var(--mut-on-dark);color:var(--white)}
+
+/* ---------- 29 Oct 2026 (approved): the home hero is Saaz's own car photo ----------
+   Phones: the photo has its own space at the top and the words start where it fades, so nothing covers the car.
+   From 768 px: the photo fills the section; the words sit on the darker lower left, the car stays clear. */
+.hero.photo{position:relative;isolation:isolate;padding-block:0;overflow:hidden}
+.hero.photo .hero-bg{position:relative;z-index:-1}
+.hero.photo .hero-bg img{width:100%;height:auto;display:block}
+.hero.photo .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--shade),.35) 0%,rgba(var(--shade),0) 30%,rgba(var(--shade),.6) 75%,var(--navy) 100%)}
+.hero.photo .wrap{margin-top:calc(-1 * var(--sp-9));padding-bottom:var(--section)}
+.hero.photo .lede{max-width:var(--narrow);margin-top:var(--sp-4);color:rgba(233,227,216,.86);font-size:var(--fs-md);line-height:var(--lh-md)}
+@media(min-width:768px){
+  .hero.photo{min-height:calc(100vh - var(--header));display:grid;align-items:end}
+  .hero.photo .hero-bg{position:absolute;inset:0}
+  .hero.photo .hero-bg img{height:100%;object-fit:cover;object-position:center 30%}
+  .hero.photo .hero-bg::after{background:linear-gradient(180deg,rgba(var(--shade),.4) 0%,rgba(var(--shade),0) 18%,rgba(var(--shade),0) 40%,rgba(var(--shade),.85) 72%,rgba(var(--shade),.98) 92%),linear-gradient(90deg,rgba(var(--shade),.75) 0%,rgba(var(--shade),.4) 32%,rgba(var(--shade),0) 55%)}
+  .hero.photo .wrap{margin-top:0;padding-top:var(--sp-9)}
+  .hero.photo .display{font-size:var(--fs-7xl);line-height:var(--lh-7xl)}
+}
+
+/* ---------- the story section: one photo that shows what the words say ---------- */
+.story .wrap{display:grid;gap:var(--sp-6)}
+.story-pic{margin:0;border-radius:var(--radius);overflow:hidden;aspect-ratio:4/3;background:var(--navy)}
+.story-pic img{width:100%;height:100%;object-fit:cover}
+.story h2 i{font-style:italic}
+.story .steps{margin-bottom:var(--sp-5)}
+@media(min-width:1024px){.story .wrap{grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;column-gap:var(--col-gap)}.story-pic{grid-column:1/span 7}.story .wrap>div{grid-column:9/span 4}}
 
 /* cars.css: the one car card, the results page and the listing page.
    Result colours are for inspection results only: pass green, attention amber, note grey. */
 :root{--pass:var(--good);--pass-bg:var(--good-bg);--att:var(--warn);--att-bg:var(--warn-bg);--fail:var(--bad)}
 
 /* ---------- the one card ----------
-   Same parts in the same order everywhere (home, results, admin): photo 4:3, name (2 lines held), specs (1 line), price, demand (1 line).
-   Each part has a fixed height, so cards in a row are equal and their prices sit on one line. */
+   Same parts in the same order everywhere (home, results, admin, /cars/): photo 4:3, the inspection line, price, name, specs.
+   29 Oct 2026 (approved, 216 versions compared): the inspection line and price have fixed heights, so prices line up across a row;
+   the name comes after the price and may take two lines, so no card holds an empty line for a short name. */
 .cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(var(--card),100%),1fr));gap:var(--sp-5) var(--col-gap)}
 /* BA-0008 (25 Oct 2026): fluid grid. The width decides the column count (1 on phones, 3 at 768, 5 at 1280 on the full page);
    auto-fill keeps empty tracks, so a short list never stretches its cards. */
-@media(min-width:768px){.cars .car-name{height:calc(2 * var(--lh-md))}}  /* cards side by side: the name always takes 2 lines so prices line up */
-.car{display:grid;grid-template-rows:auto;align-content:start;row-gap:var(--sp-1);text-decoration:none;color:inherit;min-width:0}
-.car-photo{position:relative;aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:linear-gradient(160deg,var(--accent-ink),var(--navy));display:grid;place-items:center;color:var(--mut-on-dark);margin-bottom:var(--sp-2)}
+.car{display:flex;flex-direction:column;text-decoration:none;color:inherit;min-width:0}
+.car-photo{position:relative;aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:linear-gradient(160deg,var(--accent-ink),var(--navy));display:grid;place-items:center;color:var(--mut-on-dark)}
 /* BA-0008 root cause: the photo's height:100% didn't resolve inside the grid frame, so a photo taller than 4:3 was drawn at its
    full height from the top and the frame cut off its bottom (the tyres). Pinned to the frame, object-fit now does the framing. */
 .car-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -480,21 +545,21 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .car-photo.whole:before{content:"";position:absolute;inset:0;background:var(--bg) center/cover no-repeat;filter:blur(16px) brightness(.75);transform:scale(1.15)}
 .car-photo .ph{width:72%;height:auto;aspect-ratio:600/240}
 .car-photo .phl{position:absolute;bottom:var(--sp-3);right:var(--sp-3);font-size:var(--fs-xs);line-height:var(--lh-xs);color:var(--mut-on-dark)}
-.car-photo .car-tag{position:absolute;top:var(--sp-3);left:var(--sp-3);background:var(--white);color:var(--ink)}
+/* a stage or Reserved on the photo (admin stage, BA-0003): small capitals on a white tag with square corners */
+.car-photo .car-tag{position:absolute;top:var(--sp-3);left:var(--sp-3);background:var(--white);color:var(--ink);padding:var(--sp-1) var(--sp-2);border-radius:2px}
 .car-photo .car-tag.right{left:auto;right:var(--sp-3)}
-.car-photo .car-tag.priv{background:var(--warn-bg);color:var(--warn-ink)}
-.car-tag i{width:var(--sp-2);height:var(--sp-2);border-radius:50%;background:var(--pass)}
+.car-photo .car-tag.priv{color:var(--warn-ink)}
 .car-photo .sample{position:absolute;bottom:var(--sp-3);left:var(--sp-3)}
 .car-photo:has(.sample) .phl{display:none}
-.car-name{font-size:var(--fs-md);line-height:var(--lh-md);max-height:calc(2 * var(--lh-md));font-weight:800;color:var(--navy);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.car-meta,.car .demand{font-size:var(--fs-sm);line-height:var(--lh-sm);height:var(--lh-sm);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.car .demand{display:flex;gap:var(--sp-2);margin:0;font-size:var(--fs-xs);line-height:var(--lh-xs);height:var(--lh-xs)}
-/* BA-0008: narrower cards side by side, so the specs may take 2 lines (held, so rows stay equal) instead of losing the region */
-@media(min-width:768px){.cars .car-meta{white-space:normal;height:calc(2 * var(--lh-sm));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}}
-.car-price{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);height:var(--lh-lg);overflow:hidden}
-.car-price b{font-size:var(--fs-lg);line-height:var(--lh-lg);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.car-insp{margin-top:var(--sp-3);min-height:var(--lh-2xs);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.car-insp b{font-weight:600;color:var(--navy)}
+.car-insp .att{color:var(--warn-ink)}
+.car-name{margin-top:var(--sp-1);font-size:var(--fs-md);line-height:var(--lh-md);font-weight:600;color:var(--navy)}
+.car-meta{margin-top:var(--sp-1);font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut)}
+.car-price{margin-top:var(--sp-1);display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);height:var(--lh-lg);overflow:hidden}
+.car-price b{font-size:var(--fs-lg);line-height:var(--lh-lg);font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
 .car-price small{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.car:hover .car-name{color:var(--accent-ink)}
+.car:hover .car-name{box-shadow:inset 0 -1px 0 currentColor}
 .car:hover .car-photo{box-shadow:0 12px 28px rgba(var(--shade),.18)}
 /* BA-0001: on hover (mouse) or keyboard focus the card's photo comes forward and zooms slightly; the text stays as it is */
 .car .car-photo{transition:transform .2s ease,box-shadow .2s ease}
@@ -518,12 +583,14 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 /* BA-0009: a field with long choices (Admin, Cars: Status) gets a wider column, the price field gives up one, so the row still fits */
 .filters>.wide{grid-column:span 4}
 @media(min-width:768px){.filters>.wide{grid-column:span 4}.filters:has(>.wide)>label:has(input[name=max]){grid-column:span 2}}
-.filters label{font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.filters label{font-size:var(--fs-2xs);line-height:var(--lh-2xs);letter-spacing:.14em;text-transform:uppercase}  /* short filter labels: small capitals, like the home search */
 .count{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);margin-bottom:var(--sp-4)}
 .pager{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-7)}
-.pager a,.pager span{display:inline-flex;align-items:center;justify-content:center;min-width:var(--control);height:var(--control);padding:0 var(--sp-3);border:1px solid var(--line);border-radius:var(--radius-pill);background:var(--white);color:var(--ink);text-decoration:none;font-weight:600}
-.pager [aria-current]{background:var(--navy);border-color:var(--navy);color:var(--white)}
-.pager span.gap{border:0;background:none;min-width:0}
+/* 29 Oct 2026: pages are plain numbers; the current one is underlined (no circles) */
+.pager a,.pager span{display:inline-flex;align-items:center;justify-content:center;min-width:var(--control);height:var(--control);padding:0 var(--sp-2);color:var(--mut);text-decoration:none;font-weight:500}
+.pager a:hover{color:var(--navy)}
+.pager [aria-current]{color:var(--navy);box-shadow:inset 0 -2px 0 var(--navy)}
+.pager span.gap{min-width:0;box-shadow:none}
 
 /* ---------- the listing page ----------
    Gallery, then specs and description (8 columns) beside a sticky price and contact panel (4 columns).
@@ -549,14 +616,14 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .buybox{display:grid;gap:var(--sp-4);align-content:start;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:var(--sp-5)}
 .buybox>*{margin:0}
 .buybox .demand{border-top:1px solid var(--line);padding-top:var(--sp-4)}
-.car-title{font-size:var(--fs-2xl);line-height:var(--lh-2xl);color:var(--navy);letter-spacing:-.3px}
+.car-title{font-size:var(--fs-3xl);line-height:var(--lh-3xl);color:var(--navy);letter-spacing:-.3px}
 .car-sub,.car-area{color:var(--mut)}
 .car-bigprice{font-size:var(--fs-3xl);line-height:var(--lh-3xl);font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
 .insp-card{background:var(--soft);border-radius:var(--radius);padding:var(--sp-4);display:grid;gap:var(--sp-2)}
 .insp-card>*{margin:0}
 .insp-head{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--mut)}
 .insp-card .btn.text{justify-self:start;color:var(--navy)}
-.details{display:grid;gap:var(--sp-7)}
+.details{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp-7)}  /* a long value wraps instead of widening the page */
 .details h2{margin-bottom:var(--sp-4)}
 .specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--col-gap);border-top:1px solid var(--line)}
 @media(min-width:768px){.specs{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -570,9 +637,24 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .findings b{display:block;color:var(--navy)}
 .findings span{color:var(--mut)}
 /* in a row of fields the button keeps one line, like the fields beside it */
-.filters .btn,.homesearch .btn{white-space:nowrap;padding-inline:var(--sp-4)}
+.filters .btn,.homesearch .btn{white-space:nowrap}
+.filters .btn.go{justify-self:start}  /* searching is the arrow link, as on the home picture; solid bars are for offers and saving */
 /* a hairline inside every car photo so light photos don't melt into the page (23 Oct 2026) */
 .car-photo:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(var(--shade),.08);pointer-events:none}
+
+/* 29 Oct 2026 (approved): on the car page the inspection is part of the price panel, under a hairline: the score large in the
+   title face, the verdict in words (colour only when it needs attention), the checks, who inspected it and when, the report link. */
+.buybox .insp-card{background:none;border-radius:0;padding:var(--sp-5) 0 0;border-top:1px solid var(--line);gap:var(--sp-2)}
+.insp-head{display:flex;align-items:baseline;gap:var(--sp-3)}
+.insp-score{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.insp-score b{font-family:var(--display);font-weight:400;font-size:var(--fs-5xl);line-height:var(--lh-5xl);color:var(--navy);letter-spacing:-.5px}
+.insp-verdict{font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.insp-verdict.att{color:var(--warn-ink)}
+.insp-checks{color:var(--navy);font-weight:500;font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.insp-card p{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm)}
+.car-title{font-family:var(--display);font-weight:400}
+.btn.wide{justify-content:space-between}
+@media(min-width:768px) and (max-width:1023px){.filters>.btn.go{grid-column:span 3}}  /* the arrow link needs a little more room than a 2-column button at 768 */
 
 /* app.css: the marketplace app at /app/. Mobile first; everything scoped under .appbody so the public site is untouched. */
 .appbody{background:var(--soft);color:var(--ink);min-height:100vh}
@@ -613,14 +695,14 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 .appbody .checks2{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4)}
 
 /* boxes */
-.appbody .box{background:var(--info-bg);border-radius:12px;padding:var(--sp-3) var(--sp-4);margin:var(--sp-4) 0 0}
+.appbody .box{background:none;border-left:2px solid var(--line);border-radius:0;padding:var(--sp-2) var(--sp-4);margin:var(--sp-4) 0 0}  /* 29 Oct 2026: a note is text with a rule, not a grey box */
 .appbody .box.good{background:#E6F5EC}
 .appbody .box.warn{background:#FFF1D6}
 .appbody .box.spaced{margin:var(--sp-4) 0}
 .appbody .verdict{display:grid;gap:var(--sp-1);border-radius:12px;padding:var(--sp-4);margin:var(--sp-4) 0}
 .appbody .verdict.good{background:#E6F5EC;color:#14532D}
 .appbody .verdict.bad{background:#FDE2E0;color:#8A1C12}
-.appbody .empty{background:var(--white)}
+.appbody .empty{background:none}
 .toast{visibility:hidden;position:fixed;left:50%;bottom:var(--sp-5);transform:translate(-50%,120px);background:var(--navy);color:var(--white);padding:var(--sp-3) var(--sp-4);border-radius:12px;max-width:calc(100% - 32px);transition:transform .25s;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .toast.show{visibility:visible;transform:translate(-50%,0)}
 .toast.bad{background:#8A1C12}

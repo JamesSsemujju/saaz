@@ -1,5 +1,5 @@
 """Browser test of the whole marketplace flow at phone width, against the local Supabase stand-in."""
-import os, sys, json, psycopg2
+import os, sys, json, psycopg2  # 29 Oct 2026: status words are shown in small capitals, so wording checks ignore case
 from PIL import Image
 from playwright.sync_api import sync_playwright
 D = os.path.dirname(os.path.abspath(__file__))
@@ -104,10 +104,10 @@ with sync_playwright() as pw:
     sizes = [os.path.getsize(os.path.join(D, "..", "sbtest", "storage", "car-photos", *p.split("/"))) for p in []]
     sel.check("input[name=logbook_name_matches]"); overflow(sel, "list a car")
     sel.click("button[value=submit]"); sel.wait_for_timeout(2000)
-    check("submitted: car page shows garage in play", "Kampala Motors" in sel.inner_text("#view") and "Awaiting inspection" in sel.inner_text("#view"), sel.inner_text("#view")[:400])
+    check("submitted: car page shows garage in play", "Kampala Motors" in sel.inner_text("#view") and "awaiting inspection" in sel.inner_text("#view").lower(), sel.inner_text("#view")[:400])
     sel.wait_for_timeout(800)
     insp_id = sql("select doc_no from reviews where scope='general' and status='requested'")[0][0]
-    check("seller gets the inspection ID on submitting", insp_id in sel.inner_text("#insps") and "Requested" in sel.inner_text("#insps"), sel.inner_text("#insps")[:200])
+    check("seller gets the inspection ID on submitting", insp_id in sel.inner_text("#insps") and "requested" in sel.inner_text("#insps").lower(), sel.inner_text("#insps")[:200])
     # Track an inspection: lookup first, sign-in only after a match, nothing private before that
     trk = ctx("tracker"); go(trk, "#/track")
     trk.fill("#tf input", "SZR-2026-999999"); trk.click("#tf button"); trk.wait_for_timeout(900)
@@ -153,7 +153,7 @@ with sync_playwright() as pw:
     keys = ['engine','gearbox','brakes','steering','tyres','electrics','body','chassis','interior','test_drive','odometer','vin']
     for k in keys: gar.click(f"input[name=c_{k}][value={'advise' if k=='tyres' else 'pass'}] + span")
     gar.click("#map [data-panel=bonnet]"); gar.wait_for_timeout(200)
-    check("live score preview: 96, conditional", "96/100" in gar.inner_text("#pv") and "Conditional" in gar.inner_text("#pv"), gar.inner_text("#pv"))
+    check("live score preview: 96, conditional", "96/100" in gar.inner_text("#pv") and "conditional" in gar.inner_text("#pv").lower(), gar.inner_text("#pv"))
     gar.fill("input[name=odometer]", "84500"); gar.fill("textarea[name=notes]", "Front tyres at 3 mm, replace within 3 months. Small scratch on bonnet.")
     gar.check("input[name=in_person]"); overflow(gar, "review editor")
     gar.click("button[value=issue]"); gar.wait_for_timeout(300); gar.click("button[value=issue]"); gar.wait_for_timeout(2000)
@@ -292,7 +292,7 @@ with sync_playwright() as pw:
     go(adm, "#/admin/cars"); adm.wait_for_timeout(1200)
     n_admin = adm.locator("#view .cars a.car").count(); check("admin Cars page is the listings page with every car", n_admin == 2, n_admin)
     check("same heading and filters as the marketplace, plus status", "Cars with a Saaz inspection" in adm.inner_text("#view") and adm.locator("#flt select[name=status]").count() == 1 and adm.locator("#flt select[name=make]").count() == 1)
-    check("the draft carries its status on the photo", "Draft" in adm.inner_text("#view .cars"))
+    check("the draft carries its status on the photo", "draft" in adm.inner_text("#view .cars").lower())
     go(pub, "#/browse"); pub.wait_for_timeout(1000)
     grab = "() => { const c = [...document.querySelectorAll('.cars a.car')].find(x => x.textContent.includes('Harrier')); return c ? c.innerHTML.replace(/href=\"[^\"]*\"/g, '') : null }"
     a_card = adm.evaluate(grab); p_card = pub.evaluate(grab)
@@ -308,10 +308,10 @@ with sync_playwright() as pw:
     check("team page shows the garage's certification separately", "Certified by Saaz" in gar.inner_text("#view"), gar.inner_text("#view")[:200])
     gar.fill("#f input[name=name]", "Ivy Inspector"); gar.fill("#f input[name=email]", "ivy@garage.test"); gar.click("#f button"); gar.wait_for_timeout(1500)
     go(gar, "#/garage/team"); gar.wait_for_timeout(800)
-    row = gar.locator("ul.team li:has-text('ivy@garage.test')").inner_text(); check("new member shows Invited", "Invited" in row and "Accepted" not in row, row)
+    row = gar.locator("ul.team li:has-text('ivy@garage.test')").inner_text(); check("new member shows Invited", "invited" in row.lower() and "accepted" not in row.lower(), row)
     ivy = ctx("ivy"); signup(ivy, "Ivy Inspector", "ivy@garage.test"); signin(ivy, "ivy@garage.test", "garage")
     go(gar, "#/garage/team"); gar.wait_for_timeout(800)
-    row = gar.locator("ul.team li:has-text('ivy@garage.test')").inner_text(); check("after signing in: Accepted", "Accepted" in row, row)
+    row = gar.locator("ul.team li:has-text('ivy@garage.test')").inner_text(); check("after signing in: Accepted", "accepted" in row.lower(), row)
     go(ivy, "#/garage"); ivy.wait_for_timeout(900)
     check("inspector sees only My jobs, no offered cars, no Team tab", "My jobs" in ivy.inner_text("#view") and "Offered to you" not in ivy.inner_text("#view") and ivy.locator(".areabar a[href='#/garage/team']").count() == 0)
     go(ivy, "#/garage/team"); ivy.wait_for_timeout(700); check("inspector can't open the team list", "Only the garage owner" in ivy.inner_text("#view"), ivy.inner_text("#view")[:200])
@@ -355,7 +355,7 @@ with sync_playwright() as pw:
         tok = pg_.evaluate("() => Saaz.state.session && Saaz.state.session.access_token")
         pg_.click("#acct summary"); pg_.click("#signout"); pg_.wait_for_timeout(1500)
         check(f"{name_}: sign-out lands on the public listings", pg_.url.rstrip("/") + "/" == APP or pg_.url.startswith(APP + "#/browse"), pg_.url)
-        check(f"{name_}: no sign-in page after sign-out", "#/signin" not in pg_.url and "Latest inspected cars" in pg_.inner_text("#view"), pg_.inner_text("#view")[:120])
+        check(f"{name_}: no sign-in page after sign-out", "#/signin" not in pg_.url and "Latest inspected" in pg_.inner_text("#view"), pg_.inner_text("#view")[:120])
         check(f"{name_}: signed out in the header", pg_.locator("#acct").count() == 0 and pg_.locator(".appright a[href='#/signin']").count() == 1)
         check(f"{name_}: every session of the account ended", sql("select count(*) from auth.sessions s join auth.users u on u.id=s.user_id where u.email=%s", (email_,))[0][0] == 0)
         pg_.go_back(); pg_.wait_for_timeout(900)

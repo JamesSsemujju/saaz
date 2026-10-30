@@ -72,9 +72,9 @@ with sync_playwright() as p:
     elevate(adm); go(adm, "#/browse")
     check("an admin in an admin session, assistant off: no Build button", adm.locator(".ba-launch").count() == 0)
     go(adm, "#/admin/build")
-    check("the switch is in Admin, System, Build Assistant", "Build Assistant" in adm.inner_text("#view") and "Off" in adm.inner_text(".pagehead"))
+    check("the switch is in Admin, System, Build Assistant", "Build Assistant" in adm.inner_text("#view") and "off" in adm.inner_text(".pagehead").lower().split())
     adm.fill("#bsw input[name=reason]", "Start the redesign"); adm.click("#bsw button"); adm.wait_for_timeout(2500)
-    check("switched on by the admin, with the reason in the history", "On" in adm.inner_text(".pagehead") and "Start the redesign" in adm.inner_text("#view"))
+    check("switched on by the admin, with the reason in the history", "on" in adm.inner_text(".pagehead").lower().split() and "Start the redesign" in adm.inner_text("#view"))
     go(adm, "#/browse")
     check("on: the Build button appears", adm.locator(".ba-launch").count() == 1)
     stf = page(); signin(stf, "staff@saaz.test"); elevate(stf); go(stf, "#/browse")
@@ -144,7 +144,7 @@ with sync_playwright() as p:
     m = sql("select id, body from build.messages")
     check("saved: one comment, exactly the text, four element links", len(m) == 1 and m[0][1] == full and
           [x[0] for x in sql("select ref_name from build.message_refs where message_id=%s order by ordinal", (m[0][0],))] == ["vehicle-card", "header", "filter-panel", "price-panel"], m)
-    check("saved means saved and queued, nothing more", sql("select status from build.tasks")[0][0] == "queued" and "Queued: waiting for the agent" in adm.inner_text(".ba-body"))
+    check("saved means saved and queued, nothing more", sql("select status from build.tasks")[0][0] == "queued" and "queued: waiting for the agent" in adm.inner_text(".ba-body").lower())
     shot(adm, "2-saved-and-queued")
     check("the draft is cleared after saving", adm.evaluate("() => Object.keys(localStorage).filter(k => k.startsWith('saaz-build-draft')).length") == 0)
 

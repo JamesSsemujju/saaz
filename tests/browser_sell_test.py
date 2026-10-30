@@ -39,7 +39,7 @@ with sync_playwright() as pw:
     check("the 12 checks come from inspection_scopes", len(checks) == 12 and "Test drive" in checks and "VIN or chassis number" in checks, checks)
     check("extra checks named from the database", "Engine and gearbox" in text("#extras"), text("#extras"))
     check("valid days and lowest price read from settings", "60 days" in text("#limits") and "UGX 1,000,000" in text("#pricerule"))
-    check("sample report is labelled", pg.locator(".samplereport .sample").inner_text() == "Sample")
+    check("sample report is labelled", pg.locator(".samplereport .sample").inner_text().lower() == "sample")  # small capitals since 29 Oct 2026
     t = text()
     check("no invented fee, no enquiries, inspection required", "100,000" not in t and "enquir" not in t.lower() and "Required before your car goes live" in t)
     check("no sales yet: market says so, no invented prices", "as cars sell on Saaz" in text("#market"))

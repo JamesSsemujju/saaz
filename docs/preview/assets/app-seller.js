@@ -123,7 +123,7 @@
     function preview() {
       var f = formState(), box = S.$("#pv"); if (!f || !box) return;
       box.innerHTML = S.card({ year: f.year, make: f.make, model: f.model, mileage: f.mileage === "" ? null : f.mileage, fuel: f.fuel, gearbox: f.gearbox, region: f.region,
-        price: f.price === "" ? null : f.price, currency: "UGX", photos: photos, saaz_owned: !!saaz }, { preview: true, tag: "<span class='car-tag pending'>Inspection result goes here</span>" });
+        price: f.price === "" ? null : f.price, currency: "UGX", photos: photos, saaz_owned: !!saaz }, { preview: true, tag: "<span class='ghosttext'>Inspection result goes here</span>" });
       var d = S.$("#h-desc"), len = String(f.description || "").trim().length;
       if (d) d.textContent = len >= 30 ? "" : len + " of at least 30 characters.";
     }
@@ -327,7 +327,7 @@
     function tryCard() {
       var f = S.form(tf), has = ["make", "model", "year", "mileage", "price"].some(function (k) { return f[k] !== ""; });
       S.$("#tpv").innerHTML = S.card({ make: f.make, model: f.model, year: f.year, mileage: f.mileage === "" ? null : f.mileage, price: f.price === "" ? null : f.price, currency: "UGX", photos: [] },
-        { preview: true, tag: "<span class='car-tag pending'>Inspection result goes here</span>" });
+        { preview: true, tag: "<span class='ghosttext'>Inspection result goes here</span>" });
       writeLocal(START_KEY, has ? f : null);
     }
     tf.addEventListener("input", tryCard); tf.onsubmit = function (e) { e.preventDefault(); };

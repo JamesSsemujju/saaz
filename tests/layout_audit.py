@@ -6,7 +6,7 @@ Usage: python3 tests/layout_audit.py <site url> <car ref> <out dir> [--signed-in
   and admin pages, signed in as the test accounts, at 390 and 1280.
 Rules checked at each width:
   no sideways scroll; header logo, page heading and first card share one left edge;
-  cards in a row have equal height and their names, prices and demand lines start at the same y;
+  cards in a row have equal height and their inspection lines, prices and names start at the same y (specs follow the name);
   inputs, selects and buttons in a filter or search row share one height and one bottom edge;
   at 430 px and below every control is at least 44 px tall;
   home: the search is on the first screen; listing: price and contact are within two screens.
@@ -39,7 +39,7 @@ CHECKS = r"""(kind) => {
     const rows = {}; [...g.children].filter(vis).forEach(c => { const k = Math.round(top(c)); (rows[k] = rows[k] || []).push(c); });
     Object.values(rows).forEach(r => {
       const hs = r.map(c => c.getBoundingClientRect().height); if (Math.max(...hs) - Math.min(...hs) > 1) out.push('card heights differ in a row: ' + hs.map(Math.round));
-      ['.car-name', '.car-price', '.car-meta', '.demand'].forEach(sel => { const ys = r.map(c => c.querySelector(sel)).filter(Boolean).map(e => top(e)); if (ys.length && Math.max(...ys) - Math.min(...ys) > 1) out.push(sel + ' at different y in a row: ' + ys.map(Math.round)); });
+      ['.car-insp', '.car-price', '.car-name'].forEach(sel => { const ys = r.map(c => c.querySelector(sel)).filter(Boolean).map(e => top(e)); if (ys.length && Math.max(...ys) - Math.min(...ys) > 1) out.push(sel + ' at different y in a row: ' + ys.map(Math.round)); });
     });
   });
   document.querySelectorAll('.filters, .homesearch, .check, .inlineform, .chat .send').forEach(f => {

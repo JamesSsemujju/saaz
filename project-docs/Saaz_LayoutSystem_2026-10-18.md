@@ -12,8 +12,13 @@ Structure only. Colours, fonts and images are unchanged.
 - Breakpoints: 768, 1024, 1280 only.
 - `tools/check_layout.py` runs inside `build.py`. Any margin, padding, gap, offset, font size, line height, wide width or breakpoint not from the tokens stops the build. Inline styles are checked too.
 
+## Approved design system (29 Oct 2026)
+- Type, actions, fields, status words, steps, notes and the card: project-docs/Saaz_ArtDirection_2026-10-29.md (the rules and the reasons).
+- New tokens: `--display`, `--font` (Instrument Sans), `--ivory`, `--fs-2xs`, `--fs-6xl`, `--fs-7xl`.
+
+
 ## One of each
-- Card: photo 4:3, name (2 lines held when cards sit side by side), specs (1 line; 2 held when side by side), price, demand (1 line). Used on home, results and Admin, Cars.
+- Card: photo 4:3, inspection line, price, name (may wrap), specs. Used on home, results, Admin, Cars and /cars/.
 - Card grid (25 Oct 2026, BA-0008): fluid, not on the column spans. As many cards as fit at 208 px or wider (`--card`): 1 on phones, 3 at 768, 4 at 1024, 5 at 1280 (Admin, Cars: 4 at 1280). A short list keeps the card size. Home shows two whole rows.
 - Card photo: held to the 4:3 frame. Near 4:3 fills it; portrait, square or panorama photos are shown whole over a blurred copy of themselves.
 - Dropdown (25 Oct 2026, BA-0009): one chevron with 40 px of its own; long choices end in an ellipsis. Admin, Cars: Status takes 4 columns, price 2.

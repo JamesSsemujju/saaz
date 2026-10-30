@@ -132,7 +132,7 @@ with sync_playwright() as p:
     for w in (390, 768, 1024, 1280):
         pg = page(w); go(pg, "#/", 2000)
         h = pg.evaluate("""() => { const g = document.querySelector('[data-rows]'), cards = [...g.children], vis = cards.filter(c => !c.hidden);
-          const cols = getComputedStyle(g).gridTemplateColumns.split(' ').filter(Boolean).length, m = document.querySelector('[data-ref=latest-cars] .more');
+          const cols = getComputedStyle(g).gridTemplateColumns.split(' ').filter(Boolean).length, m = document.querySelector('[data-ref=latest-cars] .sechead a');
           return { cols, vis: vis.length, more: m && !m.hidden && m.innerText }; }""")
         check(f"home @{w}: latest cars fill whole rows", h["cols"] == 1 and h["vis"] == 8 or h["cols"] > 1 and h["vis"] % h["cols"] == 0 and h["vis"] == h["cols"] * 2, h)
         check(f"home @{w}: 'See all' is there when more cars exist", bool(h["more"]) and "24" in h["more"], h)
@@ -169,7 +169,7 @@ with sync_playwright() as p:
               h: s.getBoundingClientRect().height, inH: inp.getBoundingClientRect().height, bottom: Math.round(s.getBoundingClientRect().bottom), inBottom: Math.round(inp.getBoundingClientRect().bottom),
               room: s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), cur, longest, ell: cs.textOverflow }; }); }""")
         check(f"dropdowns @{w}: the browser's own arrow replaced by one chevron", all(x["appearance"] == "none" and x["chevron"] for x in d), d)
-        check(f"dropdowns @{w}: the arrow has its own room (40 px), text starts 12 px in", all(x["padR"] >= 40 and x["padL"] >= 12 for x in d), d)
+        check(f"dropdowns @{w}: the arrow has its own room (24 px or more) and the text lines up with its label (29 Oct 2026: fields are a value over a hairline)", all(x["padR"] >= 24 and x["padL"] == 0 for x in d), d)
         check(f"dropdowns @{w}: the chosen text fits without touching the arrow", all(x["cur"] <= x["room"] for x in d), d)
         check(f"dropdowns @{w}: a longer choice ends in an ellipsis instead of running under the arrow", all(x["ell"] == "ellipsis" for x in d), d)
         check(f"dropdowns @{w}: same height as the price field", all(x["h"] == x["inH"] for x in d), d)

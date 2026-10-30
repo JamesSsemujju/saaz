@@ -5,15 +5,18 @@
 .hero .wrap,.phero .wrap{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:var(--sp-5) var(--col-gap);align-items:center}
 .hero .wrap>*,.phero .wrap>*{grid-column:1/-1;min-width:0}
 .hero h1,.phero h1{color:var(--white)}
-.display{font-size:var(--fs-3xl);line-height:var(--lh-3xl);letter-spacing:-1px}
+.display{font-size:var(--fs-4xl);line-height:var(--lh-4xl);letter-spacing:-.5px}
+.display i{font-style:italic}
 .eyebrow{color:var(--accent);font-weight:700;font-size:var(--fs-sm);line-height:var(--lh-sm);letter-spacing:1.5px;text-transform:uppercase}
 .hero p.sub,.phero p.sub{color:var(--mut-on-dark);font-size:var(--fs-lg);line-height:var(--lh-lg);max-width:var(--measure);margin-top:var(--sp-4)}
 .hero .check{margin-top:var(--sp-5)}
 .phero .top{display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:center}
 .phero .meta{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5);color:var(--mut-on-dark);font-size:var(--fs-sm);line-height:var(--lh-sm);margin-top:var(--sp-4)}
 .phero .meta b{color:var(--white);font-weight:600}
-.paths{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-5)}
-.paths a{display:inline-flex;align-items:center;height:var(--control-sm);color:var(--white);text-decoration:none;border:1px solid var(--accent-ink);border-radius:var(--radius-pill);padding:0 var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600}
+.paths{display:flex;flex-wrap:wrap;gap:0 var(--sp-5);margin-top:var(--sp-5)}
+/* 29 Oct 2026: shortcuts are text links with the arrow, like the home quick search */
+.paths a{display:inline-flex;align-items:center;gap:var(--sp-2);min-height:var(--control);color:var(--ivory);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500;box-shadow:inset 0 -1px 0 rgba(233,227,216,.35)}
+.paths a::after{content:"";width:var(--sp-3);height:var(--sp-3);background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
 .paths a:hover{background:var(--navy-2)}
 .hero-car{width:100%;height:auto}
 .hero-car .scan{animation:scan 4.5s ease-in-out infinite}
@@ -26,19 +29,34 @@
 .promise div{display:flex;gap:var(--sp-3);align-items:flex-start;color:var(--ice)}
 .promise .icon{color:var(--accent)}
 .phero h1{font-size:var(--fs-3xl);line-height:var(--lh-3xl)}
-@media(min-width:768px){.phero h1{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}.display{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}.promise{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}}
+@media(min-width:768px){.phero h1{font-size:var(--fs-4xl);line-height:var(--lh-4xl)}.display{font-size:var(--fs-5xl);line-height:var(--lh-5xl)}.promise{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--col-gap)}}
 @media(min-width:1024px){
-  .display{font-size:var(--fs-5xl);line-height:var(--lh-5xl)}
+  .display{font-size:var(--fs-6xl);line-height:var(--lh-6xl)}
   .hero .wrap>.hero-text,.phero .wrap.has-figure>:first-child{grid-column:1/span 6}
   .hero .wrap>.hero-art,.phero .wrap.has-figure>:last-child{grid-column:7/span 6}
 }
 
 /* home search: directly under the headline. Fields and the button share one height and one row. */
-.homesearch{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:var(--sp-3) var(--col-gap);align-items:end;margin-top:var(--sp-5);padding:var(--sp-4);background:var(--white);border-radius:var(--radius);color:var(--ink)}
+.homesearch{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));column-gap:var(--col-gap);align-items:end;margin-top:var(--sp-6);color:var(--ivory)}
+/* 29 Oct 2026: no white panel. The search sits on the picture: each field is its label and its value over one hairline,
+   the value in ivory (softer than white), the action is the same arrow link as the quick searches. Chosen from 100 rendered versions. */
 .homesearch>*{grid-column:1/-1;min-width:0}
-@media(min-width:768px){.homesearch>*{grid-column:span 3}}
-.homesearch label{color:var(--ink)}
-.homesearch .btn{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.homesearch label{gap:0;padding-top:var(--sp-3);box-shadow:inset 0 -1px 0 rgba(255,255,255,.22);font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.homesearch label:focus-within{box-shadow:inset 0 -1px 0 rgba(255,255,255,.7)}
+.homesearch select,.homesearch input:not([type=checkbox]):not([type=radio]):not([type=file]){height:var(--control);border:0;border-radius:0;background-color:transparent;padding-left:0;color:var(--ivory);font-weight:500;letter-spacing:0;text-transform:none}
+.homesearch select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23E9E3D8' stroke-opacity='.6' stroke-width='1.25' stroke-linecap='round'/%3E%3C/svg%3E");background-position:right 0 center;background-size:var(--sp-3) var(--sp-3);padding-right:var(--sp-5)}
+.homesearch select:hover{border-color:transparent}
+.homesearch select option{color:var(--navy)}
+.homesearch input::placeholder{color:rgba(233,227,216,.6)}
+.homesearch select:focus-visible,.homesearch input:focus-visible{outline:0}
+.homesearch .btn.go{justify-self:start;margin-top:var(--sp-4);background:none;border:0;border-radius:0;padding:0;color:var(--white);font-weight:500;box-shadow:inset 0 -1px 0 rgba(255,255,255,.6)}
+.homesearch .btn.go:hover{box-shadow:inset 0 -2px 0 var(--white)}
+@media(min-width:768px){.homesearch>*{grid-column:span 3}.homesearch .btn.go{margin-top:0;justify-self:end}}
+/* quick searches: real shortcuts into the same filters, only ones that return cars */
+.quick{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-5);margin-top:var(--sp-4)}
+.quick>span{font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.quick .btn.text{font-size:var(--fs-sm);line-height:var(--lh-sm);box-shadow:inset 0 -1px 0 rgba(233,227,216,.35)}
+.quick .btn.text:hover{box-shadow:inset 0 -1px 0 var(--ivory)}
 
 /* one trust section: three points on the grid */
 .trust{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:var(--sp-6) var(--col-gap)}
@@ -49,16 +67,29 @@
 .trust .btn.text{justify-self:start}
 .more{margin-top:var(--sp-6);display:flex;justify-content:center}
 
-/* BA-0006: the hero and the latest cars lie on one video background. No borders between them; everything in them sits in front.
-   A dark tint over the video keeps white text readable (about 10:1 over the brightest part of the road). */
-.videobg{position:relative;isolation:isolate;background:var(--navy);color:var(--white)}
-.videobg-media{position:absolute;inset:0;z-index:-1;overflow:hidden}
-.videobg-media video,.videobg-media img{display:block;width:100%;height:100%;object-fit:cover}
-.videobg-media::after{content:"";position:absolute;inset:0;background:rgba(var(--shade),.72)}
-.videobg .hero,.videobg .band{background:transparent;border:0;color:var(--white)}
-.videobg .sechead h2,.videobg .car-name,.videobg .car-price b{color:var(--white)}
-.videobg .car-meta,.videobg .car .demand,.videobg .car-price small{color:var(--mut-on-dark)}
-.videobg .car:hover .car-name{color:var(--accent)}
-.videobg .empty,.appbody .videobg .empty{border:0;background:transparent;color:var(--white);padding-inline:0}
-.videobg .empty a,.videobg .band a:not(.btn):not(.car){color:var(--white)}
-.videobg .band .btn.ghost{background:transparent;border-color:var(--mut-on-dark);color:var(--white)}
+
+/* ---------- 29 Oct 2026 (approved): the home hero is Saaz's own car photo ----------
+   Phones: the photo has its own space at the top and the words start where it fades, so nothing covers the car.
+   From 768 px: the photo fills the section; the words sit on the darker lower left, the car stays clear. */
+.hero.photo{position:relative;isolation:isolate;padding-block:0;overflow:hidden}
+.hero.photo .hero-bg{position:relative;z-index:-1}
+.hero.photo .hero-bg img{width:100%;height:auto;display:block}
+.hero.photo .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--shade),.35) 0%,rgba(var(--shade),0) 30%,rgba(var(--shade),.6) 75%,var(--navy) 100%)}
+.hero.photo .wrap{margin-top:calc(-1 * var(--sp-9));padding-bottom:var(--section)}
+.hero.photo .lede{max-width:var(--narrow);margin-top:var(--sp-4);color:rgba(233,227,216,.86);font-size:var(--fs-md);line-height:var(--lh-md)}
+@media(min-width:768px){
+  .hero.photo{min-height:calc(100vh - var(--header));display:grid;align-items:end}
+  .hero.photo .hero-bg{position:absolute;inset:0}
+  .hero.photo .hero-bg img{height:100%;object-fit:cover;object-position:center 30%}
+  .hero.photo .hero-bg::after{background:linear-gradient(180deg,rgba(var(--shade),.4) 0%,rgba(var(--shade),0) 18%,rgba(var(--shade),0) 40%,rgba(var(--shade),.85) 72%,rgba(var(--shade),.98) 92%),linear-gradient(90deg,rgba(var(--shade),.75) 0%,rgba(var(--shade),.4) 32%,rgba(var(--shade),0) 55%)}
+  .hero.photo .wrap{margin-top:0;padding-top:var(--sp-9)}
+  .hero.photo .display{font-size:var(--fs-7xl);line-height:var(--lh-7xl)}
+}
+
+/* ---------- the story section: one photo that shows what the words say ---------- */
+.story .wrap{display:grid;gap:var(--sp-6)}
+.story-pic{margin:0;border-radius:var(--radius);overflow:hidden;aspect-ratio:4/3;background:var(--navy)}
+.story-pic img{width:100%;height:100%;object-fit:cover}
+.story h2 i{font-style:italic}
+.story .steps{margin-bottom:var(--sp-5)}
+@media(min-width:1024px){.story .wrap{grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;column-gap:var(--col-gap)}.story-pic{grid-column:1/span 7}.story .wrap>div{grid-column:9/span 4}}

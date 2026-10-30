@@ -64,38 +64,26 @@ with sync_playwright() as p:
     else:
         check("phones: cards look as before (no hover state stuck on)", pub.evaluate("() => getComputedStyle(document.querySelector('.car .car-photo')).transform") == "none")
 
-    # ---------- BA-0006: the hero and the latest cars on one video background ----------
-    home = page(); go(home, "#/"); home.wait_for_timeout(1500)
-    info = home.evaluate("""() => { const bg = document.querySelector('.videobg'), v = bg && bg.querySelector('video');
-      const cs = el => getComputedStyle(document.querySelector(el));
-      return { wraps: !!bg && !!bg.querySelector('[data-ref=home-hero]') && !!bg.querySelector('[data-ref=latest-cars]'),
-               trustOutside: !bg.querySelector('[data-ref=trust-section]'),
-               src: v && v.currentSrc, muted: v && v.muted, loop: v && v.loop, inline: v && v.playsInline, controls: v && v.controls,
-               t: v && v.currentTime, paused: v && v.paused,
-               heroBg: cs('.videobg .hero').backgroundColor, bandBg: cs('.videobg .band').backgroundColor,
-               bandBorder: cs('.videobg .band').borderTopWidth + cs('.videobg .band').borderBottomWidth,
-               h1: cs('.videobg h1').color, name: cs('.videobg .car-name').color, hidden: bg.querySelector('.videobg-media').getAttribute('aria-hidden') }; }""")
-    check("the hero and the latest cars share one video background; the trust section stays outside", info["wraps"] and info["trustOutside"], info)
-    want = "home-road-wide" if W >= 768 else "home-road-tall"
-    check("the right video for the screen (turned for wide screens, portrait on phones)", want in (info["src"] or ""), info["src"])
-    check("silent, looping, inline, no controls, hidden from screen readers", info["muted"] and info["loop"] and info["inline"] and not info["controls"] and info["hidden"] == "true", info)
-    home.wait_for_timeout(1500); t2 = home.evaluate("() => document.querySelector('.videobg video').currentTime")
-    check("the video actually plays", t2 > (info["t"] or 0) and t2 > 0, (info["t"], t2))
-    check("the sections have no background or borders of their own", info["heroBg"] in ("rgba(0, 0, 0, 0)", "transparent") and info["bandBg"] in ("rgba(0, 0, 0, 0)", "transparent") and info["bandBorder"] == "0px0px", info)
-    check("text in front of the video is white", info["h1"] == "rgb(255, 255, 255)" and info["name"] == "rgb(255, 255, 255)", info)
-    pt = home.evaluate("() => { const r = document.querySelector('.videobg h1').getBoundingClientRect(); const e = document.elementFromPoint(r.left + 10, r.top + r.height / 2); return e && e.closest('h1') ? 'h1' : (e && e.tagName); }")
-    check("the content sits in front of the video", pt == "h1", pt)
-    check("the search still works in front of the video", home.locator("#hs select[name=make]").is_enabled())
-    shot(home, "4-home-video")
-    calm = page("reduce"); go(calm, "#/"); calm.wait_for_timeout(800)
-    check("motion turned off: a still frame, and the video isn't downloaded", calm.locator(".videobg video").count() == 0 and calm.locator(".videobg-media img").count() == 1)
+    # ---------- 29 Oct 2026: the approved photo hero replaces the BA-0006 video ----------
+    home = page(); go(home, "#/"); home.wait_for_timeout(1200)
+    info = home.evaluate("""() => { const h = document.querySelector('[data-ref=home-hero]'), img = h && h.querySelector('.hero-bg img');
+      return { photo: !!img && img.complete && img.naturalWidth > 0, src: img && img.currentSrc, video: document.querySelectorAll('video').length,
+               hidden: h.querySelector('.hero-bg').getAttribute('aria-hidden'), h1: getComputedStyle(h.querySelector('h1')).color,
+               trustOutside: !h.querySelector('[data-ref=trust-section]'), latestOutside: !h.querySelector('[data-ref=latest-cars]') }; }""")
+    check("home: Saaz's own car photo behind the headline, no video", info["photo"] and "home-hero" in (info["src"] or "") and info["video"] == 0, info)
+    check("home: the photo is decoration for screen readers", info["hidden"] == "true", info)
+    check("home: latest cars and the trust section sit outside the hero", info["trustOutside"] and info["latestOutside"], info)
+    pt = home.evaluate("() => { const r = document.querySelector('[data-ref=home-hero] h1').getBoundingClientRect(); const e = document.elementFromPoint(r.left + 10, r.top + r.height / 2); return e && e.tagName.toLowerCase(); }")
+    check("home: the headline sits in front of the photo", pt in ("h1", "i"), pt)
+    check("home: the search works in front of the photo", home.locator("#hs select[name=make]").is_enabled())
+    shot(home, "4-home-photo")
 
     # ---------- BA-0003 / BA-0005: viewing the marketplace as admin ----------
     adm = page(); signin(adm, "admin@saaz.test"); elevate(adm); go(adm, "#/browse")
     check("as admin: every car at any stage, the same 3 as Admin, Cars", adm.locator(".car").count() == 3, names(adm))
     check("as admin: the same buyer card design", adm.locator(".car .car-photo").count() == 3 and adm.locator(".car .car-price").count() == 3)
     tags = adm.locator(".car .car-tag.right").all_inner_texts()
-    check("as admin: the stage shows on the photo of cars that aren't live", sorted(t.strip() for t in tags) == ["Awaiting approval", "Rejected"], tags)
+    check("as admin: the stage shows on the photo of cars that aren't live", sorted(t.strip().lower() for t in tags) == ["awaiting approval", "rejected"], tags)  # small capitals since 29 Oct 2026
     check("as admin: no Saved only filter (saving is off in the admin view)", adm.locator("input[name=saved]").count() == 0)
     check("as admin: a clear line says this is the admin view", adm.locator(".admin-preview").is_visible() and "Nothing here approves or publishes" in adm.inner_text(".admin-preview"))
     check("as admin: the area bar shows Back to Admin", adm.locator(".areabar a", has_text="Back to Admin").count() >= 1 or adm.locator("a", has_text="Back to Admin").count() >= 1)
