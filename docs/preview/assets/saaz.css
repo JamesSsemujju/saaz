@@ -1013,6 +1013,10 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 /* 30 Oct 2026: the sample report says it is a sample before anything else, and its ribbon is amber, never the green of a real report */
 .samplebar{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--warn-ink);font-weight:600}
 .report.is-sample .ribbon{background:var(--warn)}
+/* 3 Nov 2026: Promotions (part 23). Terms read as plain text with their own line breaks; amber for flagged entries */
+.appbody .terms summary{cursor:pointer;font-weight:600;min-height:var(--control);display:flex;align-items:center}
+.appbody .termstext{white-space:pre-wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);border-left:2px solid var(--line);padding:0 var(--sp-4);margin:var(--sp-2) 0 var(--sp-4);max-height:24rem;overflow:auto}
+.appbody b.warn{color:var(--warn-ink)}
 
 /* build.css: the private Build Assistant (only drawn for admins the database allows; see build-assistant.js). Tokens only. */
 .ba{font-size:var(--fs-sm);line-height:var(--lh-sm)}

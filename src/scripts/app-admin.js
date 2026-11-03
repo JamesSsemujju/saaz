@@ -1,4 +1,4 @@
-/* app-admin.js: Overview, Cars, Saaz cars, What's selling, Vehicles, Reviews, Garages, Users, Deals, Audit trail, Outbox, Settings. */
+/* app-admin.js: Overview, Cars, Saaz cars, What's selling, Vehicles, Reviews, Garages, Users, Deals, Audit trail, Outbox, Settings. Promotions: app-promotions.js. */
 (function () {
   var S = window.Saaz, esc = S.esc;
   // Navigation grouped by the work being done (Zoho-style): a stable side menu on wide screens, a "Go to" menu on phones.
@@ -8,10 +8,10 @@
     ["Inspections and garage line", [["conversations", "Garage line"], ["reviews", "Car inspection reports"]]],
     ["Garages and partners", [["garages", "Garages"]]],
     ["Customers and deals", [["users", "Users"], ["deals", "Deals"]]],
-    ["Communications", [["outbox", "Outbox"]]],
+    ["Communications", [["outbox", "Outbox"], ["promotions", "Promotions"]]],
     ["System", [["audit", "All activity"], ["team", "Saaz team"], ["settings", "Settings"], ["build", "Build Assistant"]]]
   ];
-  var FULL_ONLY = ["team", "settings", "build"];  // Staff don't get these (the database refuses them too)
+  var FULL_ONLY = ["team", "settings", "build", "promotions"];  // Staff don't get these (the database refuses them too)
   function tabs(at) {
     var opts = "", side = "";
     var full = !!(S.state.roles || {}).full_admin;

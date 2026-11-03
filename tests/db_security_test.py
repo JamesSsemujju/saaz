@@ -198,7 +198,7 @@ for who, uid in OUTSIDERS.items():
 # The pattern, not just today's instances: a visitor may call only these functions. A new function that visitors can
 # call fails this test until it is either locked down (revoke execute ... from public, anon) or added here on purpose.
 VISITOR_OK = {"check_request", "browse_listings", "whats_selling", "listing_stats", "record_view", "review_document", "verify_review", "lookup_inspection",
-              "my_roles", "model_sales_public",
+              "my_roles", "model_sales_public", "promotion_public",
               # used inside row security policies, so the visitor's role must be able to run them; each answers only about the caller
               "is_admin", "is_full_admin", "my_garage_id", "my_garage_role", "my_team_garage", "garage_sees", "garage_sees_listing_work",
               "garage_on_listing", "is_seller_of", "is_listing_seller", "deal_side", "can_see_deal", "can_read_messages", "i_own_team",

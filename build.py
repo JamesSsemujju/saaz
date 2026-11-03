@@ -233,7 +233,7 @@ def build_site(out, base, cars, preview):
         extra.update(cars_ctx)
         # The marketplace app (pages/index.html) is the site root: one address for everything.
         # The design preview has no database, so its root shows the About page (pages/home.html) instead.
-        if preview and src.stem in ("index", "app"): continue
+        if preview and src.stem in ("index", "app", "giveaway"): continue
         page_slugs.add(src.stem)
         html_out = page(content, meta, "help" if src.stem == "help" else meta.get("nav", ""), extra)
         write("index.html" if src.stem == "index" else f"{src.stem}/index.html", html_out)
