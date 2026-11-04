@@ -129,6 +129,9 @@ for who, uid in OUTSIDERS.items():
                 diff = [t for t in now if now[t] != before.get(t)]
                 own = (fn == "toggle_save" and diff == ["public.saves"] and su("select bool_and(l.status in ('live','reserved','sold')) from saves s join listings l on l.id = s.listing_id where s.user_id = %s", (uid,))[0][0] is not False) \
                    or (fn == "add_garage_member" and uid == O and su("select count(*) from garage_members where garage_id <> %s and invited_by = %s", (g3, O))[0][0] == 0 if su("select count(*) from information_schema.columns where table_name='garage_members' and column_name='invited_by'")[0][0] else fn == "add_garage_member" and uid == O)
+                # Part 24: your own message settings and your own phone check codes (only rows of the caller may change)
+                own = own or (fn in ("set_notify_prefs", "phone_send_code", "phone_check_code") and uid is not None and set(diff) <= {"public.notify_prefs", "public.phone_codes", "public.outbox"}
+                              and su("select count(*) from (select user_id from notify_prefs union all select user_id from phone_codes union all select user_id from outbox where kind='phone_code') x where user_id <> all(%s::uuid[])", ([str(E), str(P), str(O)],))[0][0] == 0)
                 if not own: changed_by.append((who, fn, diff))
                 before = now
 print("function calls made:", calls)

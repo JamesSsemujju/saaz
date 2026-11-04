@@ -8,10 +8,10 @@
     ["Inspections and garage line", [["conversations", "Garage line"], ["reviews", "Car inspection reports"]]],
     ["Garages and partners", [["garages", "Garages"]]],
     ["Customers and deals", [["users", "Users"], ["deals", "Deals"]]],
-    ["Communications", [["outbox", "Outbox"], ["promotions", "Promotions"]]],
+    ["Communications", [["outbox", "Outbox"], ["announce", "Announcements"], ["promotions", "Promotions"]]],
     ["System", [["audit", "All activity"], ["team", "Saaz team"], ["settings", "Settings"], ["build", "Build Assistant"]]]
   ];
-  var FULL_ONLY = ["team", "settings", "build", "promotions"];  // Staff don't get these (the database refuses them too)
+  var FULL_ONLY = ["team", "settings", "build", "promotions", "announce"];  // Staff don't get these (the database refuses them too)
   function tabs(at) {
     var opts = "", side = "";
     var full = !!(S.state.roles || {}).full_admin;
@@ -372,15 +372,7 @@
     });
   });
 
-  A("/outbox", function (v, m, q) {
-    var ch = q.get("ch") || "", query = S.db.from("notifications").select("*").order("created_at", { ascending: false }).limit(300);
-    if (ch) query = query.contains("channels", [ch]);
-    return S.q(query).then(function (rows) {
-      page(v, "outbox", "<div class='tabs'>" + [["", "All"], ["app", "App"], ["email", "Email"], ["sms", "SMS"]].map(function (x) { return "<a href='#/admin/outbox?ch=" + x[0] + "'" + (x[0] === ch ? " aria-current='page'" : "") + ">" + x[1] + "</a>"; }).join("") + "</div>" +
-        "<p class='note'>Placeholder: email and SMS aren't connected, so those notices only land in each person's inbox.</p>" +
-        table(["When", "To", "Kind", "Message", "Channels"], rows.map(function (n) { return "<tr><td>" + S.when(n.created_at) + "</td><td><small>" + esc(n.user_id.slice(0, 8)) + "</small></td><td>" + esc(n.kind) + "</td><td>" + esc(n.body) + "</td><td>" + esc(n.channels.join(", ")) + "</td></tr>"; })));
-    });
-  });
+  // Outbox: app-notify.js (part 24)
 
   // Saaz team: Admin (everything) and Staff (daily work). Admins add, change, remove and approve authenticators.
   A("/team", function (v) {

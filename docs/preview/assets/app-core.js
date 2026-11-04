@@ -86,7 +86,7 @@
     return m;
   };
   S.rpc = function (fn, args) {
-    return S.db.rpc(fn, args || {}).then(function (r) { if (r.error) throw r.error; return r.data; });
+    return S.db.rpc(fn, args || {}).then(function (r) { if (r.error) throw r.error; if (S.kick) S.kick(); return r.data; });
   };
   S.q = function (promise) { return promise.then(function (r) { if (r.error) throw r.error; return r.data; }); };
   // Pop-up over the current page. buttons: [{text, primary, click(close)}]. Closes on the X, Escape, or a button.
@@ -567,7 +567,8 @@
       "<section><h2>Password</h2><form id='pw' class='stack'><label>New password (8 characters or more)<input name='password' type='password' minlength='8' required autocomplete='new-password'></label>" +
       "<label>Type it again<input name='again' type='password' minlength='8' required autocomplete='new-password'></label><p class='err' id='pwerr' role='alert'></p><button class='btn'>Change password</button></form></section>" +
       "<section><h2>Email</h2><p>Now: <b>" + S.esc(p.email) + "</b></p><form id='em' class='stack'><label>New email<input name='email' type='email' required autocomplete='email'></label>" +
-      "<p class='err' id='emerr' role='alert'></p><button class='btn'>Change email</button><p class='note'>Saaz sends a confirmation link. The change only happens once it is opened.</p></form></section></div>";
+      "<p class='err' id='emerr' role='alert'></p><button class='btn'>Change email</button><p class='note'>Saaz sends a confirmation link. The change only happens once it is opened.</p></form></section><div id='acctmsg'></div></div>";
+    if (S.accountMessages) S.accountMessages(S.$("#acctmsg"));
     S.$("#f").onsubmit = function (e) { e.preventDefault(); var f = S.form(e.target); S.act(e.target.querySelector("button"), function () { return S.rpc("update_profile", { p_name: f.name, p_country: "UG", p_mobile: f.mobile }); }, "Saved."); };
     S.$("#pw").onsubmit = function (e) {
       e.preventDefault(); var f = S.form(e.target), err = S.$("#pwerr"); err.textContent = "";
@@ -584,7 +585,7 @@
 
   S.route("/inbox", function (v) {
     return S.q(S.db.from("notifications").select("*").eq("user_id", S.me().id).order("created_at", { ascending: false }).limit(100)).then(function (rows) {
-      v.innerHTML = "<h1>Inbox</h1><p class='note'>Placeholder: email and SMS aren't connected yet, so every notice lands here.</p>" +
+      v.innerHTML = "<h1>Inbox</h1><p class='note'>Every notice lands here. Once Saaz switches SMS on, copies also go to your verified mobile if you allow them (<a href='#/account'>My account</a>). Email copies start once Saaz connects its email sender.</p>" +
         (rows.length ? "<ul class='list'>" + rows.map(function (n) {
           return "<li class='" + (n.read ? "" : "unread") + "'><a href='" + S.esc(S.safeHref(n.link, "#/inbox")) + "'>" + (n.read ? "<span>" + S.esc(n.body) + "</span>" : "<b>" + S.esc(n.body) + "</b><span class='new'>New</span>") + "<small>" + S.when(n.created_at) + " · " + S.esc(n.channels.join(", ")) + "</small></a></li>";
         }).join("") + "</ul>" : "<div class='empty'><b>No notices yet</b></div>");

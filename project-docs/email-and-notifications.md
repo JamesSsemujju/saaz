@@ -94,6 +94,9 @@ Business notices (stored in `notifications` with intended channels; delivered in
 | offer_received, offer_rejected, offer_auto_rejected, deal_counter, deal_propose | Offers | Seller or buyer | app, SMS (offer received) |
 | deal_agreed, sale_completed | Deal | Buyer, seller, admins | app, email, SMS |
 
+## SMS (3 Nov 2026)
+Built in part 24 with Africa's Talking: see project-docs/Saaz_Notifications_2026-11-03.md. The outbox below now exists (`public.outbox`); email rows are held there until an email sender is chosen.
+
 ## What's missing for reliable email (F-14)
 
 1. An `email_outbox` record per email: queued, sent, failed, attempts, last error (never the message body with tokens, never passwords).

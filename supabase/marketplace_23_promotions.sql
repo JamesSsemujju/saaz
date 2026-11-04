@@ -225,6 +225,11 @@ begin
   if length(v_name) < 3 or length(v_name) > 80 then raise exception 'Write your full name (3 to 80 characters).'; end if;
   v_mobile := public.promo_mobile(p->>'mobile');
   if v_mobile is null then raise exception 'Write a Ugandan mobile number, for example 0772 123456.'; end if;
+  -- Once SMS is connected and require_phone_verified is on, entries need the verified mobile on the account (part 24 phone check)
+  if coalesce((public.setting('require_phone_verified'))::text::boolean, false) then
+    if not coalesce((select phone_verified from public.profiles where id = u), false) then raise exception 'Verify your mobile number first: My account, Mobile number.'; end if;
+    if v_mobile is distinct from public.promo_mobile((select mobile from public.profiles where id = u)) then raise exception 'Use the verified mobile number on your account.'; end if;
+  end if;
   if length(btrim(coalesce(p->>'current_car', ''))) > 80 or length(btrim(coalesce(p->>'dream_car', ''))) > 80 then raise exception 'Keep car names under 80 characters.'; end if;
   if length(btrim(coalesce(p->>'current_car', ''))) < 2 then raise exception 'Write the car you drive now, or "None".'; end if;
   if length(btrim(coalesce(p->>'dream_car', ''))) < 2 then raise exception 'Write the car you would like next.'; end if;
