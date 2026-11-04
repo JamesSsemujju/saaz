@@ -94,7 +94,7 @@
 .timeline small{display:block}
 .chat{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--white)}
 .chathead{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-3);align-items:center;padding:var(--sp-3) var(--sp-3);background:var(--soft);border-bottom:1px solid var(--line)}
-.msgs{display:grid;gap:var(--sp-2);padding:var(--sp-3);max-height:360px;overflow-y:auto}
+.msgs{display:grid;gap:var(--sp-2);padding:var(--sp-3);max-height:360px;overflow-y:auto;overscroll-behavior:contain}
 .msg{margin:0;padding:var(--sp-2) var(--sp-3);border-radius:12px;max-width:85%;white-space:pre-wrap;overflow-wrap:anywhere}
 .msg small{display:block;font-size:var(--fs-xs);margin-top:var(--sp-1);line-height:var(--lh-xs)}
 .msg.me{background:var(--navy);color:var(--white);justify-self:end}
@@ -185,7 +185,9 @@
   .adminmain .filters>*{grid-column:span 3}
   .adminmain .filters>.wide{grid-column:span 4}
   .adminmain .filters:has(>.wide)>label:has(input[name=max]){grid-column:span 2}
-  .adminside{display:block;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start;padding:0 var(--sp-3) 0 0;border-right:1px solid var(--line)}
+  /* BA-0014 (4 Nov 2026): the menu ends on the screen and scrolls on its own; scrolling it never moves the page, and the page never moves it */
+  .adminside{display:block;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start;padding:0 var(--sp-3) 0 0;border-right:1px solid var(--line);
+    max-height:calc(100vh - var(--header) - var(--areabar) - 2 * var(--sp-5));overflow-y:auto;overscroll-behavior:contain}
   .adminside .navgroup{padding:var(--sp-2) 0;border-bottom:1px solid var(--line)}
   .adminside .navgroup:last-child{border-bottom:0}
   .adminside b{display:block;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.8px;color:var(--mut);padding:var(--sp-1) var(--sp-2);line-height:var(--lh-xs)}
@@ -198,7 +200,7 @@
 .report .replogo{display:block;height:34px;width:auto}
 
 /* Pop-up (S.popup) */
-dialog.pop{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100vh - 32px);overflow:auto;border:0;border-radius:12px;padding:var(--sp-5) var(--sp-5) var(--sp-4);width:min(420px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--navy)}
+dialog.pop{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100vh - 32px);overflow:auto;overscroll-behavior:contain;border:0;border-radius:12px;padding:var(--sp-5) var(--sp-5) var(--sp-4);width:min(420px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--navy)}
 dialog.pop::backdrop{background:rgba(var(--shade),.55)}
 dialog.pop h2{margin:0 var(--sp-6) var(--sp-3) 0;font-size:var(--fs-xl);line-height:var(--lh-xl)}
 dialog.pop .pop-body p{margin:0 0 var(--sp-3);overflow-wrap:anywhere}
@@ -278,6 +280,11 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
   .rtools .btn{margin-left:0;width:100%}
 }
 /* report tables: one line per row on wide screens (the table scrolls inside its frame); only the Why column wraps */
+/* BA-0015 (4 Nov 2026): on wide screens the records scroll in their own frame, no taller than the screen, with the column names kept in view */
+@media(min-width:1024px){
+  .rtable .tablewrap:has(.tbl){max-height:calc(100vh - var(--header) - var(--areabar) - 2 * var(--sp-5));overflow:auto;overscroll-behavior:contain}
+  .rtable .tablewrap .tbl thead th{position:sticky;top:0;z-index:2;background:var(--soft)}
+}
 @media(min-width:768px){
   .rtable .tbl th,.rtable .tbl td{white-space:nowrap}
   .rtable .tbl td[data-label="Why"]{white-space:normal;min-width:var(--rail)}
@@ -355,5 +362,5 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .report.is-sample .ribbon{background:var(--warn)}
 /* 3 Nov 2026: Promotions (part 23). Terms read as plain text with their own line breaks; amber for flagged entries */
 .appbody .terms summary{cursor:pointer;font-weight:600;min-height:var(--control);display:flex;align-items:center}
-.appbody .termstext{white-space:pre-wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);border-left:2px solid var(--line);padding:0 var(--sp-4);margin:var(--sp-2) 0 var(--sp-4);max-height:24rem;overflow:auto}
+.appbody .termstext{white-space:pre-wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);border-left:2px solid var(--line);padding:0 var(--sp-4);margin:var(--sp-2) 0 var(--sp-4);max-height:24rem;overflow:auto;overscroll-behavior:contain}
 .appbody b.warn{color:var(--warn-ink)}

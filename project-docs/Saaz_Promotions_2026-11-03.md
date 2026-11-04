@@ -2,7 +2,7 @@
 
 Asked for in "IT Integration Proposal" (car giveaway draw). Built as one branch, Promotions, so later kinds (offers, referrals, competitions) reuse it. First kind: prize draw.
 
-Status: **built and tested locally. Not live.** `supabase/marketplace_23_promotions.sql` needs James's approval in a live chat before it runs in Supabase. The switch starts off.
+Status: **database live since 4 Nov 2026** (part 23, run by James in the SQL Editor after approving it). The switch is off. The pages go live when James ships the zip.
 
 ## Rules the database enforces
 - One master switch (Admin, Communications, Promotions). Full admins only. Switching off needs a reason. History can't be edited.

@@ -17,6 +17,11 @@ Structure only. Colours, fonts and images are unchanged.
 - New tokens: `--display`, `--font` (Instrument Sans), `--ivory`, `--fs-2xs`, `--fs-6xl`, `--fs-7xl`.
 
 
+## Scroll boxes (4 Nov 2026, BA-0014 and BA-0015)
+- Anything that scrolls up and down on its own sets `overscroll-behavior: contain`, so reaching its end never drags the page or the menu beside it. The build refuses a scroll box without it.
+- Admin and Reports menus (from 1024 px): sticky, no taller than the screen, scroll on their own.
+- Report records (from 1024 px): their own frame, no taller than the screen, column names stay in view.
+
 ## One of each
 - Card: photo 4:3, inspection line, price, name (may wrap), specs. Used on home, results, Admin, Cars and /cars/.
 - Card grid (25 Oct 2026, BA-0008): fluid, not on the column spans. As many cards as fit at 208 px or wider (`--card`): 1 on phones, 3 at 768, 4 at 1024, 5 at 1280 (Admin, Cars: 4 at 1280). A short list keeps the card size. Home shows two whole rows.

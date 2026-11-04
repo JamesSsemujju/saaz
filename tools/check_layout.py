@@ -85,8 +85,20 @@ def scan_cut_selectors(path):
                 out.append(f"{path.relative_to(ROOT)}:{text.count(chr(10), 0, m.start(1) + sel.find(a)) + 1}: selector cut short (line ends without a comma): {a.strip()[:60]}")
     return out
 
+def scan_scroll_boxes(path):
+    """BA-0014 (4 Nov 2026): a box that scrolls up and down on its own must say overscroll-behavior, or reaching its end
+    drags the page (or the menu beside it) along: the "noise" James found. Sideways-only scrolling (overflow-x) is fine."""
+    out = []
+    text = re.sub(r"/\*.*?\*/", lambda m: " " * len(m.group(0)), path.read_text(encoding="utf-8"), flags=re.S)
+    for m in re.finditer(r"([^{}]*)\{([^{}]*)\}", text):
+        body = m.group(2)
+        if re.search(r"(?<![\w-])overflow(-y)?\s*:\s*(auto|scroll)", body) and "overscroll-behavior" not in body:
+            out.append(f"{path.relative_to(ROOT)}:{text.count(chr(10), 0, m.start(2)) + 1}: scroll box without overscroll-behavior: {m.group(1).strip()[-60:]}")
+    return out
+
 def main():
     found = []
+    for p in sorted(STY.glob("*.css")): found += scan_scroll_boxes(p)
     for p in sorted(STY.glob("*.css")): found += scan_cut_selectors(p)
     for p in sorted(STY.glob("*.css")):
         if p.name != "tokens.css": found += scan_css(p)

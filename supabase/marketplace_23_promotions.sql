@@ -1,6 +1,6 @@
 -- Part 23: Promotions, first type: prize draw (3 Nov 2026). Run after part 22. Safe to run twice.
 -- Asked for in "IT Integration Proposal" (giveaway draw). Built as one branch so later promotions reuse it.
--- NOT LIVE. Tested on the local copy only (tests/db_promotions_test.py). Needs James's approval in a live chat.
+-- Live since 4 Nov 2026: James approved in a live chat and ran it in the SQL Editor. Checked after (read-only): 8 tables locked, visitors can call only promotion_public, helpers not callable, switch off.
 --
 -- What it adds
 --   1. A master switch for every promotion (starts OFF; full admins only; a reason to switch off; history kept).

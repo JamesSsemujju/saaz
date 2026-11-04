@@ -212,7 +212,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 /* 29 Oct 2026: the open list of a search or filter dropdown (mouse screens; phones use their own picker). Light by default,
    dark on the home picture. The chosen line has a bar and a tick; no system blue. */
 label:has(>.dd){position:relative}
-.dd{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:var(--sp-1);padding:var(--sp-1) 0;list-style:none;max-height:calc(var(--control) * 7);overflow:auto;
+.dd{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:var(--sp-1);padding:var(--sp-1) 0;list-style:none;max-height:calc(var(--control) * 7);overflow:auto;overscroll-behavior:contain;
   background:var(--white);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:0 16px 40px rgba(var(--shade),.18);
   font-size:var(--fs-md);line-height:var(--lh-md);font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink)}
 .dd li{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:var(--control);padding:0 var(--sp-4);cursor:pointer}

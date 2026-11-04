@@ -17,11 +17,11 @@ The system audit, module inventory, workflows, data model, roles, email findings
 - Each update: save the new `Saaz_Platform_*.zip` into `/Users/james/Desktop/Saaz`, then run `bash ~/Desktop/Saaz/saaz/tools/ship.sh`. It takes the newest zip there (or in Downloads), builds, shows how many files changed, and pushes only if you type `y`.
 - Tested against a local copy of the repo, not against GitHub.
 
-## Promotions (3 Nov 2026, not live)
-Prize draws first (the giveaway proposal), under one Promotions branch. Part 23 (`supabase/marketplace_23_promotions.sql`) needs approval before it runs in Supabase. Rules, pages and placeholders: project-docs/Saaz_Promotions_2026-11-03.md
+## Promotions (3 Nov 2026; database live 4 Nov 2026)
+Prize draws first (the giveaway proposal), under one Promotions branch. Part 23 is live in Supabase (switch off). Rules, pages and placeholders: project-docs/Saaz_Promotions_2026-11-03.md
 
-## Notifications (3 Nov 2026, not live)
-SMS through Africa's Talking: outbox, message settings, mobile check by code, channels per notice, opt-outs, announcements. Part 24 (`supabase/marketplace_24_notifications.sql`) and the Edge Function `supabase/functions/send-outbox` need approval and set-up: project-docs/Saaz_Notifications_2026-11-03.md
+## Notifications (3 Nov 2026; database live 4 Nov 2026)
+SMS through Africa's Talking: outbox, message settings, mobile check by code, channels per notice, opt-outs, announcements. Part 24 is live in Supabase. The Edge Function `supabase/functions/send-outbox` still needs deploying and its secrets: project-docs/Saaz_Notifications_2026-11-03.md
 
 ## Structure
 ```

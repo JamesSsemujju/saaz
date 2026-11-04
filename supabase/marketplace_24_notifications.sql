@@ -1,5 +1,6 @@
 -- Part 24: Notifications: SMS through Africa's Talking, outbox, preferences, phone check, announcements (3 Nov 2026).
--- Run after part 23. Safe to run twice. NOT LIVE. Tested on the local copy only (tests/db_notify_test.py). Needs James's approval in a live chat.
+-- Run after part 23. Safe to run twice. Live since 4 Nov 2026: James approved in a live chat and ran it in the SQL Editor. Checked after (read-only):
+-- 7 tables locked, both triggers on notifications, sender functions callable only by the service role, outbox empty, require_phone_verified still off.
 --
 -- How it works
 --   Every notice the marketplace already writes (public.notifications, with its channels) now also goes to an outbox:

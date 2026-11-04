@@ -416,7 +416,7 @@ legend{font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:700;margin-bo
 /* 29 Oct 2026: the open list of a search or filter dropdown (mouse screens; phones use their own picker). Light by default,
    dark on the home picture. The chosen line has a bar and a tick; no system blue. */
 label:has(>.dd){position:relative}
-.dd{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:var(--sp-1);padding:var(--sp-1) 0;list-style:none;max-height:calc(var(--control) * 7);overflow:auto;
+.dd{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:var(--sp-1);padding:var(--sp-1) 0;list-style:none;max-height:calc(var(--control) * 7);overflow:auto;overscroll-behavior:contain;
   background:var(--white);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:0 16px 40px rgba(var(--shade),.18);
   font-size:var(--fs-md);line-height:var(--lh-md);font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink)}
 .dd li{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:var(--control);padding:0 var(--sp-4);cursor:pointer}
@@ -754,7 +754,7 @@ label:has(>.dd){position:relative}
 .timeline small{display:block}
 .chat{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--white)}
 .chathead{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-3);align-items:center;padding:var(--sp-3) var(--sp-3);background:var(--soft);border-bottom:1px solid var(--line)}
-.msgs{display:grid;gap:var(--sp-2);padding:var(--sp-3);max-height:360px;overflow-y:auto}
+.msgs{display:grid;gap:var(--sp-2);padding:var(--sp-3);max-height:360px;overflow-y:auto;overscroll-behavior:contain}
 .msg{margin:0;padding:var(--sp-2) var(--sp-3);border-radius:12px;max-width:85%;white-space:pre-wrap;overflow-wrap:anywhere}
 .msg small{display:block;font-size:var(--fs-xs);margin-top:var(--sp-1);line-height:var(--lh-xs)}
 .msg.me{background:var(--navy);color:var(--white);justify-self:end}
@@ -845,7 +845,9 @@ label:has(>.dd){position:relative}
   .adminmain .filters>*{grid-column:span 3}
   .adminmain .filters>.wide{grid-column:span 4}
   .adminmain .filters:has(>.wide)>label:has(input[name=max]){grid-column:span 2}
-  .adminside{display:block;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start;padding:0 var(--sp-3) 0 0;border-right:1px solid var(--line)}
+  /* BA-0014 (4 Nov 2026): the menu ends on the screen and scrolls on its own; scrolling it never moves the page, and the page never moves it */
+  .adminside{display:block;position:sticky;top:calc(var(--header) + var(--areabar) + var(--sp-5));align-self:start;padding:0 var(--sp-3) 0 0;border-right:1px solid var(--line);
+    max-height:calc(100vh - var(--header) - var(--areabar) - 2 * var(--sp-5));overflow-y:auto;overscroll-behavior:contain}
   .adminside .navgroup{padding:var(--sp-2) 0;border-bottom:1px solid var(--line)}
   .adminside .navgroup:last-child{border-bottom:0}
   .adminside b{display:block;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.8px;color:var(--mut);padding:var(--sp-1) var(--sp-2);line-height:var(--lh-xs)}
@@ -858,7 +860,7 @@ label:has(>.dd){position:relative}
 .report .replogo{display:block;height:34px;width:auto}
 
 /* Pop-up (S.popup) */
-dialog.pop{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100vh - 32px);overflow:auto;border:0;border-radius:12px;padding:var(--sp-5) var(--sp-5) var(--sp-4);width:min(420px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--navy)}
+dialog.pop{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100vh - 32px);overflow:auto;overscroll-behavior:contain;border:0;border-radius:12px;padding:var(--sp-5) var(--sp-5) var(--sp-4);width:min(420px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--navy)}
 dialog.pop::backdrop{background:rgba(var(--shade),.55)}
 dialog.pop h2{margin:0 var(--sp-6) var(--sp-3) 0;font-size:var(--fs-xl);line-height:var(--lh-xl)}
 dialog.pop .pop-body p{margin:0 0 var(--sp-3);overflow-wrap:anywhere}
@@ -938,6 +940,11 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
   .rtools .btn{margin-left:0;width:100%}
 }
 /* report tables: one line per row on wide screens (the table scrolls inside its frame); only the Why column wraps */
+/* BA-0015 (4 Nov 2026): on wide screens the records scroll in their own frame, no taller than the screen, with the column names kept in view */
+@media(min-width:1024px){
+  .rtable .tablewrap:has(.tbl){max-height:calc(100vh - var(--header) - var(--areabar) - 2 * var(--sp-5));overflow:auto;overscroll-behavior:contain}
+  .rtable .tablewrap .tbl thead th{position:sticky;top:0;z-index:2;background:var(--soft)}
+}
 @media(min-width:768px){
   .rtable .tbl th,.rtable .tbl td{white-space:nowrap}
   .rtable .tbl td[data-label="Why"]{white-space:normal;min-width:var(--rail)}
@@ -1015,7 +1022,7 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .report.is-sample .ribbon{background:var(--warn)}
 /* 3 Nov 2026: Promotions (part 23). Terms read as plain text with their own line breaks; amber for flagged entries */
 .appbody .terms summary{cursor:pointer;font-weight:600;min-height:var(--control);display:flex;align-items:center}
-.appbody .termstext{white-space:pre-wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);border-left:2px solid var(--line);padding:0 var(--sp-4);margin:var(--sp-2) 0 var(--sp-4);max-height:24rem;overflow:auto}
+.appbody .termstext{white-space:pre-wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);border-left:2px solid var(--line);padding:0 var(--sp-4);margin:var(--sp-2) 0 var(--sp-4);max-height:24rem;overflow:auto;overscroll-behavior:contain}
 .appbody b.warn{color:var(--warn-ink)}
 
 /* build.css: the private Build Assistant (only drawn for admins the database allows; see build-assistant.js). Tokens only. */
@@ -1029,9 +1036,9 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .ba-tabs{display:flex;border-bottom:1px solid var(--line)}
 .ba-tabs button{flex:1;min-height:var(--control-sm);border:0;background:none;font:inherit;font-weight:600;color:var(--mut);cursor:pointer;box-shadow:inset 0 -2px 0 transparent}
 .ba-tabs button[aria-selected=true]{color:var(--navy);box-shadow:inset 0 -2px 0 var(--navy)}
-.ba-body{overflow:auto;padding:var(--sp-4);display:grid;gap:var(--sp-3);align-content:start}
+.ba-body{overflow:auto;overscroll-behavior:contain;padding:var(--sp-4);display:grid;gap:var(--sp-3);align-content:start}
 .ba-body>*{margin:0}
-.ba-editor{min-height:calc(var(--control) * 2);max-height:40vh;overflow:auto;padding:var(--sp-3);border:1px solid var(--field);border-radius:var(--radius-sm);font-size:var(--fs-md);line-height:var(--lh-md);white-space:pre-wrap;overflow-wrap:anywhere}
+.ba-editor{min-height:calc(var(--control) * 2);max-height:40vh;overflow:auto;overscroll-behavior:contain;padding:var(--sp-3);border:1px solid var(--field);border-radius:var(--radius-sm);font-size:var(--fs-md);line-height:var(--lh-md);white-space:pre-wrap;overflow-wrap:anywhere}
 .ba-editor:focus{outline:3px solid var(--focus);outline-offset:1px}
 .ba-chip{display:inline-flex;align-items:center;gap:var(--sp-1);padding:0 var(--sp-1) 0 var(--sp-2);border-radius:var(--radius-pill);background:var(--navy);color:var(--white);font-family:var(--mono);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;user-select:all}
 .ba-chip[data-stab=unstable]{background:var(--warn-bg);color:var(--warn-ink)}

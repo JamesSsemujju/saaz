@@ -106,7 +106,20 @@
     });
   }, "admin");
 
-  var AUD = [["all", "Everyone with a Saaz account"], ["sellers", "Sellers (listed a car)"], ["buyers", "Buyers (saved a car or made an offer)"], ["garages", "Certified garage teams"], ["promotion", "Entrants of a promotion"]];
+  var AUD = [["all", "Everyone with a Saaz account"], ["sellers", "Sellers (listed a car)"], ["buyers", "Buyers (saved a car or made an offer)"], ["garages", "Certified garage teams"], ["promotion", "Entrants of a promotion"], ["custom", "Custom (filters and named people)"]];
+  // BA-0013: a custom audience, built from filters on data Saaz has, plus people picked by name (part 25)
+  function customText(fl) {
+    if (!fl) return "";
+    var bits = [];
+    if (fl.roles && fl.roles.length) bits.push(fl.roles.join(" or "));
+    if (fl.verified) bits.push("mobile verified");
+    if (fl.active_days) bits.push("active in " + fl.active_days + " days");
+    if (fl.joined_days) bits.push("joined in " + fl.joined_days + " days");
+    if (fl.makes && fl.makes.length) bits.push("makes: " + fl.makes.join(", "));
+    if (fl.models && fl.models.length) bits.push("models: " + fl.models.join(", "));
+    if (fl.people && fl.people.length) bits.push("+ " + fl.people.length + " named");
+    return bits.join("; ");
+  }
   S.route("/admin/announce", function (v) {
     return S.rpc("admin_announcements").then(function (an) {
       var proms = an.promotions;
@@ -114,26 +127,62 @@
         "<section><h2>New announcement</h2><form id='anf' class='stack'>" +
         "<label>Who<select name='audience'>" + AUD.map(function (a) { return "<option value='" + a[0] + "'>" + a[1] + "</option>"; }).join("") + "</select></label>" +
         "<label id='anpromo' hidden>Promotion<select name='promotion'>" + proms.map(function (p) { return "<option value='" + p.id + "'>" + esc(p.title) + "</option>"; }).join("") + "</select></label>" +
+        "<fieldset id='ancustom' class='stack' hidden data-ref='custom-audience'><legend>Custom audience</legend>" +
+          "<p class='note'>Everyone who matches all the filters you set, plus anyone you add by name. Leave a filter empty to ignore it.</p>" +
+          "<div><b>Who they are</b> <small>any of these; none ticked means everyone</small></div>" +
+          "<label class='inline'><input type='checkbox' name='r_sellers' value='1'> Sellers (listed a car)</label>" +
+          "<label class='inline'><input type='checkbox' name='r_buyers' value='1'> Buyers (saved a car or made an offer)</label>" +
+          "<label class='inline'><input type='checkbox' name='r_garages' value='1'> Certified garage teams</label>" +
+          "<label class='inline'><input type='checkbox' name='verified' value='1'> Only verified mobiles</label>" +
+          "<div class='row'><label>Active in the last (days)<input name='active_days' type='number' min='1' max='3650' placeholder='Any'></label>" +
+          "<label>Joined in the last (days)<input name='joined_days' type='number' min='1' max='3650' placeholder='Any'></label></div>" +
+          "<label>Car makes they listed or saved (commas)<input name='makes' maxlength='200' placeholder='Toyota, Subaru'></label>" +
+          "<label>Car models they listed or saved (commas)<input name='models' maxlength='200' placeholder='Harrier, Forester'></label>" +
+          "<div><b>Add people by name</b></div><div class='inlineform'><label>Name, email or mobile<input id='anpq' autocomplete='off' placeholder='At least 2 letters'></label><button type='button' class='btn small ghost' id='anpfind'>Find</button></div>" +
+          "<ul class='list' id='anpres'></ul><p class='note' id='anpicked'>Nobody added by name.</p></fieldset>" +
         "<label>Message<textarea name='body' rows='3' minlength='10' maxlength='450' required placeholder='For example: New inspected Harriers this week. See them on Saaz.'></textarea></label><p class='note' id='ancount'>0 characters</p>" +
         "<label>Link (a Saaz page, optional)<input name='link' placeholder='#/browse' pattern='#/[^ ]*'></label>" +
         "<label class='inline'><input type='checkbox' name='sms' value='1'> Also by SMS (opted-in people only)</label>" +
         "<div class='row'><button type='button' class='btn ghost' id='anprev'>Check who gets it</button><button class='btn' id='ansend' disabled>Send</button></div><div id='anres'></div></form></section>" +
         "<section><h2>Sent</h2>" + table(["When", "By", "Who", "Message", "Inbox", "SMS"], an.list.map(function (a) {
-          return "<tr><td>" + S.when(a.at) + "</td><td>" + esc(a.by || "") + "</td><td>" + esc((AUD.filter(function (x) { return x[0] === a.audience; })[0] || [0, a.audience])[1]) + (a.promotion ? "<small> " + esc(a.promotion) + "</small>" : "") + "</td><td>" + esc(a.body) + "</td><td>" + (a.counts.app || 0) + "</td><td>" +
+          return "<tr><td>" + S.when(a.at) + "</td><td>" + esc(a.by || "") + "</td><td>" + esc((AUD.filter(function (x) { return x[0] === a.audience; })[0] || [0, a.audience])[1]) + (a.promotion ? "<small> " + esc(a.promotion) + "</small>" : "") + (a.filter ? "<small> " + esc(customText(a.filter)) + "</small>" : "") + "</td><td>" + esc(a.body) + "</td><td>" + (a.counts.app || 0) + "</td><td>" +
             (a.channels.indexOf("sms") >= 0 ? (a.counts.sms || 0) + "<small> (" + (a.counts.sms_skipped || 0) + " not sent)</small>" : "No") + "</td></tr>"; })) + "</section>");
-      var f = S.$("#anf"), cnt = S.$("#ancount"), send = S.$("#ansend"), res = S.$("#anres"), seen = null;
-      var args = function () { var d = S.form(f); return { p_audience: d.audience, p_promotion: d.audience === "promotion" ? d.promotion || null : null, p_channels: d.sms === "1" ? ["app", "sms"] : ["app"], p_body: d.body, link: d.link || null }; };
+      var f = S.$("#anf"), cnt = S.$("#ancount"), send = S.$("#ansend"), res = S.$("#anres"), seen = null, picked = [];
+      var list = function (t) { return String(t || "").split(",").map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 20); };
+      var filter = function (d) {
+        var o = { roles: ["sellers", "buyers", "garages"].filter(function (r) { return d["r_" + r] === "1"; }), verified: d.verified === "1",
+          makes: list(d.makes), models: list(d.models), people: picked.map(function (x) { return x.id; }) };
+        if (d.active_days) o.active_days = +d.active_days; if (d.joined_days) o.joined_days = +d.joined_days;
+        return o;
+      };
+      var args = function () { var d = S.form(f), a = { p_audience: d.audience, p_promotion: d.audience === "promotion" ? d.promotion || null : null, p_channels: d.sms === "1" ? ["app", "sms"] : ["app"], p_body: d.body, link: d.link || null };
+        if (d.audience === "custom") a.p_filter = filter(d); return a; };
       var stale = function () { send.disabled = true; seen = null; res.innerHTML = ""; };
-      f.audience.onchange = function () { S.$("#anpromo").hidden = f.audience.value !== "promotion"; stale(); };
+      var showPicked = function () {
+        S.$("#anpicked").innerHTML = picked.length ? "Added by name: " + picked.map(function (x, i) { return "<span class='chip'>" + esc(x.name || x.email) + " <button type='button' class='btn text' data-unpick='" + i + "' aria-label='Remove " + esc(x.name || x.email) + "'>×</button></span>"; }).join(" ") : "Nobody added by name.";
+        S.$$("[data-unpick]", f).forEach(function (b) { b.onclick = function () { picked.splice(+b.dataset.unpick, 1); showPicked(); stale(); }; });
+      };
+      var find = function () {
+        var q = S.$("#anpq").value.trim(); if (q.length < 2) { S.toast("Type at least 2 letters.", true); return; }
+        S.rpc("admin_people_search", { p_q: q }).then(function (rows) {
+          var el = S.$("#anpres");
+          el.innerHTML = rows.length ? rows.map(function (x, i) { return "<li><span>" + esc(x.name || "") + " <small>" + esc(x.email || "") + (x.mobile ? " · " + esc(x.mobile) : "") + (x.verified ? " · verified" : "") + "</small></span> <button type='button' class='btn small ghost' data-pick='" + i + "'>Add</button></li>"; }).join("") : "<li class='note'>Nobody found.</li>";
+          S.$$("[data-pick]", el).forEach(function (b) { b.onclick = function () { var x = rows[+b.dataset.pick]; if (!picked.some(function (y) { return y.id === x.id; })) picked.push(x); showPicked(); stale(); b.disabled = true; b.textContent = "Added"; }; });
+        }).catch(function (e2) { S.toast(S.friendly(e2), true); });
+      };
+      S.$("#anpfind").onclick = find;
+      S.$("#anpq").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); find(); } };
+      S.$$("#ancustom input", f).forEach(function (x) { if (x.id !== "anpq") x.addEventListener("change", stale); });
+      f.audience.onchange = function () { S.$("#anpromo").hidden = f.audience.value !== "promotion"; S.$("#ancustom").hidden = f.audience.value !== "custom"; stale(); };
       f.body.oninput = function () { var l = ("Saaz: " + f.body.value + " Stop these in your Saaz account.").length; cnt.textContent = f.body.value.length + " characters · " + (l <= 160 ? 1 : Math.ceil(l / 153)) + " SMS part" + (l <= 160 ? "" : "s") + " each"; stale(); };
       [f.sms, f.link, f.promotion].forEach(function (x) { if (x) x.onchange = stale; });
       S.$("#anprev").onclick = function () {
         var a = args(), b = S.$("#anprev"); if (a.p_body.trim().length < 10) { S.toast("Write the message first (10 characters or more).", true); return; }
         b.disabled = true;
-        S.rpc("admin_announce_preview", { p_audience: a.p_audience, p_promotion: a.p_promotion, p_channels: a.p_channels, p_body: a.p_body }).then(function (p) {
+        S.rpc("admin_announce_preview", Object.assign({ p_audience: a.p_audience, p_promotion: a.p_promotion, p_channels: a.p_channels, p_body: a.p_body }, a.p_filter ? { p_filter: a.p_filter } : {})).then(function (p) {
           b.disabled = false; seen = JSON.stringify(a); send.disabled = !p.people;
           var why = Object.keys(p.sms_not_sent || {}).map(function (k) { return esc(k) + ": " + p.sms_not_sent[k]; }).join("; ");
-          res.innerHTML = "<div class='box'><p><b>" + p.people + "</b> people get it in their Saaz inbox.</p>" + (a.p_channels.indexOf("sms") >= 0 ?
+          res.innerHTML = "<div class='box'><p><b>" + p.people + "</b> people get it in their Saaz inbox." + (p.sample && p.sample.length ? " <small>For example: " + p.sample.map(esc).join(", ") + (p.people > p.sample.length ? " and " + (p.people - p.sample.length) + " more" : "") + ".</small>" : "") + "</p>" + (a.p_channels.indexOf("sms") >= 0 ?
             "<p><b>" + p.sms + "</b> get an SMS (" + p.segments + " part" + (p.segments > 1 ? "s" : "") + " each), from " + S.when(p.sms_from) + ". " +
             (p.cost_ugx != null ? "Estimated cost UGX " + Number(p.cost_ugx).toLocaleString("en-US") + "." : "Cost unknown: set sms_price_ugx in Settings.") + "</p>" + (why ? "<p class='note'>No SMS: " + why + ".</p>" : "") : "") + "</div>";
         }).catch(function (e2) { b.disabled = false; S.toast(S.friendly(e2), true); });
@@ -142,7 +191,7 @@
         e.preventDefault(); var a = args();
         if (seen !== JSON.stringify(a)) { stale(); S.toast("Check who gets it first.", true); return; }
         S.confirmBtn(send, function () {
-          S.act(send, function () { return S.rpc("admin_announce", { p_audience: a.p_audience, p_promotion: a.p_promotion, p_channels: a.p_channels, p_body: a.p_body, p_link: a.link }); },
+          S.act(send, function () { return S.rpc("admin_announce", Object.assign({ p_audience: a.p_audience, p_promotion: a.p_promotion, p_channels: a.p_channels, p_body: a.p_body, p_link: a.link }, a.p_filter ? { p_filter: a.p_filter } : {})); },
             function (r) { return "Sent to " + r.app + " inboxes" + (a.p_channels.indexOf("sms") >= 0 ? ", " + r.sms + " SMS queued" : "") + "."; });
         });
       };

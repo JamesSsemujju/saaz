@@ -2,7 +2,7 @@
 
 SMS through Africa's Talking, an outbox, message settings, a mobile check by code, and announcements. James chose Africa's Talking on 3 Nov 2026.
 
-Status: **built and tested locally. Not live.** `supabase/marketplace_24_notifications.sql` (after part 23) needs James's approval in a live chat. The Edge Function `send-outbox` must be deployed and given its secrets before any SMS goes out. Until then everything works as today: every notice lands in the in-app inbox.
+Status: **database live since 4 Nov 2026** (part 24, run by James in the SQL Editor after approving it). Not yet: the Edge Function `send-outbox` (deploy, then its Africa's Talking secrets). Until then SMS wait in the outbox and every notice lands in the in-app inbox, as before.
 
 ## How a notice becomes an SMS
 1. The marketplace writes a notice (`notifications`) with its channels, as before.
@@ -17,6 +17,9 @@ My account, Mobile number: Send me a code by SMS. 6 digits, 10 minutes, 5 tries,
 
 ## Announcements (Admin, Communications, Announcements; full admins)
 Audience: everyone, sellers, buyers, certified garage teams, or a promotion's entrants. Everyone gets it in the inbox. SMS only to people who opted in (My account, News and offers by SMS, or the marketing tick on that promotion), verified, not opted out. SMS wait for 08:00 to 20:00 EAT. "Check who gets it" shows counts, why others get no SMS, the SMS parts, and the cost once `sms_price_ugx` is set. Limit `sms_max_audience` (20,000).
+
+## Custom audience (BA-0013, part 25, 4 Nov 2026; not live yet)
+James chose C: filters plus named people. Filters (all must hold; empty ones ignored): who they are (sellers, buyers, garage teams; any of), verified mobile only, active in the last N days, joined in the last N days, car makes and models they listed or saved. Named people (found by name, email or mobile) are added on top; with no filters, only they get it. Suspended accounts never do. The check shows the count and up to 10 names. The Sent list records how the audience was chosen. No country filter: Saaz is Uganda only.
 
 ## Set-up (James or Allan; type keys only in the Supabase dashboard)
 1. Africa's Talking: account for Saaz Investments Ltd, an app, apply for the sender name SAAZ (Likely about 2 weeks, MTN and Airtel), top up a test amount, ask for the Uganda price per SMS.

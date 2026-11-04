@@ -149,3 +149,13 @@ Found while working the first real tasks: a task handed to an agent stays "queue
 | BA-0007 | Why only admins have the Build Assistant; others should have it | Asked James: A keep admins and developers, B trusted non-admin accounts, C a feedback inbox for signed-in users (visitors optional). B and C need database changes. Waiting on his answer |
 | BA-0008 | Smaller cards, fluid grid, photos framed with the tyres visible | Root cause: the photo's height didn't resolve in its frame, so photos taller than 4:3 were drawn from the top and lost their bottom. Photo pinned to the frame; photos far from 4:3 shown whole over a blurred copy. Fluid grid at 208 px minimum (5 a row at 1280, 4 in Admin, Cars). Smaller name and price, specs on 2 lines, demand in small type. Home shows two whole rows |
 | BA-0009 | Dropdowns crush into their borders | One dropdown style: own chevron with room, ellipsis for long choices; Admin, Cars Status field wider |
+
+
+## Tasks worked on 4 Nov 2026
+| Task | Asked | Done |
+|---|---|---|
+| BA-0013 | Custom audience for Announcements | James chose C: filters (who they are, verified mobile, active or joined in N days, makes and models listed or saved) plus people added by name. Part 25 (`supabase/marketplace_25_custom_audience.sql`), not live yet |
+| BA-0014 | Admin menu and page scroll each other ("noise"); clean it up everywhere | The menu ends on the screen and scrolls on its own. The same fix in 6 more scroll boxes (chat, pop-up, dropdown list, terms text, Build Assistant panel and editor). `tools/check_layout.py` now stops the build when a scroll box has no overscroll-behavior |
+| BA-0015 | Report table scrolls on its own; filterable and sortable headers? | On wide screens the records scroll in their own frame, no taller than the screen, column names kept in view. Every column already sorts; no per-column filter or two-column sort yet |
+
+BA-0014 and BA-0015 were first done by the morning run on 4 Nov 2026; that zip was not shipped, so the live session rebuilt them on top of Promotions and Notifications and they ship in one zip with BA-0013.
