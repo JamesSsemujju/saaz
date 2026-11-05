@@ -28,8 +28,11 @@ const PERMANENT = new Set([403, 404, 406, 407, 409]);   // InvalidPhoneNumber, U
 const ACCOUNT = new Set([401, 402, 405, 500, 501, 502]);
 
 type Row = { id: number; to: string; body: string; attempts: number };
+// One SMS sent, or why not: permanent = this number never can; account = the account can't send now, so stop the run
+export type Sent = { ok: true; id: string | null; cost: string | null } | { ok: false; permanent: boolean; account: boolean; error: string };
+const stop = (error: string): Sent => ({ ok: false, permanent: false, account: true, error });
 
-export async function sendOne(row: Row, cfg: { user: string; key: string; from?: string; base: string }) {
+export async function sendOne(row: Row, cfg: { user: string; key: string; from?: string; base: string }): Promise<Sent> {
   const form = new URLSearchParams({ username: cfg.user, to: row.to, message: row.body });
   if (cfg.from) form.set("from", cfg.from);
   let res: Response;
@@ -41,15 +44,14 @@ export async function sendOne(row: Row, cfg: { user: string; key: string; from?:
       signal: AbortSignal.timeout(15000),
     });
   } catch (e) {
-    return { ok: false, permanent: false, account: true, error: "Network: " + String((e as Error).message ?? e).slice(0, 120) };
+    return stop("Network: " + String((e as Error).message ?? e).slice(0, 120));
   }
   const text = await res.text();
-  if (res.status === 401) return { ok: false, permanent: false, account: true, error: "Africa's Talking refused the API key (401)" };
-  if (!res.ok) return { ok: false, permanent: false, account: true, error: `Africa's Talking HTTP ${res.status}` };
+  if (!res.ok) return stop(res.status === 401 ? "Africa's Talking refused the API key (401)" : `Africa's Talking HTTP ${res.status}`);
   let data: { SMSMessageData?: { Message?: string; Recipients?: { statusCode: number; status: string; messageId?: string; cost?: string }[] } };
-  try { data = JSON.parse(text); } catch { return { ok: false, permanent: false, account: true, error: "Africa's Talking sent a reply that isn't JSON" }; }
+  try { data = JSON.parse(text); } catch { return stop("Africa's Talking sent a reply that isn't JSON"); }
   const r = data.SMSMessageData?.Recipients?.[0];
-  if (!r) return { ok: false, permanent: false, account: true, error: "No recipient in reply: " + String(data.SMSMessageData?.Message ?? "").slice(0, 120) };
+  if (!r) return stop("No recipient in reply: " + String(data.SMSMessageData?.Message ?? "").slice(0, 120));
   if (OK.has(r.statusCode)) return { ok: true, id: r.messageId ?? null, cost: r.cost ?? null };
   return { ok: false, permanent: PERMANENT.has(r.statusCode), account: ACCOUNT.has(r.statusCode), error: `${r.statusCode} ${r.status}` };
 }

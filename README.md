@@ -23,6 +23,9 @@ Prize draws first (the giveaway proposal), under one Promotions branch. Part 23 
 ## Notifications (3 Nov 2026; database live 4 Nov 2026)
 SMS through Africa's Talking: outbox, message settings, mobile check by code, channels per notice, opt-outs, announcements. Part 24 is live in Supabase. The Edge Function `supabase/functions/send-outbox` still needs deploying and its secrets: project-docs/Saaz_Notifications_2026-11-03.md
 
+## Continuity (5 Nov 2026)
+Header in the HTML, no footer jump, Back keeps your place, area code loaded when needed, photo fade-in, prefetch on touch, press state: project-docs/Saaz_Continuity_2026-11-05.md
+
 ## Structure
 ```
 build.py                 builds src/ into docs/, then checks every internal link

@@ -1024,6 +1024,26 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .appbody .terms summary{cursor:pointer;font-weight:600;min-height:var(--control);display:flex;align-items:center}
 .appbody .termstext{white-space:pre-wrap;font-size:var(--fs-sm);line-height:var(--lh-sm);border-left:2px solid var(--line);padding:0 var(--sp-4);margin:var(--sp-2) 0 var(--sp-4);max-height:24rem;overflow:auto;overscroll-behavior:contain}
 .appbody b.warn{color:var(--warn-ink)}
+/* BA-0016 (4 Nov 2026): changing page. The current page stays until the next is ready; only after 150 ms does it dim and a thin
+   line runs under the header. The new page area fades in over 120 ms. No movement, nothing with reduced motion. */
+#view{transition:opacity .15s ease}
+#view.is-busy{opacity:.55;cursor:progress}
+#view.is-busy::before{content:"";position:fixed;left:0;right:0;top:0;height:2px;z-index:70;background:linear-gradient(90deg,transparent,var(--navy),transparent);background-size:40% 100%;background-repeat:no-repeat;animation:busyline 1s linear infinite}
+@keyframes busyline{from{background-position:-40% 0}to{background-position:140% 0}}
+.adminmain.viewin{animation:viewin .12s ease-out}
+@keyframes viewin{from{opacity:.4}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#view{transition:none}#view.is-busy::before,.adminmain.viewin{animation:none}}
+/* 5 Nov 2026: the page area always has a screen's worth of room below the header, so the footer never paints high and jumps */
+#view{min-height:calc(100vh - var(--header))}
+/* Car photos fade in over their reserved frame once loaded (the html.imgfade class is set by app-core.js) */
+.imgfade .car-photo img:not(.is-loaded),.imgfade #mainphoto:not(.is-loaded),.imgfade .thumbs img:not(.is-loaded){opacity:0}
+.imgfade .car-photo img.is-loaded,.imgfade #mainphoto.is-loaded,.imgfade .thumbs img.is-loaded{animation:imgin .2s ease-out}
+@keyframes imgin{from{opacity:0}to{opacity:1}}
+/* Pressed: links and cards answer the finger at once (under 100 ms), in place of the browser's blue flash */
+.appbody a,.appbody button{-webkit-tap-highlight-color:transparent}
+.appbody a:active,.appbody .car:active{opacity:.65;transition:opacity 0s}
+.appbody a,.appbody .car{transition:opacity .08s ease}
+@media(prefers-reduced-motion:reduce){.imgfade .car-photo img.is-loaded,.imgfade #mainphoto.is-loaded,.imgfade .thumbs img.is-loaded{animation:none}}
 
 /* build.css: the private Build Assistant (only drawn for admins the database allows; see build-assistant.js). Tokens only. */
 .ba{font-size:var(--fs-sm);line-height:var(--lh-sm)}

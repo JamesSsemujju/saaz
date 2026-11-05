@@ -18,7 +18,7 @@ My account, Mobile number: Send me a code by SMS. 6 digits, 10 minutes, 5 tries,
 ## Announcements (Admin, Communications, Announcements; full admins)
 Audience: everyone, sellers, buyers, certified garage teams, or a promotion's entrants. Everyone gets it in the inbox. SMS only to people who opted in (My account, News and offers by SMS, or the marketing tick on that promotion), verified, not opted out. SMS wait for 08:00 to 20:00 EAT. "Check who gets it" shows counts, why others get no SMS, the SMS parts, and the cost once `sms_price_ugx` is set. Limit `sms_max_audience` (20,000).
 
-## Custom audience (BA-0013, part 25, 4 Nov 2026; not live yet)
+## Custom audience (BA-0013, part 25, live 4 Nov 2026)
 James chose C: filters plus named people. Filters (all must hold; empty ones ignored): who they are (sellers, buyers, garage teams; any of), verified mobile only, active in the last N days, joined in the last N days, car makes and models they listed or saved. Named people (found by name, email or mobile) are added on top; with no filters, only they get it. Suspended accounts never do. The check shows the count and up to 10 names. The Sent list records how the audience was chosen. No country filter: Saaz is Uganda only.
 
 ## Set-up (James or Allan; type keys only in the Supabase dashboard)

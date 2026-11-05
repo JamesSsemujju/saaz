@@ -85,8 +85,36 @@
     }
     return m;
   };
+  // Ask the SMS sender (Edge Function send-outbox, part 24) to run: at most every 30 seconds from this tab. Safe to call
+  // often: it only sends what the database queued.
+  var lastKick = 0;
+  S.kick = function (now) {
+    if (!S.db || !S.signedIn || !S.signedIn()) return;
+    if (!now && Date.now() - lastKick < 30000) return;
+    lastKick = Date.now();
+    try { S.db.functions.invoke("send-outbox", { body: {} }).catch(function () {}); } catch (e) {}
+  };
+  // Short-lived read cache (5 Nov 2026): public, read-only data a page needs (the car list, a car's page) is kept for
+  // 20 seconds, so a tap that was prefetched draws at once. Any change made with S.act empties it.
+  S._rc = {};
+  // A call that may have changed data: forget the short-lived reads and nudge the SMS sender. S.act also asks who-you-are again.
+  S.changed = function () { S._rc = {}; S.kick(); };
+  S.cached = function (key, ttl, load) {
+    var e = S._rc[key];
+    if (e && Date.now() - e.at < ttl) return e.p;
+    var p = Promise.resolve().then(load);
+    S._rc[key] = { at: Date.now(), p: p };
+    p.catch(function () { if (S._rc[key] && S._rc[key].p === p) delete S._rc[key]; });
+    return p;
+  };
+  var READS = { browse_listings: 1, listing_stats: 1, my_roles: 1, whats_selling: 1, review_document: 1, verify_review: 1, lookup_inspection: 1,
+    model_sales_public: 1, record_view: 1, tick: 1, build_status: 1, promotion_public: 1, my_notify_prefs: 1 };
   S.rpc = function (fn, args) {
-    return S.db.rpc(fn, args || {}).then(function (r) { if (r.error) throw r.error; if (S.kick) S.kick(); return r.data; });
+    return S.db.rpc(fn, args || {}).then(function (r) {
+      if (r.error) throw r.error;
+      if (!READS[fn]) S.changed();
+      return r.data;
+    });
   };
   S.q = function (promise) { return promise.then(function (r) { if (r.error) throw r.error; return r.data; }); };
   // Pop-up over the current page. buttons: [{text, primary, click(close)}]. Closes on the X, Escape, or a button.
@@ -104,9 +132,13 @@
   };
   // One toast that changes state: S.busy("Saving…") stays up with a spinner until the next S.toast or S.toastHide.
   // S.toast(msg, bad, action): action {text, href} or {text, click} puts one button inside the toast.
-  S.toast = function (msg, bad, action) {
+  function toastText(msg) {
     var t = S.$("#toast"); clearTimeout(S._t);
     t.textContent = ""; var m = document.createElement("span"); m.className = "tmsg"; m.textContent = msg; t.appendChild(m);
+    return t;
+  }
+  S.toast = function (msg, bad, action) {
+    var t = toastText(msg);
     if (action && action.text) {
       var a = document.createElement(action.href ? "a" : "button"); a.className = "tact"; a.textContent = action.text;
       if (action.href) a.href = action.href; else a.type = "button";
@@ -115,16 +147,12 @@
     t.className = "toast show" + (bad ? " bad" : "");
     S._t = setTimeout(function () { t.className = "toast"; }, action ? 6000 : 4200);
   };
-  S.busy = function (msg) {
-    var t = S.$("#toast"); clearTimeout(S._t);
-    t.textContent = ""; var m = document.createElement("span"); m.className = "tmsg"; m.textContent = msg; t.appendChild(m);
-    t.className = "toast show busy";
-  };
+  S.busy = function (msg) { toastText(msg).className = "toast show busy"; };
   S.toastHide = function () { clearTimeout(S._t); var t = S.$("#toast"); if (t) t.className = "toast"; };
   // Run an action from a button: disable it, show the database's answer, then re-render.
   S.act = function (btn, fn, ok) {
     if (btn) btn.disabled = true;
-    return Promise.resolve().then(fn).then(function (r) { if (ok) S.toast(typeof ok === "function" ? ok(r) : ok); S.render(); return r; })
+    return Promise.resolve().then(fn).then(function (r) { S._rolesAt = 0; S.changed(); if (ok) S.toast(typeof ok === "function" ? ok(r) : ok); S.render(); return r; })
       .catch(function (e) { S.toast(S.friendly(e), true); if (btn) btn.disabled = false; });
   };
   S.confirmBtn = function (btn, fn) { // two taps for anything that can't be undone
@@ -201,8 +229,7 @@
   S.loadInspections = function (id, listingId) {
     return S.rpc("car_inspections", { p_listing: listingId }).then(function (rows) {
       var el = S.$("#" + id); if (!el) return;
-      el.innerHTML = rows.length ? "<div class='tablewrap'><table class='tbl'><thead><tr><th>Inspection ID</th><th>Type</th><th>Garage</th><th>Inspector</th><th>Status</th><th>Result</th><th>Saaz</th></tr></thead><tbody>" + rows.map(function (r0) {
-        var x = r0;
+      el.innerHTML = rows.length ? "<div class='tablewrap'><table class='tbl'><thead><tr><th>Inspection ID</th><th>Type</th><th>Garage</th><th>Inspector</th><th>Status</th><th>Result</th><th>Saaz</th></tr></thead><tbody>" + rows.map(function (x) {
         return "<tr><td><a href='#/inspection/" + S.esc(x.doc_no) + "'>" + S.esc(x.doc_no || "") + "</a>" + (x.verify_code ? " · <a href='#/report/" + S.esc(x.verify_code) + "'>report</a>" : "") + "</td><td>" + S.esc(x.scope_name || "") + "</td><td>" + S.esc(x.garage || "") + "</td><td>" + S.esc(x.inspector || "") + "</td><td>" + S.inspChip(x.status) +
           "<small> " + S.day(x.issued_at || x.started_at) + "</small></td><td>" + (x.verdict ? S.esc(S.label(x.verdict)) + " " + x.score : "") + "</td><td>" + (x.saaz_stance === "object" ? "<span class='chip s-flag'>Objected</span>" : x.saaz_stance === "support" ? "<span class='chip s-pass'>Supported</span>" : "") + "</td></tr>";
       }).join("") + "</tbody></table></div><p class='note'>" + rows.length + " inspection" + (rows.length === 1 ? "" : "s") + " of this car, each with its own ID.</p>" : "<p class='note'>No inspections yet.</p>";
@@ -227,6 +254,11 @@
   // Inspection status words for people (the database says draft for "in progress")
   S.inspStatus = function (st) { return { requested: "Requested", draft: "In progress", issued: "Completed", superseded: "Completed, replaced by a newer report", cancelled: "Cancelled", void: "Void" }[st] || S.label(st); };
   S.inspChip = function (st) { var cls = { requested: "awaiting_review", draft: "in_play", issued: "issued", superseded: "issued", cancelled: "cancelled", void: "void" }[st] || st; return "<span class='chip s-" + cls + "'>" + S.esc(S.inspStatus(st)) + "</span>"; };
+  // A plain table, or one row saying "Nothing here." (Admin, Promotions, Outbox)
+  S.table = function (head, rows) {
+    return "<div class='tablewrap'><table class='tbl'><thead><tr>" + head.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      (rows.length ? rows.join("") : "<tr><td colspan='" + head.length + "' class='note'>Nothing here.</td></tr>") + "</tbody></table></div>";
+  };
   S.bars = function (rows) { // tiny bar chart: [{label, value}]
     var max = Math.max.apply(null, rows.map(function (r) { return r.value; }).concat([1]));
     return "<div class='bars' role='img' aria-label='" + S.esc(rows.map(function (r) { return r.label + ": " + r.value; }).join(", ")) + "'>" +
@@ -234,13 +266,19 @@
   };
 
   // ---------- accounts ----------
-  S.loadRoles = function () {
+  // BA-0016 (4 Nov 2026): moving between pages reuses who you are for 30 seconds in the same session (same token), instead of
+  // asking the database on every click. Sign-in, sign-out, the admin check and any change made with S.act ask again.
+  // This only decides what the page shows; the database still checks every call.
+  var ROLES_TTL = 30000;
+  S.loadRoles = function (cached) {
     if (!S.db) return Promise.resolve(null);
     return S.db.auth.getSession().then(function (r) {
       S.state.session = r.data.session;
-      if (!S.state.session) { S.state.roles = null; return null; }
-      return S.rpc("my_roles").then(function (roles) { S.state.roles = roles; return roles; });
-    }).catch(function () { S.state.roles = null; });
+      if (!S.state.session) { S.state.roles = null; S._rolesFor = null; return null; }
+      var tok = S.state.session.access_token;
+      if (cached && S.state.roles && S._rolesFor === tok && Date.now() - (S._rolesAt || 0) < ROLES_TTL) return S.state.roles;
+      return S.rpc("my_roles").then(function (roles) { S.state.roles = roles; S._rolesFor = tok; S._rolesAt = Date.now(); return roles; });
+    }).catch(function () { S.state.roles = null; S._rolesFor = null; });
   };
   S.mode = function (m) {
     try { if (m) localStorage.setItem("saaz-mode", m); return m || localStorage.getItem("saaz-mode") || "buyer"; } catch (e) { return m || "buyer"; }
@@ -342,10 +380,47 @@
     }
     var so = S.$("#signout"); if (so) so.onclick = function () { so.disabled = true; S.signOut(); };
     ["#leaveadmin", "#leaveadmin2"].forEach(function (id) { var b = S.$(id); if (b) b.onclick = S.leaveAdmin; });
-    if (S.signedIn()) S.q(S.db.from("notifications").select("id", { count: "exact", head: false }).eq("read", false).eq("user_id", S.me().id)).then(function (rows) {
-      var b = S.$("#unread"); if (b && rows.length) { b.hidden = false; b.textContent = rows.length; }
-    }).catch(function () {});
+    S.showUnread();
   }
+
+  // Car photos fade in once loaded, over their reserved frame (5 Nov 2026). Only when this script runs, so photos never stay
+  // hidden if it doesn't. Photos already in the browser's cache are shown straight away.
+  document.documentElement.classList.add("imgfade");
+  document.addEventListener("load", function (e) { var t = e.target; if (t && t.tagName === "IMG") t.classList.add("is-loaded"); }, true);
+  document.addEventListener("error", function (e) { var t = e.target; if (t && t.tagName === "IMG") t.classList.add("is-loaded"); }, true);
+  S.markImages = function (root) { S.$$("img", root || document).forEach(function (i) { if (i.complete) i.classList.add("is-loaded"); }); };
+
+  // Unread count in the header: asked at most every 30 seconds (and on the inbox page), not on every click (BA-0016)
+  S.showUnread = function (force) {
+    if (!S.signedIn()) return;
+    var paint = function (n) { var b = S.$("#unread"); if (b) { b.hidden = !n; b.textContent = n || ""; } };
+    if (!force && S._unread && S._unread.uid === S.me().id && Date.now() - S._unread.at < 30000) { paint(S._unread.n); return; }
+    S.q(S.db.from("notifications").select("id").eq("read", false).eq("user_id", S.me().id)).then(function (rows) {
+      S._unread = { uid: S.me().id, n: rows.length, at: Date.now() }; paint(rows.length);
+    }).catch(function () {});
+  };
+
+  // ---------- page shell (BA-0016, 4 Nov 2026) ----------
+  // A work area with its own side menu (Admin, Reports): when the next page uses the same menu, the menu stays as it is
+  // (same element, same scroll) and only the current item and the page area change. Nothing is rebuilt that hasn't changed.
+  S.STALE = { stale: true };
+  S.shellPage = function (v, kind, side, phone, html) {
+    if (v._tok !== undefined && v._tok !== S._tok) throw S.STALE;   // a newer click won: drop this page, don't draw over it
+    var key = side.replace(/ aria-current='page'/g, ""), wrap = v.firstElementChild && v.querySelector(":scope > .adminwrap");
+    if (wrap && wrap.dataset.kind === kind && wrap.dataset.key === key) {
+      var cur = (side.match(/href='([^']*)' aria-current='page'/) || [])[1];
+      S.$$(".adminside a", wrap).forEach(function (a) { if (a.getAttribute("href") === cur) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+      var main = wrap.querySelector(".adminmain"); main.innerHTML = phone + html;
+    } else {
+      v.innerHTML = (kind === "admin" ? "<h1 class='sr'>Admin</h1>" : "") + "<div class='adminwrap' data-kind='" + kind + "'>" + side + "<div class='adminmain'>" + phone + html + "</div></div>";
+      wrap = v.querySelector(".adminwrap"); wrap.dataset.key = key;
+    }
+    var m = wrap.querySelector(".adminmain");
+    m.classList.remove("viewin"); void m.offsetWidth; m.classList.add("viewin");
+    S._shellCache[location.hash] = { kind: kind, key: key, html: m.innerHTML };   // shown, greyed out and inert, while a return visit refreshes
+    var keys = Object.keys(S._shellCache); if (keys.length > 20) delete S._shellCache[keys[0]];
+  };
+  S._shellCache = {};
 
   // Build Assistant (part 18): the database decides who may use it. Only then is its script loaded.
   // Visitors, buyers, sellers, garages and staff who aren't developers never get the script or any of its data.
@@ -362,6 +437,66 @@
   }
   S.buildCheck = buildCheck;
 
+  // ---------- work-area code, loaded when first needed (5 Nov 2026) ----------
+  // Buyers and visitors get only the core and the public pages. Selling, garage and admin code loads the first time someone
+  // goes there, in the same order as before (later files use earlier ones). Signed-in people get their own area's code
+  // in the background once the page is idle, so their first tap there is quick too.
+  var BUNDLES = {
+    seller: ["app-seller"], garage: ["app-seller", "app-garage"], notify: ["app-notify"], promotions: ["app-promotions"],
+    admin: ["app-seller", "app-garage", "app-admin", "app-reports", "app-promotions", "app-notify"]
+  };
+  S.bundleFor = function (path) {
+    if (/^\/admin(\/|$)/.test(path)) return "admin";
+    if (/^\/garage(\/|$)/.test(path)) return "garage";
+    if (/^\/(sell|my|offers|deals)(\/|$)/.test(path)) return "seller";
+    if (/^\/promotions\//.test(path)) return "promotions";
+    if (path === "/account") return "notify";
+    return null;
+  };
+  S._loaded = {}; S._loading = {};
+  function loadScript(name) {
+    if (S._loaded[name]) return Promise.resolve();
+    if (S._loading[name]) return S._loading[name];
+    return (S._loading[name] = new Promise(function (res, rej) {
+      var t = document.createElement("script"); t.src = S.site + "assets/" + name + ".js?v=" + encodeURIComponent(C.build || ""); t.async = false;
+      t.onload = function () { S._loaded[name] = true; res(); };
+      t.onerror = function () { delete S._loading[name]; t.remove(); rej(new Error("Couldn't load this part of Saaz. Check your connection and try again.")); };
+      document.body.appendChild(t);
+    }));
+  }
+  S.need = function (bundle) {
+    var list = bundle ? BUNDLES[bundle] : [];
+    return list.reduce(function (p, n) { return p.then(function () { return loadScript(n); }); }, Promise.resolve());
+  };
+  function warmBundles() {
+    var r = S.state.roles; if (!r || !r.signed_in || S._warmed) return; S._warmed = true;
+    var go = function () { S.need(r.admin_account ? "admin" : r.garage ? "garage" : "seller").catch(function () {}); };
+    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 2000);
+  }
+
+  // ---------- Back keeps your place (5 Nov 2026) ----------
+  // Each history entry gets a number. A new page starts at the top; Back or Forward to an entry shows its last view at once
+  // (greyed out while it refreshes) and returns to the same scroll position.
+  try { history.scrollRestoration = "manual"; } catch (e) {}
+  S._entry = 0; S._spot = {}; S._views = {};
+  function entryKey() {
+    var st = history.state;
+    if (st && st.saazEntry) return { key: st.saazEntry, back: st.saazEntry !== S._curKey, same: st.saazEntry === S._curKey };   // same entry = a refresh after an action, not Back
+    var k = Date.now() + "-" + (++S._entry);
+    try { history.replaceState(Object.assign({}, st || {}, { saazEntry: k }), ""); } catch (e) {}
+    return { key: k, back: false };
+  }
+  function rememberSpot() {
+    var k = S._curKey, v = S.$("#view");
+    if (!k || !v) return;
+    S._spot[k] = window.scrollY;
+    if (!v.classList.contains("is-busy")) S._views[k] = { html: v.innerHTML, cls: v.className };
+    var ks = Object.keys(S._views); if (ks.length > 15) delete S._views[ks[0]];
+  }
+  window.addEventListener("hashchange", rememberSpot, true);   // capture: runs before the page changes
+
+  // The page area greyed out and not taking clicks while the next page loads
+  function setBusy(v, on) { v.classList.toggle("is-busy", on); v.inert = on; if (!on) clearTimeout(S._busyT); }
   var linkPending = false;
   S.render = function () {
     if (linkPending) return; // the Supabase client may change the address while it reads an email link
@@ -383,33 +518,66 @@
     }
     var hash = location.hash.replace(/^#/, "") || "/";
     var path = hash.split("?")[0], query = new URLSearchParams(hash.split("?")[1] || "");
-    var root = S.$("#app");
+    var root = S.$("#app"), tok = S._tok = (S._tok || 0) + 1;
     if (!S.db) { root.innerHTML = "<div class='wrap pad'><div class='empty'><b>Saaz isn't connected yet</b><span>The database settings are missing from this build.</span></div></div>"; return; }
-    S.loadRoles().then(function () {
-      if (S.signedIn()) S.rpc("tick").catch(function () {}); // garage time-outs and review expiry
+    var view0 = S.$("#view");
+    // Keep the current page on screen while the next one loads. Only after 150 ms does it dim (and stop taking clicks),
+    // so quick pages never flash. No blank "Loading" screen between pages.
+    if (view0) { clearTimeout(S._busyT); S._busyT = setTimeout(function () { if (S._tok === tok) setBusy(view0, true); }, 150); }
+    var ek = entryKey(); S._curKey = ek.key;
+    var bundle = S.bundleFor(path);
+    S.loadRoles(true).then(function () { return S.need(bundle).catch(function (e) { return e; }); }).then(function (loadErr) {
+      if (tok !== S._tok) return;   // a newer click already started
+      warmBundles();
+      if (S.signedIn() && Date.now() - (S._tickAt || 0) > 60000) { S._tickAt = Date.now(); S.rpc("tick").catch(function () {}); } // garage time-outs and review expiry, at most once a minute
       var match = null, m;
       for (var i = 0; i < S.routes.length; i++) { m = S.routes[i].re.exec(path); if (m) { match = S.routes[i]; break; } }
       var area = S.signedIn() ? areaOf(path) : "";
       if (area === "admin" && !S.isAdmin()) area = "";  // no Admin bar on the "Page not found" a non-admin sees
-      if (area && (area !== "garage" || S.state.roles.garage) && (area !== "admin" || S.isAdmin())) S.mode(area);
+      if (area && (area !== "garage" || S.state.roles.garage)) S.mode(area);
       buildCheck();
-      root.innerHTML = header(path, area) + "<main id='view' class='wrap pad" + (area || S.inAdmin() ? " inarea" : "") + "'><p class='loading'>Loading…</p></main>";
-      wireHeader();
+      var head = header(path, area), cls = "wrap pad" + (area || S.inAdmin() ? " inarea" : "");
+      var keep = S.$("#view");
+      if (!keep) {   // first page: draw the shell once
+        root.innerHTML = head + "<main id='view' class='" + cls + "'><p class='loading'>Loading…</p></main>"; S._head = head; wireHeader();
+      } else {
+        if (S._head !== head) {   // the header or area bar changed: swap just those, the page area stays
+          Array.prototype.slice.call(root.children).forEach(function (el) { if (el !== keep) el.remove(); });
+          keep.insertAdjacentHTML("beforebegin", head); S._head = head; wireHeader();
+        } else { var ac = S.$("#acct"); if (ac) ac.open = false; S.showUnread(path === "/inbox"); }
+        keep.className = cls;
+      }
       var view = S.$("#view");
+      view._tok = tok;
+      if (loadErr instanceof Error) { view.innerHTML = "<div class='empty'><b>Couldn't load this page</b><span>" + S.esc(loadErr.message) + " <a href='" + S.esc(location.hash || "#/") + "'>Try again</a></span></div>"; setBusy(view, false); return; }
+      // Back or Forward: show the last view of that entry at once, where it was, while the fresh page loads
+      var back = ek.back && S._views[ek.key];
+      if (back) { view.innerHTML = back.html; view.className = back.cls; setBusy(view, true); window.scrollTo({ top: S._spot[ek.key] || 0, behavior: "instant" }); }
+      var done = function () {
+        if (S._tok !== tok) return; setBusy(view, false);
+        S.markImages(view);
+        if (ek.back && S._spot[ek.key] != null) window.scrollTo({ top: S._spot[ek.key], behavior: "instant" });   // back to where you were
+      };
+      // A return visit to a page with a side menu shows what it showed last time, greyed out, until the fresh page is ready
+      var cached = S._shellCache[location.hash], wrap0 = view.querySelector(":scope > .adminwrap");
+      if (cached && wrap0 && wrap0.dataset.kind === cached.kind && wrap0.dataset.key === cached.key) wrap0.querySelector(".adminmain").innerHTML = cached.html;
       var notFound = "<div class='empty'><b>Page not found</b><span><a href='#/browse'>Browse cars</a></span></div>";
       // Inside Admin, a missing or failing page keeps the Admin menu, so there is always a way to the other Admin pages
       var inAdminShell = function (h) { if (area === "admin" && S.adminPage) S.adminPage(view, "", h); else view.innerHTML = h; };
-      if (!match) { inAdminShell(notFound); return; }
+      if (!match) { done(); inAdminShell(notFound); return; }
       // Admin pages look like any missing page unless this session passed the admin's authenticator (checked by the database)
-      if (match.need === "admin" && !S.isAdmin()) { view.innerHTML = notFound; return; }
+      if (match.need === "admin" && !S.isAdmin()) { done(); view.innerHTML = notFound; return; }
       // Signed out (or the session ended) on a page that needs an account: a public page with a sign-in option, never the page itself
       if (match.need && !S.signedIn()) {
-        view.innerHTML = "<div class='empty'><b>Sign in to see this page</b><span><a class='btn small' href='#/signin' id='needsignin'>Sign in</a> or <a href='#/browse'>browse cars</a></span></div>";
+        done(); view.innerHTML = "<div class='empty'><b>Sign in to see this page</b><span><a class='btn small' href='#/signin' id='needsignin'>Sign in</a> or <a href='#/browse'>browse cars</a></span></div>";
         var ns = S.$("#needsignin"), here = location.hash; if (ns) ns.onclick = function () { S.after = here; };
         return;
       }
-      window.scrollTo(0, 0);
-      Promise.resolve(match.handler(view, m.slice(1), query)).catch(function (e) {
+      if (!ek.back && !ek.same && window.scrollY > 0) window.scrollTo({ top: 0, behavior: "instant" });   // a new page starts at the top (smooth scrolling is for in-page links)
+      var run; try { run = match.handler(view, m.slice(1), query); } catch (e0) { run = Promise.reject(e0); }
+      Promise.resolve(run).then(done, function (e) {
+        if (e === S.STALE || tok !== S._tok) return;   // a newer page took over
+        done();
         var h = "<div class='empty'><b>Couldn't load this page</b><span>" + S.esc(S.friendly(e)) + "</span></div>";
         if (/^\/admin\/reports/.test(path) && S.reportShell) S.reportShell(view, path.split("/")[3] || "", query, h); else inAdminShell(h);
       });

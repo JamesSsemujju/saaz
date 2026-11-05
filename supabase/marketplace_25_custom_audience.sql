@@ -1,6 +1,6 @@
 -- Part 25: Custom audience for Announcements (BA-0013, 4 Nov 2026). Run after part 24. Safe to run twice.
 -- James chose C (4 Nov 2026, live chat): filters on data Saaz already has, plus named people picked one by one.
--- NOT LIVE. Tested on the local copy only (tests/db_custom_audience_test.py). Needs James's approval in a live chat.
+-- Live since 4 Nov 2026: James approved and ran it in the SQL Editor. Checked after (read-only): new functions in place, old ones gone, none callable by visitors.
 --
 -- Custom audience (p_audience = 'custom', p_filter jsonb):
 --   roles        any of 'sellers' (listed a car), 'buyers' (saved a car or made an offer), 'garages' (certified garage team). Empty: everyone.

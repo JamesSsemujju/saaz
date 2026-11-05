@@ -3,14 +3,7 @@
 (function () {
   var S = window.Saaz, esc = S.esc;
 
-  // Ask the sender to run (at most every 30 seconds from this tab). Safe to call often: it only sends what the database queued.
-  var lastKick = 0;
-  S.kick = function (now) {
-    if (!S.db || !S.signedIn || !S.signedIn()) return;
-    if (!now && Date.now() - lastKick < 30000) return;
-    lastKick = Date.now();
-    try { S.db.functions.invoke("send-outbox", { body: {} }).catch(function () {}); } catch (e) {}
-  };
+  // S.kick (ask the SMS sender to run) lives in app-core.js since 5 Nov 2026: every visitor's actions can queue an SMS
 
   // ---------- My account: mobile check and message settings ----------
   S.accountMessages = function (el) {
@@ -53,12 +46,8 @@
   };
 
   // ---------- Admin ----------
-  if (!S.adminPage) return;
-  var page = S.adminPage;
-  function table(head, rows) {
-    return "<div class='tablewrap'><table class='tbl'><thead><tr>" + head.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr></thead><tbody>" +
-      (rows.length ? rows.join("") : "<tr><td colspan='" + head.length + "' class='note'>Nothing here.</td></tr>") + "</tbody></table></div>";
-  }
+  // Admin pages draw through S.adminPage (app-admin.js), looked up at draw time: this file can load first
+  var table = S.table;
   var WORD = { queued: "Waiting to send", sending: "Sending", sent: "Sent", failed: "Failed", held: "Held", skipped: "Not sent" };
 
   S.route("/admin/outbox", function (v, m, q) {
@@ -87,7 +76,7 @@
       var optSec = !an ? "" : "<section><h2>SMS opt-outs</h2><p class='note'>Numbers that asked Saaz to stop SMS (by phone, WhatsApp or in person). Checked before every SMS except phone check codes they ask for.</p>" +
         table(["Number", "When", "How they asked", ""], an.optouts.map(function (z) { return "<tr><td>" + esc(z.mobile) + "</td><td>" + S.day(z.at) + "</td><td>" + esc(z.reason) + "</td><td><button class='btn small text' data-optin='" + esc(z.mobile) + "'>Remove</button></td></tr>"; })) +
         "<form id='optf' class='inlineform'><label>Mobile<input name='mobile' type='tel' required placeholder='0772 123456'></label><label>How they asked<input name='reason' required minlength='10' maxlength='200' placeholder='Called Saaz on 3 Nov'></label><button class='btn small'>Stop SMS to this number</button></form></section>";
-      page(v, "outbox", "<div class='pagehead'><h2>Outbox</h2></div>" + sender +
+      S.adminPage(v, "outbox", "<div class='pagehead'><h2>Outbox</h2></div>" + sender +
         "<p class='note'>SMS: " + n("sms:sent") + " sent, " + n("sms:queued") + " waiting, " + n("sms:failed") + " failed, " + n("sms:skipped") + " not sent. Email: " + n("email:held") + " held (no email sender yet).</p>" +
         "<nav class='tabs' aria-label='Filter'>" + link(null, null, "All") + link("queued", "sms", "SMS waiting") + link("sent", "sms", "SMS sent") + link("failed", "sms", "SMS failed") + link("skipped", "sms", "SMS not sent") + link("held", "email", "Email held") + "</nav>" +
         table(["When", "To", "Channel", "Notice", "Message", "Status", ""], rows) +
@@ -123,7 +112,7 @@
   S.route("/admin/announce", function (v) {
     return S.rpc("admin_announcements").then(function (an) {
       var proms = an.promotions;
-      page(v, "announce", "<div class='pagehead'><h2>Announcements</h2></div><p class='lead'>One message to many people. It lands in each person's Saaz inbox. SMS go only to people who opted in, between 08:00 and 20:00 East Africa Time.</p>" +
+      S.adminPage(v, "announce", "<div class='pagehead'><h2>Announcements</h2></div><p class='lead'>One message to many people. It lands in each person's Saaz inbox. SMS go only to people who opted in, between 08:00 and 20:00 East Africa Time.</p>" +
         "<section><h2>New announcement</h2><form id='anf' class='stack'>" +
         "<label>Who<select name='audience'>" + AUD.map(function (a) { return "<option value='" + a[0] + "'>" + a[1] + "</option>"; }).join("") + "</select></label>" +
         "<label id='anpromo' hidden>Promotion<select name='promotion'>" + proms.map(function (p) { return "<option value='" + p.id + "'>" + esc(p.title) + "</option>"; }).join("") + "</select></label>" +

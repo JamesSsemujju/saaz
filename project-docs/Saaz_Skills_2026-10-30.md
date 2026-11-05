@@ -14,6 +14,9 @@ Which skills every Saaz build session uses, and when. A skill only loads in a se
 | security-audit | cloudflare/security-audit-skill (MIT) | Guidance mode: any change to sign-in, admin access (authenticator), row rules, database functions, storage, edge functions, or who can use the Build Assistant (BA-0007). Full audit mode only when James asks, and once before Saaz starts trading | Before any supabase/*.sql part is written for approval; full audit before launch |
 | audit-suite (a11y, UX, design, frontend, performance, production readiness, repo maintainer) | already installed | UI and interaction changes | With every UI change |
 | skill-creator | already installed | Making or changing skills | When asked |
+| ponytail (full level) | DietrichGebert/ponytail (MIT) | Added 5 Nov 2026 at James's request. Any code change: reuse what the codebase has, no wrapper or option nobody asked for, deletion beats addition, never cut validation, security or accessibility | Before and during every task, with karpathy-guidelines |
+| thermo-nuclear-code-quality-review | cursor/plugins, cursor-team-kit | Added 5 Nov 2026. Strict structure review of a finished change: duplicated helpers, thin wrappers, ad-hoc branches in shared code, files pushed past 1,000 lines | Before every zip, after blast-radius |
+| principle-laziness-protocol, principle-boundary-discipline | cursor/plugins, pstack | Added 5 Nov 2026. One place for each decision; guards at the edges (database functions, Edge Functions, forms), no re-checks inside | During review |
 
 Every session also follows `Saaz_EngineeringRules_2026-10-30.md` (fix the pattern, not just the instance; the security rules and their tests).
 
@@ -23,8 +26,8 @@ Rules that still win over any skill: never push or deploy, no production databas
 
 | Skill(s) | Why not |
 |---|---|
-| ponytail (all 6) | Smallest-change and short-reply rules duplicate karpathy-guidelines and james-working-style; its review and audit duplicate audit-suite and security-audit; gain and help are about the tool itself |
-| pstack principles (22) | Covered by karpathy-guidelines, systematic-debugging and verification-before-completion (prove-it-works, fix-root-causes, laziness, subtract-before-add) |
+| ponytail review, audit, debt, gain, help | Review and audit duplicate audit-suite, security-audit and thermo-nuclear review; gain and help are about the tool itself |
+| pstack principles (the other 20) | Covered by karpathy-guidelines, systematic-debugging and verification-before-completion (prove-it-works, fix-root-causes, laziness, subtract-before-add) |
 | pstack arena, swarm, interrogate, setup-pstack | Need several model families configured and cost many agent runs; design exploration already uses the rendered 100-version matrix James asked for |
 | pstack Benny automations, recall, reflect, automate-me, poteto-mode, bro, teach, how, why, no-comments, make-bot-ui | Slack and tracker bots, personal modes, or not relevant to a static site with Supabase |
 | pstack tdd, typescript-best-practices | Saaz tests are browser and database checks, and Saaz has no TypeScript |

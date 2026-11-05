@@ -60,19 +60,15 @@
   });
 
   // ---------- admin ----------
-  if (!S.adminPage) return;
-  var page = S.adminPage;
-  function table(head, rows) {
-    return "<div class='tablewrap'><table class='tbl'><thead><tr>" + head.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr></thead><tbody>" +
-      (rows.length ? rows.join("") : "<tr><td colspan='" + head.length + "' class='note'>Nothing here.</td></tr>") + "</tbody></table></div>";
-  }
+  // Admin pages draw through S.adminPage (app-admin.js), looked up at draw time: this file can load first
+  var table = S.table;
   var STATUS_WORD = { draft: "Draft", open: "Open", closed: "Closed", drawn: "Drawn", cancelled: "Cancelled" };
   function chip(st, open) { return "<span class='chip s-" + (open ? "active" : st === "cancelled" ? "suspended" : "draft") + "'>" + esc(STATUS_WORD[st] || st) + (st === "open" && !open ? " (not taking entries)" : "") + "</span>"; }
 
   S.route("/admin/promotions", function (v) {
     return S.rpc("admin_promotions").then(function (b) {
       var on = b.enabled;
-      page(v, "promotions", "<div class='pagehead'><h2>Promotions</h2><span class='chip s-" + (on ? "active" : "suspended") + "'>" + (on ? "On" : "Off") + "</span></div>" +
+      S.adminPage(v, "promotions", "<div class='pagehead'><h2>Promotions</h2><span class='chip s-" + (on ? "active" : "suspended") + "'>" + (on ? "On" : "Off") + "</span></div>" +
         "<p class='lead'>Prize draws now; other kinds later. A promotion takes entries only when this switch is on, it is open, and today is between its dates. It can't open without a permit number and terms.</p>" +
         "<section><h2>" + (on ? "Switch off" : "Switch on") + "</h2>" +
         (on ? "<p>When off: promotion pages say nothing is running, the database refuses entries, and nothing is deleted.</p>" : "<p>Switch on only once the permit and data protection registration are in place.</p>") +
@@ -160,7 +156,7 @@
             next.map(function (n) { return "<button class='btn small ghost' data-res='" + r.id + "' data-to='" + n[0] + "'>" + n[1] + "</button>"; }).join(" ") + "</td></tr>"; }))
         : p.status === "closed" ? "<p>Flagged entries must be cleared or marked invalid first. The draw runs once and can't be undone.</p><form id='pdraw' class='inlineform'><label>Witness<input name='witness' required minlength='3' maxlength='120' placeholder='Name and organisation'></label><button class='btn'>Run the draw</button></form>"
         : "<p class='note'>The draw runs after entries close.</p>") + "</section>";
-      page(v, "promotions", "<p class='crumbs'><a href='#/admin/promotions'>Promotions</a></p><div class='pagehead'><h2>" + esc(p.title) + "</h2>" + chip(p.status, d.open) + "</div>" +
+      S.adminPage(v, "promotions", "<p class='crumbs'><a href='#/admin/promotions'>Promotions</a></p><div class='pagehead'><h2>" + esc(p.title) + "</h2>" + chip(p.status, d.open) + "</div>" +
         (!d.switch_on ? "<p class='note'>The promotions switch is off, so nothing is public.</p>" : "") +
         "<p class='note'>Public page: <code>" + esc(link("")) + "</code></p>" + (acts ? "<div class='row'>" + acts + "</div>" : "") +
         (draft ? details + linksSec + codesSec + reportSec + entriesSec + drawSec : reportSec + entriesSec + drawSec + linksSec + codesSec + details));

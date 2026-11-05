@@ -75,7 +75,7 @@
       "</div><div class='navgroup'><a href='#/admin/reports/glossary" + (qs ? "?" + qs : "") + "'" + (at === "glossary" ? " aria-current='page'" : "") + ">Glossary</a></div></nav>";
     var phone = "<label class='adminjump'>Report<select data-jump>" + REPORTS.map(function (r) { return [r.id, r.name]; }).concat([["glossary", "Glossary"]]).map(function (r) {
       return "<option value='#/admin/reports/" + r[0] + (qs ? "?" + qs : "") + "'" + (r[0] === at ? " selected" : "") + ">" + r[1] + "</option>"; }).join("") + "<option value='#/admin'>Back to Admin</option></select></label>";
-    v.innerHTML = "<div class='adminwrap'>" + rail + "<div class='adminmain'>" + phone + html + "</div></div>";
+    S.shellPage(v, "reports", rail, phone, html);   // BA-0016: the report menu stays, only the report changes
   }
 
   // ---------- the control bar: one for every report, with that report's filters ----------

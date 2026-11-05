@@ -10,21 +10,21 @@
 <link rel="icon" type="image/png" href="/saaz/assets/img/brand/saaz-icon-32.png">
 <link rel="apple-touch-icon" href="/saaz/assets/img/brand/saaz-icon-180.png">
 <title>Saaz marketplace</title>
+<link rel="preload" href="/saaz/assets/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/saaz/assets/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/saaz/assets/fonts/instrument-serif-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/saaz/assets/saaz.css">
 </head>
 <body class="appbody">
-<div id="app"><noscript><div class="wrap pad"><p>The Saaz marketplace needs JavaScript. <a href="/saaz/home/">About Saaz</a></p></div></noscript></div>
+<div id="app"><header class="apphead" data-ref="header"><div class="wrap"><a class="logo" data-ref="logo" href="#/" aria-label="Saaz home"><img src="/saaz/assets/img/brand/saaz-wordmark-white-240.webp" srcset="/saaz/assets/img/brand/saaz-wordmark-white-240.webp 1x, /saaz/assets/img/brand/saaz-wordmark-white-480.webp 2x" width="112" height="32" alt="Saaz"></a><nav class="appnav" data-ref="main-nav" aria-label="Marketplace"><a href="#/browse">Buy cars</a><a href="#/selling">What's selling</a><a href="#/verify">Verify a report</a><a href="#/track">Track an inspection</a></nav><div class="appright"><a href="#/signin">Sign in</a><a class="hide-s" href="#/signup">Create account</a><a class="sellbtn" data-ref="sell-btn" href="#/sell">Sell a car</a></div></div></header><main id="view" class="wrap pad"><noscript><p>The Saaz marketplace needs JavaScript. <a href="/saaz/home/">About Saaz</a></p></noscript></main></div>
+<!-- 5 Nov 2026: the header is in the page itself, so it is the first thing on screen; the page area keeps a full screen of room,
+     so the footer never paints high and then jumps down. The app redraws the header for signed-in people (same size). -->
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="/saaz/assets/config.js"></script>
 <script src="/saaz/assets/supabase.js" defer></script>
 <script src="/saaz/assets/app-core.js" defer></script>
 <script src="/saaz/assets/app-public.js" defer></script>
-<script src="/saaz/assets/app-seller.js" defer></script>
-<script src="/saaz/assets/app-garage.js" defer></script>
-<script src="/saaz/assets/app-admin.js" defer></script>
-<script src="/saaz/assets/app-reports.js" defer></script>
-<script src="/saaz/assets/app-promotions.js" defer></script>
-<script src="/saaz/assets/app-notify.js" defer></script>
+<!-- Selling, garage and admin code loads when first needed (app-core.js, S.need) -->
 
 <footer class="site-footer" data-ref="footer"><div class="wrap">
   <div class="foot-grid grid">

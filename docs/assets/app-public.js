@@ -146,9 +146,38 @@
     } };
   };
 
+  // ---------- shared reads and prefetch (5 Nov 2026) ----------
+  // The car list and a car's public facts are kept for 20 seconds (S.cached in app-core.js). A finger landing on a car or on
+  // Buy cars starts loading it before the tap ends; a mouse resting on it for 80 ms does the same. Per-person parts (your
+  // saves, your offers) and views are never cached or prefetched.
+  var TTL = 20000;
+  S.browseData = function () { return S.cached("browse", TTL, function () { return S.rpc("browse_listings", { p_country: "UG" }); }); };
+  S.carData = function (ref) {
+    return S.cached("car:" + ref + ":" + (S.me().id || "visitor"), TTL, function () {
+      return S.q(S.db.from("listings").select("*").eq("ref", ref).limit(1)).then(function (rows) {
+        var l = rows[0]; if (!l) return { l: null };
+        return Promise.all([
+          S.rpc("listing_stats", { p_listing: l.id }),
+          l.current_review_id ? S.q(S.db.from("reviews").select("verdict,score,verify_code,valid_until,garage_name,issued_at,doc_no,status,checks").eq("id", l.current_review_id)) : []
+        ]).then(function (x) { return { l: l, stats: x[0], review: x[1] }; });
+      });
+    });
+  };
+  function prefetch(a) {
+    if (!S.db || S.inAdmin()) return;
+    var h = a.getAttribute("href") || "", c = /^#\/car\/([A-Z0-9-]+)$/.exec(h);
+    if (c) S.carData(c[1]).catch(function () {});
+    else if (h === "#/browse" || h === "#/") S.browseData().catch(function () {});
+  }
+  var near = function (e) { var a = e.target.closest && e.target.closest("a[href^='#/']"); return a; };
+  document.addEventListener("pointerdown", function (e) { var a = near(e); if (a) prefetch(a); }, { passive: true, capture: true });
+  document.addEventListener("touchstart", function (e) { var a = near(e); if (a) prefetch(a); }, { passive: true, capture: true });
+  var hoverT;
+  document.addEventListener("mouseover", function (e) { var a = near(e); clearTimeout(hoverT); if (a) hoverT = setTimeout(function () { prefetch(a); }, 80); }, { passive: true });
+
   S.route("/browse", function (v, m, q) {
     var asAdmin = S.inAdmin();
-    return S.rpc(asAdmin ? "admin_listings" : "browse_listings", asAdmin ? { p_status: "" } : { p_country: "UG" }).then(function (rows) {
+    return (asAdmin ? S.rpc("admin_listings", { p_status: "" }) : S.browseData()).then(function (rows) {
       var pg = S.listingsPage(rows || [], q, asAdmin ? { admin: true, cardOpts: S.adminCardOpts } : null);
       v.innerHTML = (asAdmin ? ADMIN_NOTE : "") + pg.html; pg.wire();
     });
@@ -173,20 +202,20 @@
   S.homePage = function (v) {
     v.className = "home";
     var asAdmin = S.inAdmin();
-    return S.rpc(asAdmin ? "admin_listings" : "browse_listings", asAdmin ? { p_status: "" } : { p_country: "UG" }).then(function (rows) {
+    return (asAdmin ? S.rpc("admin_listings", { p_status: "" }) : S.browseData()).then(function (rows) {
       rows = rows || [];
       // 29 Oct 2026 (approved design): the car first (Saaz's own photo), the promise in the title face, the search on the picture,
       // the latest cars on white, then why a car on Saaz can be trusted, told with the engine bay. The road video (BA-0006) is kept in
       // assets/video but no longer used here: James approved the photo hero on 29 Oct 2026.
       v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") +
-        "<section class='hero photo' data-ref='home-hero'><div class='hero-bg' aria-hidden='true'><img src='" + S.site + "assets/img/home-hero-640.webp' srcset='" + S.site + "assets/img/home-hero-640.webp 640w, " + S.site + "assets/img/home-hero-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' alt=''></div><div class='wrap'><div>" +
+        "<section class='hero photo' data-ref='home-hero'><div class='hero-bg' aria-hidden='true'><img src='" + S.site + "assets/img/home-hero-640.webp' srcset='" + S.site + "assets/img/home-hero-640.webp 640w, " + S.site + "assets/img/home-hero-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' width='1280' height='960' alt=''></div><div class='wrap'><div>" +
         "<h1 class='display'>Inspected <i>before</i><br>you buy.</h1><p class='lede'>Used cars in Uganda, checked by a certified garage inside Saaz before they are listed. Read the report, then make an offer.</p>" +
         "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn go'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form>" + quick(rows) + "</div></div></section>" +
         "<section class='band white' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected</h2>" + (rows.length ? "<a class='btn text' href='#/browse'>See all " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</a>" : "") + "</div>" +
         (rows.length ? "<div class='cars' data-rows='2'>" + rows.slice(0, 10).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>"
           : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a class='btn text' href='#/sell'>Sell your car on Saaz</a></span></div>") +
         "</div></section>" +
-        "<section class='band white story' data-ref='trust-section'><div class='wrap'><figure class='story-pic'><img src='" + S.site + "assets/img/inspections-640.webp' srcset='" + S.site + "assets/img/inspections-640.webp 640w, " + S.site + "assets/img/inspections-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' alt='An engine bay opened for a Saaz inspection'></figure><div>" +
+        "<section class='band white story' data-ref='trust-section'><div class='wrap'><figure class='story-pic'><img src='" + S.site + "assets/img/inspections-640.webp' srcset='" + S.site + "assets/img/inspections-640.webp 640w, " + S.site + "assets/img/inspections-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' width='1280' height='960' alt='An engine bay opened for a Saaz inspection'></figure><div>" +
           "<h2>Every car is opened up <i>before</i> it is listed.</h2><ol class='steps one'>" +
           "<li><span class='n'>1</span><b>Inspected in person</b><span>A certified garage checks the car inside Saaz: 12 checks, the body panels and the odometer.</span></li>" +
           "<li><span class='n'>2</span><b>A report with a code</b><span>The score and result are on every car. Anyone can confirm a report is real and unchanged.</span></li>" +
@@ -207,13 +236,13 @@
   }
   S.route("/car/([A-Z0-9-]+)", function (v, m) {
     var ref = m[0];
-    return S.q(S.db.from("listings").select("*").eq("ref", ref).limit(1)).then(function (rows) {
-      var l = rows[0];
+    return S.carData(ref).then(function (cd) {
+      var l = cd.l;
       if (!l) { v.innerHTML = "<div class='empty'><b>Car not found</b><span>It may have been withdrawn. <a href='#/browse'>Browse cars</a></span></div>"; return; }
       if (!S.isAdmin()) S.rpc("record_view", { p_listing: l.id, p_device: S.device() }).catch(function () {});  // Saaz staff looking don't count as demand
       return Promise.all([
-        S.rpc("listing_stats", { p_listing: l.id }),
-        l.current_review_id ? S.q(S.db.from("reviews").select("verdict,score,verify_code,valid_until,garage_name,issued_at,doc_no,status,checks").eq("id", l.current_review_id)) : [],
+        cd.stats,
+        cd.review,
         S.signedIn() ? S.q(S.db.from("saves").select("listing_id").eq("listing_id", l.id).eq("user_id", S.me().id)) : [],
         S.signedIn() ? S.q(S.db.from("deals").select("id,status,amount").eq("listing_id", l.id).eq("buyer_id", S.me().id).in("status", ["negotiating", "agreed", "on_hold"])) : []
       ]).then(function (res) {
