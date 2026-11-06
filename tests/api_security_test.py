@@ -26,7 +26,10 @@ for who, t in (("visitor", None), ("buyer", B), ("seller", S)):
         s, _ = req("PATCH", f"/{tab}?id=not.is.null", {"updated_at": "2000-01-01"} if tab != "settings" else {"value": 1}, t); check(f"{who}: PATCH /{tab} refused", s in (400, 401, 403), s)
         s, _ = req("DELETE", f"/{tab}?id=not.is.null", None, t); check(f"{who}: DELETE /{tab} refused", s in (400, 401, 403), s)
 k.execute("select price from listings order by ref"); check("no listing changed", k.fetchall() == before)
-s, r = req("GET", "/vehicles", None, B); check("buyer reads no vehicle register", s == 200 and r == [], r)
+# Part 26: a seller reads the vehicle record of their own cars (Edit needs the VIN). In this world the buyer relisted the
+# car they bought, so they see exactly that one vehicle, nobody else's.
+k.execute("select distinct l.vehicle_id::text from listings l join profiles p on p.id = l.seller_id where p.email = 'buyer@x.test'"); own = {x[0] for x in k.fetchall()}
+s, r = req("GET", "/vehicles", None, B); check("buyer reads only the vehicles of cars they list themselves", s == 200 and {v["id"] for v in r} == own, r)
 s, r = req("GET", "/odometer_readings"); check("visitor reads no odometer history", s == 200 and r == [], r)
 s, r = req("GET", "/profiles", None, B); check("buyer sees only their own profile", s == 200 and [p["email"] for p in r] == ["buyer@x.test"], r)
 s, r = req("GET", "/deals?select=id,buyer_id", None, B); k.execute("select id from auth.users where email='buyer@x.test'"); me = str(k.fetchone()[0])

@@ -173,7 +173,7 @@ with sync_playwright() as p:
         check(f"dropdowns @{w}: the chosen text fits without touching the arrow", all(x["cur"] <= x["room"] for x in d), d)
         check(f"dropdowns @{w}: a longer choice ends in an ellipsis instead of running under the arrow", all(x["ell"] == "ellipsis" for x in d), d)
         check(f"dropdowns @{w}: same height as the price field", all(x["h"] == x["inH"] for x in d), d)
-        rows = pg.evaluate("""() => { const o = {}; [...document.querySelectorAll('[data-ref=filter-panel] select, [data-ref=filter-panel] input, [data-ref=filter-panel] .btn')].forEach(e => {
+        rows = pg.evaluate("""() => { const o = {}; [...document.querySelectorAll('[data-ref=filter-panel] select, [data-ref=filter-panel] input:not([type=checkbox]), [data-ref=filter-panel] .btn')].forEach(e => {
           const r = e.closest('label') ? e.closest('label').getBoundingClientRect() : e.getBoundingClientRect(); (o[Math.round(r.top)] = o[Math.round(r.top)] || []).push(Math.round(e.getBoundingClientRect().bottom)); });
           return Object.values(o).map(b => [...new Set(b)].length); }""")
         check(f"dropdowns @{w}: every control in a filter row shares one bottom edge", all(n == 1 for n in rows), rows)

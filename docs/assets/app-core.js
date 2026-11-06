@@ -51,6 +51,8 @@
   S.when = function (iso) { if (!iso) return ""; var p = parts(new Date(iso), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); return S.day(iso) + ", " + p.hour + ":" + p.minute + " EAT"; };
   S.km = function (n) { return n == null ? "" : Number(n).toLocaleString("en-US") + " km"; };
   // Status words come from the database; "review" there means the Saaz inspection
+  // Today in Kampala as YYYY-MM-DD (the database counts days in Africa/Kampala too)
+  S.today = function () { try { return new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Kampala" }); } catch (e) { return new Date().toISOString().slice(0, 10); } };
   S.label = function (s) { return String(s || "").replace(/_/g, " ").replace(/\breview\b/g, "inspection").replace(/^./, function (c) { return c.toUpperCase(); }); };
   S.name = function (l) { return [l.year, l.make, l.model].filter(function (x) { return x !== "" && x != null; }).join(" "); };
   S.photo = function (p) { return p ? C.supabaseUrl + "/storage/v1/object/public/car-photos/" + p : ""; };
@@ -73,6 +75,8 @@
     if (/Failed to fetch|NetworkError|network/i.test(m)) return "Couldn't reach Saaz. Check your connection and try again.";
     if (/Invalid login credentials/i.test(m)) return "Wrong email or password.";
     if (/Email not confirmed/i.test(m)) return "Confirm your email first: open the link Saaz sent you.";
+    // 6 Nov 2026: the mail server refused the address (seen live: a misspelt domain, "Unrouteable address")
+    if (/Error sending (confirmation|recovery|invite|magic link|email change)/i.test(m)) return "We couldn't send an email to that address. Check it for typing mistakes (the part after @ too) and try again.";
     if (/JWT|token is expired/i.test(m)) return "Your session ended. Sign in again.";
     if (/violates row-level security|permission denied/i.test(m)) return "You don't have access to do that.";
     if (e && e.code === "42501") return m;   // Saaz's own access answers (Build Assistant: "Not found.", "switched off")
@@ -108,12 +112,18 @@
     return p;
   };
   var READS = { browse_listings: 1, listing_stats: 1, my_roles: 1, whats_selling: 1, review_document: 1, verify_review: 1, lookup_inspection: 1,
-    model_sales_public: 1, record_view: 1, tick: 1, build_status: 1, promotion_public: 1, my_notify_prefs: 1 };
+    model_sales_public: 1, record_view: 1, tick: 1, build_status: 1, promotion_public: 1, my_notify_prefs: 1, car_history: 1 };
   S.rpc = function (fn, args) {
     return S.db.rpc(fn, args || {}).then(function (r) {
       if (r.error) throw r.error;
       if (!READS[fn]) S.changed();
       return r.data;
+    });
+  };
+  // Open marketplace switch (part 26): decides which buttons show. The database checks every call itself.
+  S.market = function () {
+    return S.cached("market", 60000, function () {
+      return S.q(S.db.from("settings").select("value").eq("key", "open_market")).then(function (r) { return { open_market: !!(r[0] && r[0].value === true) }; }, function () { return { open_market: false }; });
     });
   };
   S.q = function (promise) { return promise.then(function (r) { if (r.error) throw r.error; return r.data; }); };

@@ -34,7 +34,7 @@ def agent(q, a=()): return su(q, a)[0][0]
 # ---------- who can reach it ----------
 check("visitors can't even ask whether it exists", err(None, "select build_status()") is not None)
 check("a seller is told nothing", as_(S, "select build_status()")[0][0] == {"allowed": False})
-check("staff who aren't developers are told nothing", as_(ST, "select build_status()")[0][0] == {"allowed": False})
+check("part 27: staff see it too, but can't approve or switch", (lambda x: x["allowed"] and x["can_approve"] is False and x["can_switch"] is False)(as_(ST, "select build_status()")[0][0]))
 st = as_(A, "select build_status()")[0][0]
 check("a full admin sees it, switched off by default", st["allowed"] and st["enabled"] is False and st["can_switch"] is True, st)
 check("switched off: nothing can be submitted", "switched off" in (err(A, "select build_submit('{}'::jsonb)") or ""))
@@ -87,6 +87,18 @@ c1 = submit(A, {"kind": "chat", "message_kind": "note", "scope": "project", "bod
 check("a chat note is saved without making a task", c1["task"] is None)
 c2 = submit(DEV, {"kind": "chat", "message_kind": "instruction", "scope": "project", "body": "Do not publish these changes until I approve them.", "client_key": "c3"})
 check("a chat instruction makes a project-wide task", su("select scope, route from build.tasks where id=%s", (c2["task"]["id"],))[0] == ("project", None))
+# Part 27: a staff request waits for an admin; the agent can't see it until then
+check("a staff request waits for admin approval", c2["task"]["status"] == "awaiting_approval")
+check("admins are told it waits", su("select count(*) from notifications where user_id=%s and kind='build_approval'", (A,))[0][0] == 1)
+check("the agent's queue doesn't hold it while it waits", su("select count(*) from build.tasks where id=%s and status='queued'", (c2["task"]["id"],))[0][0] == 0)
+check("staff can't approve", "Only an admin" in (err(ST, "select build_task_action(%s,'approve',null)", (c2["task"]["id"],)) or ""))
+check("declining needs a reason", "Say why" in (err(A, "select build_task_action(%s,'decline','')", (c2["task"]["id"],)) or ""))
+check("staff can still edit it before approval", err(DEV, "select build_edit(%s,%s::jsonb)", (c2["message_id"], J({"body": "Do not publish these changes until I approve them.", "refs": []}))) is None)
+as_(A, "select build_task_action(%s,'approve','Fine')", (c2["task"]["id"],))
+check("approved: queued, the history says who and why, the asker is told", su("select status from build.tasks where id=%s", (c2["task"]["id"],))[0][0] == "queued"
+      and su("select count(*) from build.task_events where task_id=%s and actor_kind='admin' and note='Approved: Fine'", (c2["task"]["id"],))[0][0] == 1
+      and su("select count(*) from notifications where user_id=%s and kind='build_approved'", (DEV,))[0][0] == 1)
+check("an approved task can't be approved again", err(A, "select build_task_action(%s,'approve',null)", (c2["task"]["id"],)) is not None)
 c3 = submit(A, {"kind": "chat", "message_kind": "instruction", "scope": "page", "route": "/sell/new", "body": "Review the seller form on this page.", "client_key": "c4"})
 check("a page instruction keeps its page", su("select scope, route from build.tasks where id=%s", (c3["task"]["id"],))[0] == ("page", "/sell/new"))
 hist = as_(A, "select build_history(50, null)")[0][0]

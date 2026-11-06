@@ -149,10 +149,12 @@
       S.q(S.db.from("conversations").select("id,status,opened_at,closed_at,assigned_by_admin,round,garage_first_message_at, garages(name)").eq("listing_id", id).order("opened_at")),
       S.rpc("listing_stats", { p_listing: id }), S.rpc("listing_history", { p_listing: id }),
       S.q(S.db.from("garages").select("id,name,region,country").eq("status", "certified")),
-      S.q(S.db.from("reviews").select("id,doc_no,status,verdict,score,verify_code,odometer_flag,garage_name,member_name,issued_at").eq("listing_id", id).neq("status", "draft").order("issued_at"))
+      S.q(S.db.from("reviews").select("id,doc_no,status,verdict,score,verify_code,odometer_flag,garage_name,member_name,issued_at").eq("listing_id", id).neq("status", "draft").order("issued_at")),
+      S.market()
     ]).then(function (r) {
       var l = r[0][0], convs = r[1], st = r[2] || {}, hist = r[3] || [], garages = r[4].filter(function (g) { return g.country === l.country; }), reviews = r[5];
-      var cur = reviews.filter(function (x) { return x.id === l.current_review_id; })[0];
+      var cur = reviews.filter(function (x) { return x.id === l.current_review_id; })[0], openMk = r[6].open_market;
+      var noApprove = cur && cur.verdict === "fail" && !openMk;   // open marketplace: a failed report is shown on the car, not blocked
       var st0 = l.status, forSeller = [];
       if (["live", "draft", "changes_requested", "awaiting_review", "review_booked", "awaiting_approval"].indexOf(st0) >= 0)
         forSeller.push({ kind: "price", target: l.id, label: "Change the price", fields: "<label>New asking price (" + l.currency + ")<input name='price' type='number' required value='" + l.price + "'></label>", p: function (f) { return { price: +f.price }; } });
@@ -179,9 +181,9 @@
           "<a href='#/report/" + esc(cur.verify_code) + "'>Open the report</a></div></section>" : "") +
         "<section><h2>Decision</h2><form id='dec' class='stack'><label>Note to the seller (needed for changes, reject and unlist)<textarea name='note' rows='2'></textarea></label>" +
         "<label class='inline'><input type='checkbox' name='new_review' value='1'> Request changes needs a new Saaz inspection</label><div class='row'>" +
-        (l.status === "awaiting_approval" ? "<button class='btn' value='approve'" + (cur && cur.verdict === "fail" ? " disabled title='A safety Fail cannot be approved'" : "") + ">Approve and go live</button><button class='btn ghost' value='changes'>Request changes</button><button class='btn ghost' value='reject'>Reject</button>" : "") +
+        (l.status === "awaiting_approval" ? "<button class='btn' value='approve'" + (noApprove ? " disabled title='A safety Fail cannot be approved'" : "") + ">" + (cur ? "Approve and go live" : "Approve: live, marked Not inspected") + "</button><button class='btn ghost' value='changes'>Request changes</button><button class='btn ghost' value='reject'>Reject</button>" : "") +
         (["live", "re_review_due"].indexOf(l.status) >= 0 ? "<button class='btn ghost' value='unlist'>Unlist</button>" : "") + "</div></form>" +
-        (cur && cur.verdict === "fail" ? "<p class='note'>A safety Fail can't be approved.</p>" : "") + "</section>" +
+        (noApprove ? "<p class='note'>A safety Fail can't be approved.</p>" : cur && cur.verdict === "fail" ? "<p class='note'>The report failed safety. Approving puts the car on sale with the report on its page.</p>" : "") + "</section>" +
         (l.saaz_owned ? "" : S.actFor("afs", "Act for the seller", "Do what the seller can do, for them: the same rules apply. The seller is told each time, with your reason.", forSeller)) +
         "<section><h2>Garage line</h2>" + table(["Garage", "Status", "Round", "Opened", "Closed"], convs.map(function (c) {
           return "<tr><td>" + esc(c.garages.name) + (c.assigned_by_admin ? " <small>assigned</small>" : "") + "</td><td>" + S.chip(c.status) + "</td><td>" + c.round + "</td><td>" + S.when(c.opened_at) + "</td><td>" + S.when(c.closed_at) + "</td></tr>";
@@ -402,13 +404,13 @@
     return S.rpc("build_admin").then(function (b) {
       var on = b.settings.enabled, c = b.counts || {}, open = Object.keys(c).filter(function (k) { return ["verified", "cancelled"].indexOf(k) < 0; }).reduce(function (n, k) { return n + c[k]; }, 0);
       page(v, "build", "<div class='pagehead'><h2>Build Assistant</h2>" + "<span class='chip s-" + (on ? "active" : "suspended") + "'>" + (on ? "On" : "Off") + "</span>" + "</div>" +
-        "<p class='lead'>A private tool for building Saaz: comments on elements, chat, and the coding agent's task queue. Only admins in an admin session, and the developers listed below, can use it. Visitors and customers never see it or its records.</p>" +
+        "<p class='lead'>A private tool for building Saaz: comments on elements, chat, and the coding agent's task queue. Everyone on the Saaz team can use it in an admin session (admins and staff). A staff request waits for an admin to approve it before the agent sees it. Visitors and customers never see it or its records.</p>" +
         "<section><h2>" + (on ? "Switch it off" : "Switch it on") + "</h2>" +
         (on ? "<p>When off: nobody can send new comments or messages, the agent takes no new tasks, queued tasks wait (they are not marked done or removed), a task the agent already holds keeps its status and its agent can still record what happened. All history stays. The website is not affected.</p>"
-            : "<p>When on: admins in an admin session and the listed developers see a small Build button on every page.</p>") +
+            : "<p>When on: the Saaz team, in an admin session, see a small Build button on every page.</p>") +
         "<form id='bsw' class='inlineform'><label>Reason (kept in the history)<input name='reason' maxlength='200'" + (on ? " required" : "") + "></label><button class='btn" + (on ? " ghost" : "") + "'>" + (on ? "Switch off" : "Switch on") + "</button></form>" +
         "<p class='note'>Open tasks: " + open + ". Agent last checked in: " + (b.agent_last_seen ? S.day(b.agent_last_seen) : "never") + ".</p></section>" +
-        "<section><h2>Developers</h2><p class='note'>Full admins can always use it. Add Saaz team members (they still need their authenticator).</p>" +
+        "<section><h2>Developers</h2><p class='note'>Everyone on the Saaz team already has it (Team page). This list is kept for the record; adding someone here changes nothing else.</p>" +
         table(["Name", "Email", "Added", ""], (b.members || []).map(function (m) { return "<tr><td>" + esc(m.name || "") + "</td><td>" + esc(m.email) + "</td><td>" + S.day(m.added_at) + "</td><td><button class='btn small ghost' data-rm='" + esc(m.email) + "'>Remove</button></td></tr>"; })) +
         "<form id='bmem' class='inlineform'><label>Email of a Saaz team member<input name='email' type='email' required></label><button class='btn small'>Add</button></form></section>" +
         "<section><h2>History of the switch</h2>" + table(["When", "Change", "By", "Reason", "Open tasks then"], (b.toggles || []).map(function (t) {

@@ -6,7 +6,7 @@
   var S = window.Saaz, esc = S.esc;
   if (!S || S._buildLoaded) return; S._buildLoaded = true;
   var uid = (S.me() || {}).id || "anon", DRAFT = "saaz-build-draft:" + uid, MODE = "saaz-build-mode";
-  var STATUS = { queued: "Queued: waiting for the agent", acknowledged: "Acknowledged by the agent", in_progress: "In progress", needs_clarification: "Needs your answer",
+  var STATUS = { awaiting_approval: "Waiting for admin approval", queued: "Queued: waiting for the agent", acknowledged: "Acknowledged by the agent", in_progress: "In progress", needs_clarification: "Needs your answer",
     blocked: "Blocked", implemented: "Implemented, not yet verified", verifying: "Verifying", verified: "Verified", failed: "Failed", cancelled: "Cancelled" };
   var REF_RE = /(^|[^\/\w:])\/\/([a-z0-9]+(?:-[a-z0-9]+)*)/g;
   var st = { mode: false, editor: false, tab: "comment", busy: false, picked: null, status: null };
@@ -84,6 +84,7 @@
   // The draft is kept on every change (this browser, this account) so nothing is lost on a page change, a re-render or a reload.
   var ed, edState = null, lastRange = null;
   function draft() { return load(DRAFT); }
+  function queuedText(t) { return !t ? "" : t.status === "awaiting_approval" ? t.ref + " waits for an admin to approve it." : t.ref + " is queued for the agent."; }
   function chipHtml(r) {
     return "<span class='ba-chip' contenteditable='false' data-el='" + esc(r.id) + "' data-name='" + esc(r.ref_name) + "' data-key='" + esc(r.item_key || "") + "' data-stab='" + esc(r.stability) + "'" +
       " title='" + (r.stability === "unstable" ? "No stable reference: the agent will check it before acting" : r.stability === "anchored" ? "Found by its component and label" : "Stable reference") + "'>//" + esc(r.ref_name) +
@@ -160,7 +161,7 @@
       if (unknown.length) { btn.disabled = false; err.textContent = "Unknown reference: //" + unknown[0].name + ". Tag the element on the page, or remove that text."; return; }
       found.forEach(function (x) { sr.refs.push({ element_id: x.f.id, ref_name: x.f.ref_name, stability: x.f.stability }); });
       return S.rpc("build_submit", { p: { kind: "annotation", message_kind: "instruction", body: sr.body, refs: sr.refs, route: edState.route || routeNow(), client_key: edState.key, build_version: (window.SAAZ || {}).build || null } })
-        .then(function (r) { discardDraft(); S.toast("Saved. " + (r.task ? r.task.ref + " is queued for the agent." : "")); st.tab = "tasks"; renderTab(); });
+        .then(function (r) { discardDraft(); S.toast("Saved. " + queuedText(r.task)); st.tab = "tasks"; renderTab(); });
     }).catch(function (e) { btn.disabled = false; err.textContent = S.friendly(e); });
   }
 
@@ -246,7 +247,7 @@
     f.onsubmit = function (e) {
       e.preventDefault(); var o = S.form(f), b = f.querySelector("button"); b.disabled = true; f.querySelector(".err").textContent = "";
       S.rpc("build_submit", { p: { kind: "chat", message_kind: o.message_kind, scope: o.scope, route: routeNow(), body: o.body, refs: [], client_key: key, build_version: (window.SAAZ || {}).build || null } })
-        .then(function (r) { S.toast("Saved." + (r.task ? " " + r.task.ref + " is queued for the agent." : " Kept as a note.")); renderChat(); })
+        .then(function (r) { S.toast("Saved." + (r.task ? " " + queuedText(r.task) : " Kept as a note.")); renderChat(); })
         .catch(function (x) { b.disabled = false; f.querySelector(".err").textContent = S.friendly(x); });
     };
     loadHistory("chat");
@@ -264,12 +265,13 @@
           }).join("") +
           (t.tasks || []).map(function (k) {
             var msgs = t.messages.filter(function (m) { return m.task_id === k.id; });
-            return "<details class='ba-task'><summary><span class='chip s-" + (k.status === "verified" ? "issued" : k.status === "failed" || k.status === "blocked" ? "fail" : k.status === "needs_clarification" ? "flag" : k.status === "cancelled" ? "cancelled" : "in_play") + "'>" + esc(STATUS[k.status] || k.status) + "</span> " + esc(k.ref) + "</summary>" +
+            return "<details class='ba-task'><summary><span class='chip s-" + (k.status === "verified" ? "issued" : k.status === "failed" || k.status === "blocked" ? "fail" : k.status === "needs_clarification" || k.status === "awaiting_approval" ? "flag" : k.status === "cancelled" ? "cancelled" : "in_play") + "'>" + esc(STATUS[k.status] || k.status) + "</span> " + esc(k.ref) + "</summary>" +
               "<ol class='timeline'>" + (k.events || []).map(function (ev) { return "<li><b>" + esc(ev.to ? (STATUS[ev.to] || ev.to) : "") + "</b> " + esc(ev.note || "") + " <small>" + esc(ev.actor_kind) + " · " + S.day(ev.at) + " " + new Date(ev.at).toLocaleTimeString("en-GB", { timeZone: "Africa/Kampala", hour: "2-digit", minute: "2-digit" }) + "</small>" +
                 (ev.detail && (ev.detail.files || ev.detail.checks) ? "<small>" + esc((ev.detail.files || []).join(", ")) + (ev.detail.checks ? " · checks: " + esc(ev.detail.checks.map(function (c) { return c.name + " " + c.result; }).join(", ")) : "") + "</small>" : "") + "</li>"; }).join("") + "</ol>" +
               msgs.map(function (m) { return "<div class='ba-msg " + m.author_kind + "'><p>" + esc(m.body) + "</p><small>" + (m.author_kind === "agent" ? "Agent" : "You") + " · " + S.day(m.created_at) + "</small></div>"; }).join("") +
               (["verified", "cancelled"].indexOf(k.status) < 0 ? "<form class='inlineform ba-reply' data-task='" + k.id + "'><label>" + (k.status === "needs_clarification" ? "Your answer" : "Add a note") + "<input name='body' required maxlength='8000'></label><button class='btn small'>Send</button></form>" +
-                "<div class='row'>" + (["failed", "blocked"].indexOf(k.status) >= 0 ? "<button type='button' class='btn ghost small' data-act='retry' data-task='" + k.id + "'>Retry</button>" : "") +
+                "<div class='row'>" + (k.status === "awaiting_approval" && st.status && st.status.can_approve ? "<button type='button' class='btn small' data-act='approve' data-task='" + k.id + "'>Approve</button><button type='button' class='btn ghost small' data-act='decline' data-task='" + k.id + "'>Decline</button>" : "") +
+                (["failed", "blocked"].indexOf(k.status) >= 0 ? "<button type='button' class='btn ghost small' data-act='retry' data-task='" + k.id + "'>Retry</button>" : "") +
                 "<button type='button' class='btn ghost small' data-act='cancel-task' data-task='" + k.id + "'>Cancel task</button></div>" : "") + "</details>";
           }).join("") + "</article>";
       }).join("");
@@ -292,6 +294,12 @@
     if (act === "discard") discardDraft();
     if (act === "keep") { root.querySelector(".ba-confirm").hidden = true; ed.focus(); restoreRange(); }
     if (act === "comment-picked" && st.picked) register(st.picked).then(function (r) { openEditor(r); setPick(""); });
+    if (act === "approve" || act === "decline") {   // part 27: an admin approves a staff request, or declines it with a reason
+      var why = act === "decline" ? window.prompt("Why decline? The person who asked sees this.") : null;
+      if (act === "decline" && !why) return;
+      S.rpc("build_task_action", { p_task: a.dataset.task, p_action: act, p_reason: why }).then(function () { S.toast(act === "approve" ? "Approved: queued for the agent." : "Declined."); renderTab(); }).catch(function (x) { S.toast(S.friendly(x), true); });
+      return;
+    }
     if (act === "retry" || act === "cancel-task") S.rpc("build_task_action", { p_task: a.dataset.task, p_action: act === "retry" ? "retry" : "cancel", p_reason: null }).then(function () { renderTab(); }).catch(function (x) { S.toast(S.friendly(x), true); });
   });
   root.addEventListener("change", function (e) { if (e.target.dataset.act === "mode") setMode(e.target.checked); });

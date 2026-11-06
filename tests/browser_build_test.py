@@ -78,7 +78,7 @@ with sync_playwright() as p:
     go(adm, "#/browse")
     check("on: the Build button appears", adm.locator(".ba-launch").count() == 1)
     stf = page(); signin(stf, "staff@saaz.test"); elevate(stf); go(stf, "#/browse")
-    check("staff who aren't developers still don't get it", stf.locator(".ba-launch").count() == 0)
+    check("part 27: staff get it too (their requests wait for an admin)", stf.locator(".ba-launch").count() == 1)
 
     # ---------- annotating ----------
     adm.click(".ba-launch"); adm.check(".ba-switch input"); adm.wait_for_timeout(300)
@@ -168,6 +168,18 @@ with sync_playwright() as p:
     check("the agent's last check-in is shown", "just now" in adm.inner_text(".ba-agent") or "min ago" in adm.inner_text(".ba-agent"))
     box = adm.locator(".ba-task", has_text=ctx["task"]["ref"]); box.locator(".ba-reply input").fill("The header's 24 px."); box.locator(".ba-reply button").click(); adm.wait_for_timeout(1500)
     check("answering puts the task back in the queue", sql("select status from build.tasks where id=%s", (tid,))[0][0] == "queued")
+
+    # ---------- part 27: a staff request waits for an admin ----------
+    go(stf, "#/browse"); stf.click(".ba-launch"); stf.wait_for_timeout(500)
+    stf.click("[data-tab=chat]"); stf.fill(".ba-chat textarea", "Make the photo bigger when I tap it."); stf.click(".ba-chat button"); stf.wait_for_timeout(1500)
+    sid = sql("select id, ref, status from build.tasks where created_by = (select id from auth.users where email='staff@saaz.test')")
+    check("a staff request waits for admin approval", sid and sid[0][2] == "awaiting_approval", sid)
+    stf.click("[data-tab=tasks]"); stf.wait_for_timeout(1200)
+    check("staff see it waiting, with no Approve button", "waiting for admin approval" in stf.inner_text(".ba-body").lower() and stf.locator("[data-act=approve]").count() == 0)
+    adm.click("[data-tab=chat]"); adm.wait_for_timeout(300); adm.click("[data-tab=tasks]"); adm.wait_for_timeout(1500)
+    sbox = adm.locator(".ba-task", has_text=sid[0][1]); sbox.locator("summary").click(); adm.wait_for_timeout(300)
+    sbox.locator("[data-act=approve]").click(); adm.wait_for_timeout(1500)
+    check("an admin approves it from the task list: queued for the agent", sql("select status from build.tasks where id=%s", (sid[0][0],))[0][0] == "queued")
 
     # ---------- touch ----------
     if W < 768:

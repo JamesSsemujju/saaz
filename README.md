@@ -26,6 +26,9 @@ SMS through Africa's Talking: outbox, message settings, mobile check by code, ch
 ## Continuity (5 Nov 2026)
 Header in the HTML, no footer jump, Back keeps your place, area code loaded when needed, photo fade-in, prefetch on touch, press state: project-docs/Saaz_Continuity_2026-11-05.md
 
+## Open marketplace and Build Assistant for staff (6 Nov 2026; not live yet)
+Parts 26 and 27, see `project-docs/Saaz_OpenMarketplace_2026-11-06.md`. Part 26: cars can go live marked Not inspected once Saaz approves them; buyers can ask for a Saaz inspection; reports stay on the car, pass or fail. Switch: Admin, Settings, `open_market` (off when run). Part 27: the whole Saaz team uses the Build Assistant; staff requests wait for an admin's approval.
+
 ## Structure
 ```
 build.py                 builds src/ into docs/, then checks every internal link

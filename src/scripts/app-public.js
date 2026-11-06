@@ -11,8 +11,7 @@
     var meta = [S.km(l.mileage), l.fuel, l.gearbox, l.region].filter(function (x) { return x !== "" && x != null; });
     // 29 Oct 2026 (approved card): the photo stays clean; under it one quiet line says the inspection, then the price,
     // the name (it may take two lines) and the specs. Colour only when the result needs attention.
-    var insp = r.verdict ? "Inspected <b>" + r.score + "</b>/100 · " + (r.verdict === "pass" ? esc(S.label(r.verdict)) : "<span class='att'>" + esc(S.label(r.verdict)) + "</span>")
-      : (opts.tag ? opts.tag : "");
+    var insp = opts.tag ? opts.tag : pv ? "" : inspLine(l);
     if (l.saaz_owned) insp += (insp ? " · " : "") + "Saaz car";
     return "<" + tag + " class='car" + (pv ? " preview" : "") + "' data-ref='vehicle-card' data-ref-key='" + esc(l.ref || "") + "'" + (pv ? "" : " href='" + esc(opts.href || "#/car/" + l.ref) + "'") + "><div class='car-photo'" + (l.photos && l.photos[0] ? " style='--bg:url(&quot;" + esc(S.photo(l.photos[0])) + "&quot;)'" : "") + ">" +
       (l.photos && l.photos[0] ? "<img src='" + esc(S.photo(l.photos[0])) + "' alt='' loading='lazy' decoding='async'>" : pv ? "<span class='phl'>Your photos go here</span>" : "") +
@@ -24,6 +23,19 @@
       "</" + tag + ">";
   }
   S.card = card;
+  // Inspection state of a car on sale (part 26, open marketplace): Inspected with its result, Inspection expired, or Not inspected
+  function inspState(l) {
+    var r = l.review;
+    if (!r || !r.verdict) return "none";
+    return r.valid_until && r.valid_until < S.today() ? "expired" : "valid";
+  }
+  S.inspState = inspState;
+  function inspLine(l) {
+    var r = l.review || {}, s = inspState(l);
+    if (s === "valid") return "Inspected <b>" + r.score + "</b>/100 · " + (r.verdict === "pass" ? esc(S.label(r.verdict)) : "<span class='att'>" + esc(S.label(r.verdict)) + "</span>");
+    if (s === "expired") return "<span class='att'>Inspection expired</span>" + (l.inspection_requested ? " · new inspection booked" : "");
+    return "<span class='att'>Not inspected</span>" + (l.inspection_requested ? " · inspection booked" : "");
+  }
   // 29 Oct 2026: the open list of a search or filter dropdown. On a mouse screen Saaz draws it (no system blue); phones and
   // tablets keep their own picker, which suits thumbs. The <select> stays the real field: value, form and change events as before.
   var TICK = "<svg viewBox='0 0 16 16' aria-hidden='true'><path d='M3 8.5l3.2 3L13 5' fill='none' stroke='currentColor' stroke-width='1.6'/></svg>";
@@ -126,14 +138,18 @@
   S.listingsPage = function (rows, q, opts) {
     opts = opts || {};
     var route = opts.route || "#/browse";
-    var make = q.get("make") || "", model = q.get("model") || "", body = q.get("body") || "", max = +(q.get("max") || 0), saved = q.get("saved") === "1";
+    var make = q.get("make") || "", model = q.get("model") || "", body = q.get("body") || "", max = +(q.get("max") || 0), saved = q.get("saved") === "1", insp = q.get("insp") === "1";
+    var mixed = rows.some(function (l) { return (l.status === "live" || l.status === "reserved") && inspState(l) !== "valid"; });   // open marketplace: some cars on sale aren't inspected
     var shown = rows.filter(function (l) {
-      return (!make || l.make === make) && (!model || l.model === model) && (!body || l.body === body) && (!max || l.price <= max) && (!saved || l.saved);
+      return (!make || l.make === make) && (!model || l.model === model) && (!body || l.body === body) && (!max || l.price <= max) && (!saved || l.saved) && (!insp || inspState(l) === "valid");
     });
     var pages = Math.max(1, Math.ceil(shown.length / PER_PAGE)), page = Math.min(pages, Math.max(1, +(q.get("page") || 1)));
     var slice = shown.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-    var html = "<div class='sechead'><h1>" + (saved ? "Saved cars" : "Saaz certified cars") + "</h1><p>Every car here was inspected in person by a Saaz certified garage.</p></div>" +
+    var html = "<div class='sechead'><h1>" + (saved ? "Saved cars" : mixed && !insp ? "Cars on Saaz" : "Saaz certified cars") + "</h1><p>" +
+        (mixed && !insp ? "Each car shows whether a Saaz certified garage has inspected it. Not inspected? You can buy it as it is, or ask for a Saaz inspection first."
+          : "Every car here was inspected in person by a Saaz certified garage.") + "</p></div>" +
       "<form id='flt' class='filters' data-ref='filter-panel'>" + (opts.statusSelect ? "<label class='wide'>Status" + opts.statusSelect + "</label>" : "") + searchFields(rows, make, body, max) +
+      (mixed || insp ? "<label class='inline'><input type='checkbox' name='insp' value='1'" + (insp ? " checked" : "") + "> Inspected only</label>" : "") +
       (S.signedIn() && !opts.admin ? "<label class='inline'><input type='checkbox' name='saved' value='1'" + (saved ? " checked" : "") + "> Saved only</label>" : "") +
       "<button class='btn go'>Show cars</button></form>" +
       "<p class='count'>" + shown.length + " car" + (shown.length === 1 ? "" : "s") + (pages > 1 ? " · page " + page + " of " + pages : "") +
@@ -204,19 +220,21 @@
     var asAdmin = S.inAdmin();
     return (asAdmin ? S.rpc("admin_listings", { p_status: "" }) : S.browseData()).then(function (rows) {
       rows = rows || [];
+      var mixed = rows.some(function (l) { return l.status === "live" || l.status === "reserved" ? inspState(l) !== "valid" : false; });   // open marketplace: some cars on sale aren't inspected
       // 29 Oct 2026 (approved design): the car first (Saaz's own photo), the promise in the title face, the search on the picture,
       // the latest cars on white, then why a car on Saaz can be trusted, told with the engine bay. The road video (BA-0006) is kept in
       // assets/video but no longer used here: James approved the photo hero on 29 Oct 2026.
       v.innerHTML = (asAdmin ? "<div class='wrap'>" + ADMIN_NOTE + "</div>" : "") +
         "<section class='hero photo' data-ref='home-hero'><div class='hero-bg' aria-hidden='true'><img src='" + S.site + "assets/img/home-hero-640.webp' srcset='" + S.site + "assets/img/home-hero-640.webp 640w, " + S.site + "assets/img/home-hero-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' width='1280' height='960' alt=''></div><div class='wrap'><div>" +
-        "<h1 class='display'>Inspected <i>before</i><br>you buy.</h1><p class='lede'>Used cars in Uganda, checked by a certified garage inside Saaz before they are listed. Read the report, then make an offer.</p>" +
+        "<h1 class='display'>Inspected <i>before</i><br>you buy.</h1><p class='lede'>" + (mixed ? "Used cars in Uganda. Each car shows whether a Saaz certified garage has inspected it. Read the report, or ask for a Saaz inspection, then make an offer."
+          : "Used cars in Uganda, checked by a certified garage inside Saaz before they are listed. Read the report, then make an offer.") + "</p>" +
         "<form id='hs' class='homesearch' data-ref='home-search' role='search' aria-label='Search cars'>" + searchFields(rows, "", "", 0) + "<button class='btn go'>Search " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</button></form>" + quick(rows) + "</div></div></section>" +
-        "<section class='band white' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>Latest inspected</h2>" + (rows.length ? "<a class='btn text' href='#/browse'>See all " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</a>" : "") + "</div>" +
+        "<section class='band white' data-ref='latest-cars'><div class='wrap'><div class='sechead'><h2>" + (mixed ? "Latest cars" : "Latest inspected") + "</h2>" + (rows.length ? "<a class='btn text' href='#/browse'>See all " + rows.length + " car" + (rows.length === 1 ? "" : "s") + "</a>" : "") + "</div>" +
         (rows.length ? "<div class='cars' data-rows='2'>" + rows.slice(0, 10).map(function (l) { return card(l, asAdmin ? S.adminCardOpts(l) : null); }).join("") + "</div>"
           : "<div class='empty' data-ref='no-cars'><b>No cars listed yet</b><span>Cars appear here once they pass a Saaz inspection. <a class='btn text' href='#/sell'>Sell your car on Saaz</a></span></div>") +
         "</div></section>" +
         "<section class='band white story' data-ref='trust-section'><div class='wrap'><figure class='story-pic'><img src='" + S.site + "assets/img/inspections-640.webp' srcset='" + S.site + "assets/img/inspections-640.webp 640w, " + S.site + "assets/img/inspections-1280.webp 1280w' sizes='(min-width: 1024px) 100vw, 100vw' width='1280' height='960' alt='An engine bay opened for a Saaz inspection'></figure><div>" +
-          "<h2>Every car is opened up <i>before</i> it is listed.</h2><ol class='steps one'>" +
+          "<h2>" + (mixed ? "Every Saaz inspection opens the car <i>up</i>." : "Every car is opened up <i>before</i> it is listed.") + "</h2><ol class='steps one'>" +
           "<li><span class='n'>1</span><b>Inspected in person</b><span>A certified garage checks the car inside Saaz: 12 checks, the body panels and the odometer.</span></li>" +
           "<li><span class='n'>2</span><b>A report with a code</b><span>The score and result are on every car. Anyone can confirm a report is real and unchanged.</span></li>" +
           "<li><span class='n'>3</span><b>No money through Saaz</b><span>Make an offer here. Contact details are shared once you and the seller agree.</span></li></ol>" +
@@ -244,9 +262,18 @@
         cd.stats,
         cd.review,
         S.signedIn() ? S.q(S.db.from("saves").select("listing_id").eq("listing_id", l.id).eq("user_id", S.me().id)) : [],
-        S.signedIn() ? S.q(S.db.from("deals").select("id,status,amount").eq("listing_id", l.id).eq("buyer_id", S.me().id).in("status", ["negotiating", "agreed", "on_hold"])) : []
+        S.signedIn() ? S.q(S.db.from("deals").select("id,status,amount").eq("listing_id", l.id).eq("buyer_id", S.me().id).in("status", ["negotiating", "agreed", "on_hold"])) : [],
+        S.market(), S.rpc("car_history", { p_listing: l.id }).catch(function () { return []; })
       ]).then(function (res) {
-        var st = res[0] || {}, r = res[1][0], saved = res[2].length > 0, open = res[3][0], mine = l.seller_id === S.me().id;
+        var st = res[0] || {}, r = res[1][0], saved = res[2].length > 0, open = res[3][0], mine = l.seller_id === S.me().id, mk = res[4] || {}, hist = res[5] || [];
+        var expired = r && r.valid_until && r.valid_until < S.today(), onSale = l.status === "live" || l.status === "reserved";
+        // Open marketplace (part 26): a buyer may ask for a Saaz inspection of a car with none, or whose inspection expired
+        var ask = "";
+        if (onSale && !mine && !S.inAdmin() && (!r || expired)) {
+          if (st.inspection_requested) ask = "<p class='box' data-ref='inspection-booked'>A Saaz inspection of this car is on its way. The report shows here when it is issued.</p>";
+          else if (mk.open_market) ask = S.signedIn() ? "<div class='box' data-ref='ask-inspection'><b>Want it checked first?</b><p>Ask for a Saaz inspection. A Saaz certified garage books it with the seller and you pay the garage directly. The report shows here for everyone.</p><button class='btn ghost wide' id='askinsp'>Ask for a Saaz inspection</button></div>"
+            : "<a class='btn ghost wide' href='#/signin' data-after>Sign in to ask for a Saaz inspection</a>";
+        }
         var ph = (l.photos || []).map(function (p) { return S.photo(p); });
         var gallery = "<div class='gallery' data-ref='car-gallery'><div class='main'>" + (ph[0] ? "<img id='mainphoto' src='" + esc(ph[0]) + "' alt='Photo 1 of " + ph.length + "' decoding='async'>" : "<div class='car-photo'></div>") + "</div>" +
           (ph.length > 1 ? "<div class='shots'>" + ph.map(function (u, i) { return "<button type='button' data-i='" + i + "'" + (i ? "" : " aria-current='true'") + " aria-label='Show photo " + (i + 1) + "'><img src='" + esc(u) + "' alt='' loading='lazy' decoding='async'></button>"; }).join("") + "</div>" : "") + "</div>";
@@ -272,21 +299,28 @@
           "<p class='car-bigprice'>" + S.money(l.currency, l.price) + "</p><p class='car-area'>" + esc(l.region) + ", " + S.COUNTRY[l.country] + (l.saaz_owned ? " · Sold by Saaz" : "") + "</p>" +
           (r ? "<div class='insp-card' data-ref='inspection-card'><div class='insp-head'><span class='insp-score'><b>" + r.score + "</b>/100</span>" +
             "<span class='insp-verdict" + (r.verdict === "pass" ? "" : " att") + "'>" + esc(S.label(r.verdict)) + "</span></div>" + checksLine(r.checks) +
-            "<p>Inspected in person by " + esc(r.garage_name) + " on " + S.day(r.issued_at) + ". Valid until " + S.day(r.valid_until) + ". Report " + esc(r.doc_no) + ".</p>" +
-            "<a class='btn text' href='#/report/" + esc(r.verify_code) + "'>Read the inspection report</a></div>" : "") +
-          buy +
+            "<p>Inspected in person by " + esc(r.garage_name) + " on " + S.day(r.issued_at) + ". " + (expired ? "<b class='bad'>Expired " + S.day(r.valid_until) + ".</b>" : "Valid until " + S.day(r.valid_until) + ".") + " Report " + esc(r.doc_no) + ".</p>" +
+            "<a class='btn text' href='#/report/" + esc(r.verify_code) + "'>Read the inspection report</a></div>"
+            : onSale ? "<div class='insp-card none' data-ref='inspection-card'><div class='insp-head'><span class='insp-verdict att'>Not inspected</span></div><p>No Saaz certified garage has inspected this car yet. You can buy it as it is, or ask for a Saaz inspection.</p></div>" : "") +
+          ask + buy +
           (S.signedIn() && !mine && !asAdmin ? "<button class='btn ghost wide' id='save'>" + (saved ? "Saved" : "Save this car") + "</button>" : "") +
           (mine ? "<a class='btn ghost wide' href='#/my/cars/" + l.id + "'>Manage this car</a>" : "") +
           "<div class='demand'><span><b>" + st.views_7d + "</b> views this week</span><span><b>" + st.saves + "</b> saves</span><span><b>" + st.offers + "</b> offers so far</span></div></aside>" +
           "<div class='details' data-ref='car-details'><div><h2>Details</h2><dl class='specs'>" + [["Year", l.year], ["Mileage", S.km(l.mileage)], ["Fuel", l.fuel], ["Gearbox", l.gearbox], ["Body", l.body], ["Colour", l.colour], ["Engine", l.engine], ["Plate", l.plate], ["Saaz ref", l.ref]]
             .filter(function (x) { return x[1]; }).map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl></div>" +
-          "<div><h2>From the seller</h2><p class='pre'>" + esc(l.description) + "</p></div></div></div>";
+          "<div><h2>From the seller</h2><p class='pre'>" + esc(l.description) + "</p></div>" +
+          (hist.length ? "<div data-ref='inspection-history'><h2>Every Saaz inspection of this car</h2><ul class='timeline'>" + hist.map(function (h) {
+            return "<li><small>" + S.day(h.issued_at) + "</small> <b" + (h.verdict === "pass" ? "" : " class='bad'") + ">" + esc(S.label(h.verdict)) + ", " + h.score + "/100</b> · " + esc(h.scope_name) + " · " + esc(h.garage) +
+              (h.replaced ? " · replaced by a newer report" : h.current ? "" : " · from an earlier listing") + (h.odometer_flag ? " · <span class='bad'>odometer flag</span>" : "") +
+              (h.saaz_stance === "object" ? " · <span class='bad'>Saaz objected</span>" : "") + " <a href='#/report/" + esc(h.verify_code) + "'>Report</a></li>";
+          }).join("") + "</ul><p class='note'>Every report stays on the car, pass or fail.</p></div>" : "") + "</div></div>";
         S.$$(".shots button", v).forEach(function (b) {
           b.onclick = function () {
             var i = +b.dataset.i, mp = S.$("#mainphoto"); mp.src = ph[i]; mp.alt = "Photo " + (i + 1) + " of " + ph.length;
             S.$$(".shots button", v).forEach(function (x) { x.removeAttribute("aria-current"); }); b.setAttribute("aria-current", "true");
           };
         });
+        var ai = S.$("#askinsp"); if (ai) ai.onclick = function () { S.act(ai, function () { return S.rpc("buyer_request_inspection", { p_listing: l.id }); }, function (x) { return "Asked. Inspection " + x.inspection_id + ": Saaz is bringing in a certified garage. We'll tell you which, and its number."; }); };
         var sv = S.$("#save"); if (sv) sv.onclick = function () { S.act(sv, function () { return S.rpc("toggle_save", { p_listing: l.id }); }, function (on) { return on ? "Saved." : "Removed from saved."; }); };
         var of = S.$("#offer");
         if (of) of.onsubmit = function (e) {
