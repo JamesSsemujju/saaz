@@ -99,7 +99,7 @@ with sync_playwright() as p:
         check("phones: table rows are cards with labels", adm.evaluate("() => getComputedStyle(document.querySelector('.rtable tbody tr')).display") == "block" and
               adm.evaluate("() => getComputedStyle(document.querySelector('.rtable td'), '::before').content").strip('"') == "Ref")
         check("phones: charts fit the screen", (go(adm, "#/admin/reports/funnel?range=30") or True) and adm.evaluate("() => document.querySelector('.rchart svg').getBoundingClientRect().right <= innerWidth"))
-    go(adm, "#/admin/cars"); check("existing admin pages still work", "Cars with a Saaz inspection" in adm.inner_text("#view"))
+    go(adm, "#/admin/cars"); check("existing admin pages still work", "Saaz certified cars" in adm.inner_text("#view"))
     SHOTS = os.environ.get("SHOTS", "."); os.makedirs(SHOTS, exist_ok=True)
     for h, n in [("#/admin/reports/inventory?range=30", "inventory"), ("#/admin/reports/funnel?range=30&cmp=1", "funnel")]:
         go(adm, h); adm.screenshot(path=f"{SHOTS}/{n}_{W}.png", full_page=True)

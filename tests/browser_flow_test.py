@@ -291,7 +291,7 @@ with sync_playwright() as pw:
     sql("update listings set status='live' where status='sold'")  # test only: put the sold car back on sale to compare cards
     go(adm, "#/admin/cars"); adm.wait_for_timeout(1200)
     n_admin = adm.locator("#view .cars a.car").count(); check("admin Cars page is the listings page with every car", n_admin == 2, n_admin)
-    check("same heading and filters as the marketplace, plus status", "Cars with a Saaz inspection" in adm.inner_text("#view") and adm.locator("#flt select[name=status]").count() == 1 and adm.locator("#flt select[name=make]").count() == 1)
+    check("same heading and filters as the marketplace, plus status", "Saaz certified cars" in adm.inner_text("#view") and adm.locator("#flt select[name=status]").count() == 1 and adm.locator("#flt select[name=make]").count() == 1)
     check("the draft carries its status on the photo", "draft" in adm.inner_text("#view .cars").lower())
     go(pub, "#/browse"); pub.wait_for_timeout(1000)
     grab = "() => { const c = [...document.querySelectorAll('.cars a.car')].find(x => x.textContent.includes('Harrier')); return c ? c.innerHTML.replace(/href=\"[^\"]*\"/g, '') : null }"

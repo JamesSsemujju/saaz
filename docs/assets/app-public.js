@@ -132,7 +132,7 @@
     });
     var pages = Math.max(1, Math.ceil(shown.length / PER_PAGE)), page = Math.min(pages, Math.max(1, +(q.get("page") || 1)));
     var slice = shown.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-    var html = "<div class='sechead'><h1>" + (saved ? "Saved cars" : "Cars with a Saaz inspection") + "</h1><p>Every car here was inspected in person by a certified garage, inside Saaz.</p></div>" +
+    var html = "<div class='sechead'><h1>" + (saved ? "Saved cars" : "Saaz certified cars") + "</h1><p>Every car here was inspected in person by a Saaz certified garage.</p></div>" +
       "<form id='flt' class='filters' data-ref='filter-panel'>" + (opts.statusSelect ? "<label class='wide'>Status" + opts.statusSelect + "</label>" : "") + searchFields(rows, make, body, max) +
       (S.signedIn() && !opts.admin ? "<label class='inline'><input type='checkbox' name='saved' value='1'" + (saved ? " checked" : "") + "> Saved only</label>" : "") +
       "<button class='btn go'>Show cars</button></form>" +
