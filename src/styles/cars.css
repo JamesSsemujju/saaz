@@ -34,7 +34,6 @@
 .car-price{margin-top:var(--sp-1);display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);height:var(--lh-lg);overflow:hidden}
 .car-price b{font-size:var(--fs-lg);line-height:var(--lh-lg);font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
 .car-price small{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.car:hover .car-name{box-shadow:inset 0 -1px 0 currentColor}
 .car:hover .car-photo{box-shadow:0 12px 28px rgba(var(--shade),.18)}
 /* BA-0001: on hover (mouse) or keyboard focus the card's photo comes forward and zooms slightly; the text stays as it is */
 .car .car-photo{transition:transform .2s ease,box-shadow .2s ease}

@@ -60,6 +60,8 @@
   --card:208px;                  /* BA-0008: narrowest a listing card gets; the grid fits as many as the width allows */
   --doc:820px;                   /* documents (the inspection report) and wide forms */
   --radius:12px; --radius-sm:8px; --radius-pill:999px;
+  /* links (7 Nov 2026): the underline that draws under a title link, and the fade that brightens other links */
+  --link-draw:340ms; --link-ease:cubic-bezier(.65,0,.35,1); --link-fade:200ms; --link-line:1px;
 }
 @media (min-width:768px){
   :root{ --gutter:var(--sp-5); --cols:12; --col-gap:var(--sp-5); --section:var(--sp-8); --section-compact:var(--sp-6); --control-sm:40px; }

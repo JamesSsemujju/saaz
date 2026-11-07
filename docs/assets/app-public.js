@@ -18,7 +18,7 @@
       (opts.badge || (l.status === "reserved" ? "<span class='car-tag right'>Reserved</span>" : "")) + "</div>" +
       "<div class='car-insp'>" + insp + "</div>" +
       "<div class='car-price'><b>" + (pv && !l.price ? "<span class='ghosttext'>Your asking price</span>" : S.money(l.currency, l.price)) + "</b></div>" +
-      "<div class='car-name'>" + (pv && !(l.make || l.model) ? "<span class='ghosttext'>Year, make and model</span>" : esc(S.name(l))) + "</div>" +
+      "<div class='car-name'>" + (pv && !(l.make || l.model) ? "<span class='ghosttext'>Year, make and model</span>" : "<span>" + esc(S.name(l)) + "</span>") + "</div>" +
       "<div class='car-meta'>" + (meta.length ? meta.map(esc).join(" · ") : pv ? "<span class='ghosttext'>Mileage, fuel, gearbox, region</span>" : "") + "</div>" +
       "</" + tag + ">";
   }

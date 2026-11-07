@@ -29,7 +29,7 @@ MONO = ' class="mono"'
 
 ROOT = Path(__file__).resolve().parent
 SRC, DOCS = ROOT / "src", ROOT / "docs"
-CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "app.css", "build.css"]
+CSS_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css", "cars.css", "app.css", "links.css", "build.css"]
 DESKTOP_NAV = ["inspections", "cars", "sell", "import", "finance", "garages"]
 BUYER_FOOT = ["inspections", "history", "cars", "import", "finance"]
 SELLER_FOOT = ["sell", "garages", "partners"]

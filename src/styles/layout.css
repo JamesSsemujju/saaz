@@ -14,7 +14,6 @@
 .appright .inbox b{display:inline-block;color:var(--white);font-weight:600;margin-left:var(--sp-1);font-size:var(--fs-xs);line-height:var(--lh-xs)}
 /* 29 Oct 2026: Sell a car is a link like the rest of the bar, in white so sellers find it. No pill: nothing else in the bar is a box. */
 .appright>a.sellbtn{color:var(--white);font-weight:500}
-.appright>a.sellbtn:hover{box-shadow:inset 0 -1px 0 var(--white)}
 .acct{position:relative}
 .acct summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--sp-1);height:var(--control-sm);color:var(--white);padding:0}  /* 29 Oct 2026: no outline round the account menu; the initials circle is enough */
 .acct summary::-webkit-details-marker{display:none}
@@ -23,7 +22,7 @@
 .acctmenu .who{margin:var(--sp-1) var(--sp-2) var(--sp-2);display:grid;overflow-wrap:anywhere}
 .acctmenu .mh{font-size:var(--fs-xs);line-height:var(--lh-xs);text-transform:uppercase;letter-spacing:.8px;color:var(--mut);padding:var(--sp-2) var(--sp-2) 0}
 .acctmenu a,.acctmenu button{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);min-height:var(--control-sm);padding:0 var(--sp-2);border-radius:var(--radius-sm);color:var(--ink);text-decoration:none;font:inherit;font-size:var(--fs-sm);line-height:var(--lh-sm);background:none;border:0;text-align:left;cursor:pointer;width:100%}
-.acctmenu a:hover,.acctmenu button:hover{background:var(--soft)}
+.acctmenu a:hover,.acctmenu button:hover{color:var(--navy)}
 .acctmenu a[aria-current]{font-weight:700}
 .acctmenu hr{border:0;border-top:1px solid var(--line);margin:var(--sp-1) 0}
 .acctmenu a.adminentry{flex-direction:column;align-items:flex-start;justify-content:center}
@@ -42,7 +41,7 @@
 .areabar{background:var(--ice);border-bottom:1px solid var(--accent)}
 .areabar .wrap{display:flex;flex-wrap:wrap;align-items:center;column-gap:var(--sp-5);min-height:var(--areabar)}
 .areabar .back{display:flex;align-items:center;min-height:var(--areabar);color:var(--accent-ink);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600}
-.areabar .back:hover{color:var(--navy);text-decoration:underline}
+.areabar .back:hover{color:var(--navy)}
 .areabar b{color:var(--navy)}
 .areabar nav{display:flex;gap:var(--sp-4);overflow-x:auto}
 .areabar nav a{display:flex;align-items:center;min-height:var(--areabar);color:var(--accent-ink);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600;box-shadow:inset 0 -3px 0 transparent;white-space:nowrap}

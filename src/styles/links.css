@@ -1,0 +1,46 @@
+/* links.css (7 Nov 2026): one standard for every clickable text on the site and in Admin.
+   Links read as part of the type, not as little buttons.
+   - Title links (main menus, clickable headings, a listing card's name, links that carry the arrow):
+     no line at rest; on hover a line draws under the text from left to right, and draws back on leaving.
+   - Every other link (footer and menus: no line at all; breadcrumbs, side menus, tabs, page numbers, lists, links inside sentences):
+     muted at rest, a little brighter on hover. Links inside sentences keep a faint underline, so they read as links without a mouse.
+   - Keyboard: focus shows the same line, plus the focus ring from base.css.
+   - Touch screens (no hover): links that carry the arrow keep their line at all times; nothing depends on hover.
+   - Buttons (<button>) are not links and keep their own look (components.css). */
+
+/* "Brighter" means more contrast: towards navy on light backgrounds, towards white on dark ones */
+:root{--link-hi:var(--navy)}
+.apphead,.hero,.phero,.ba-modebar{--link-hi:var(--white)}
+
+/* the fade, for every link */
+:where(a){transition:color var(--link-fade) ease-out,text-decoration-color var(--link-fade) ease-out}
+a:not([class]):hover{color:var(--link-hi)}
+
+/* links inside sentences: a faint line that firms up on hover */
+:where(p,td,dd,small,.note,.lead,.box,.empty span,.err,.timeline li,.prose li) > a:not([class]){text-decoration-line:underline;text-decoration-thickness:var(--link-line);text-underline-offset:.22em;text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
+:where(p,td,dd,small,.note,.lead,.box,.empty span,.err,.timeline li,.prose li) > a:not([class]):hover{text-decoration-color:currentColor}
+
+/* brighter on hover: the places that didn't say so yet */
+.appbody .tabs a:hover,.crumbs a:hover,.appbody .tbl th a:hover,.appbody .list a:hover,.appbody .rows a:hover{color:var(--link-hi)}
+.phero .crumbs a:hover{color:var(--white)}
+
+/* ---------- title links: the drawn line ---------- */
+.appnav a,.appright>a,.areabar nav a,a.btn.ghost,a.btn.text,a.btn.go,.paths a,.car-name>span,:is(h1,h2,h3,h4) a:not(.btn),a.lk-title{
+  background-image:linear-gradient(currentColor,currentColor);background-repeat:no-repeat;background-position:0 100%;
+  background-size:0 var(--u,var(--link-line));box-decoration-break:clone;-webkit-box-decoration-break:clone;text-decoration:none;
+  transition:background-size var(--link-draw) var(--link-ease),color var(--link-fade) ease-out}
+a.btn.ghost,a.btn.text,a.btn.go{box-shadow:none}   /* the line is drawn, not printed (was a permanent hairline) */
+.appnav a,.appright>a{--u:2px}         /* same weight as the line under the page you're on */
+.areabar nav a{--u:3px}
+.car-name>span{display:inline}
+@media(hover:hover){
+  .appnav a:hover,.appright>a:hover,.areabar nav a:hover,a.btn.ghost:hover,a.btn.text:hover,a.btn.go:hover,.paths a:hover,
+  :is(h1,h2,h3,h4) a:not(.btn):hover,a.lk-title:hover,.car:hover .car-name>span{background-size:100% var(--u,var(--link-line))}
+}
+.appnav a:focus-visible,.appright>a:focus-visible,.areabar nav a:focus-visible,a.btn.ghost:focus-visible,a.btn.text:focus-visible,a.btn.go:focus-visible,
+.paths a:focus-visible,:is(h1,h2,h3,h4) a:not(.btn):focus-visible,a.lk-title:focus-visible,.car:focus-visible .car-name>span{background-size:100% var(--u,var(--link-line))}
+/* touch: a link with the arrow always shows its line (hover can't tell you it's a link) */
+@media(hover:none){a.btn.ghost,a.btn.text,a.btn.go,.paths a{background-size:100% var(--link-line)}}
+@media(prefers-reduced-motion:reduce){
+  .appnav a,.appright>a,.areabar nav a,a.btn.ghost,a.btn.text,a.btn.go,.paths a,.car-name>span,:is(h1,h2,h3,h4) a:not(.btn),a.lk-title{transition:color var(--link-fade) ease-out}
+}

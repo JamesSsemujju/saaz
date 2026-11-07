@@ -60,6 +60,8 @@
   --card:208px;                  /* BA-0008: narrowest a listing card gets; the grid fits as many as the width allows */
   --doc:820px;                   /* documents (the inspection report) and wide forms */
   --radius:12px; --radius-sm:8px; --radius-pill:999px;
+  /* links (7 Nov 2026): the underline that draws under a title link, and the fade that brightens other links */
+  --link-draw:340ms; --link-ease:cubic-bezier(.65,0,.35,1); --link-fade:200ms; --link-line:1px;
 }
 @media (min-width:768px){
   :root{ --gutter:var(--sp-5); --cols:12; --col-gap:var(--sp-5); --section:var(--sp-8); --section-compact:var(--sp-6); --control-sm:40px; }
@@ -148,7 +150,6 @@ p,li,dd{text-wrap:pretty}
 .appright .inbox b{display:inline-block;color:var(--white);font-weight:600;margin-left:var(--sp-1);font-size:var(--fs-xs);line-height:var(--lh-xs)}
 /* 29 Oct 2026: Sell a car is a link like the rest of the bar, in white so sellers find it. No pill: nothing else in the bar is a box. */
 .appright>a.sellbtn{color:var(--white);font-weight:500}
-.appright>a.sellbtn:hover{box-shadow:inset 0 -1px 0 var(--white)}
 .acct{position:relative}
 .acct summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--sp-1);height:var(--control-sm);color:var(--white);padding:0}  /* 29 Oct 2026: no outline round the account menu; the initials circle is enough */
 .acct summary::-webkit-details-marker{display:none}
@@ -157,7 +158,7 @@ p,li,dd{text-wrap:pretty}
 .acctmenu .who{margin:var(--sp-1) var(--sp-2) var(--sp-2);display:grid;overflow-wrap:anywhere}
 .acctmenu .mh{font-size:var(--fs-xs);line-height:var(--lh-xs);text-transform:uppercase;letter-spacing:.8px;color:var(--mut);padding:var(--sp-2) var(--sp-2) 0}
 .acctmenu a,.acctmenu button{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);min-height:var(--control-sm);padding:0 var(--sp-2);border-radius:var(--radius-sm);color:var(--ink);text-decoration:none;font:inherit;font-size:var(--fs-sm);line-height:var(--lh-sm);background:none;border:0;text-align:left;cursor:pointer;width:100%}
-.acctmenu a:hover,.acctmenu button:hover{background:var(--soft)}
+.acctmenu a:hover,.acctmenu button:hover{color:var(--navy)}
 .acctmenu a[aria-current]{font-weight:700}
 .acctmenu hr{border:0;border-top:1px solid var(--line);margin:var(--sp-1) 0}
 .acctmenu a.adminentry{flex-direction:column;align-items:flex-start;justify-content:center}
@@ -176,7 +177,7 @@ p,li,dd{text-wrap:pretty}
 .areabar{background:var(--ice);border-bottom:1px solid var(--accent)}
 .areabar .wrap{display:flex;flex-wrap:wrap;align-items:center;column-gap:var(--sp-5);min-height:var(--areabar)}
 .areabar .back{display:flex;align-items:center;min-height:var(--areabar);color:var(--accent-ink);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600}
-.areabar .back:hover{color:var(--navy);text-decoration:underline}
+.areabar .back:hover{color:var(--navy)}
 .areabar b{color:var(--navy)}
 .areabar nav{display:flex;gap:var(--sp-4);overflow-x:auto}
 .areabar nav a{display:flex;align-items:center;min-height:var(--areabar);color:var(--accent-ink);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:600;box-shadow:inset 0 -3px 0 transparent;white-space:nowrap}
@@ -214,7 +215,7 @@ p,li,dd{text-wrap:pretty}
 .btn:active:not(:disabled){transform:scale(.98)}  /* a press you can feel */
 @media(prefers-reduced-motion:reduce){.btn{transition-property:background-color,border-color,color}.btn:active:not(:disabled){transform:none}}
 .btn.ghost,.btn.text,.btn.go{background:none;border:0;border-radius:0;color:var(--navy);padding:0;min-height:var(--control);font-weight:500;text-decoration:none;box-shadow:inset 0 -1px 0 currentColor;justify-content:flex-start}
-.btn.ghost:hover,.btn.text:hover,.btn.go:hover{background:none;box-shadow:inset 0 -2px 0 currentColor}
+button.btn.ghost:hover,button.btn.text:hover,button.btn.go:hover{background:none;box-shadow:inset 0 -2px 0 currentColor}   /* buttons keep their hairline; links: links.css */
 .btn.ghost.wide,.btn.text.wide{width:auto}
 /* (the text link is defined with .btn.ghost above) */
 
@@ -446,9 +447,8 @@ label:has(>.dd){position:relative}
 .phero .meta b{color:var(--white);font-weight:600}
 .paths{display:flex;flex-wrap:wrap;gap:0 var(--sp-5);margin-top:var(--sp-5)}
 /* 29 Oct 2026: shortcuts are text links with the arrow, like the home quick search */
-.paths a{display:inline-flex;align-items:center;gap:var(--sp-2);min-height:var(--control);color:var(--ivory);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500;box-shadow:inset 0 -1px 0 rgba(233,227,216,.35)}
+.paths a{display:inline-flex;align-items:center;gap:var(--sp-2);min-height:var(--control);color:var(--ivory);text-decoration:none;font-size:var(--fs-sm);line-height:var(--lh-sm);font-weight:500}
 .paths a::after{content:"";width:var(--sp-3);height:var(--sp-3);background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 5v7H5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
-.paths a:hover{background:var(--navy-2)}
 .hero-car{width:100%;height:auto}
 .hero-car .scan{animation:scan 4.5s ease-in-out infinite}
 .hero-car .dot{animation:pulse 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
@@ -486,8 +486,7 @@ label:has(>.dd){position:relative}
 /* quick searches: real shortcuts into the same filters, only ones that return cars */
 .quick{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-5);margin-top:var(--sp-4)}
 .quick>span{font-size:var(--fs-2xs);line-height:var(--lh-2xs);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
-.quick .btn.text{font-size:var(--fs-sm);line-height:var(--lh-sm);box-shadow:inset 0 -1px 0 rgba(233,227,216,.35)}
-.quick .btn.text:hover{box-shadow:inset 0 -1px 0 var(--ivory)}
+.quick .btn.text{font-size:var(--fs-sm);line-height:var(--lh-sm)}
 
 /* one trust section: three points on the grid */
 .trust{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:var(--sp-6) var(--col-gap)}
@@ -561,7 +560,6 @@ label:has(>.dd){position:relative}
 .car-price{margin-top:var(--sp-1);display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);height:var(--lh-lg);overflow:hidden}
 .car-price b{font-size:var(--fs-lg);line-height:var(--lh-lg);font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
 .car-price small{color:var(--mut);font-size:var(--fs-sm);line-height:var(--lh-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.car:hover .car-name{box-shadow:inset 0 -1px 0 currentColor}
 .car:hover .car-photo{box-shadow:0 12px 28px rgba(var(--shade),.18)}
 /* BA-0001: on hover (mouse) or keyboard focus the card's photo comes forward and zooms slightly; the text stays as it is */
 .car .car-photo{transition:transform .2s ease,box-shadow .2s ease}
@@ -1044,6 +1042,53 @@ dialog.pop .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--l
 .appbody a:active,.appbody .car:active{opacity:.65;transition:opacity 0s}
 .appbody a,.appbody .car{transition:opacity .08s ease}
 @media(prefers-reduced-motion:reduce){.imgfade .car-photo img.is-loaded,.imgfade #mainphoto.is-loaded,.imgfade .thumbs img.is-loaded{animation:none}}
+
+/* links.css (7 Nov 2026): one standard for every clickable text on the site and in Admin.
+   Links read as part of the type, not as little buttons.
+   - Title links (main menus, clickable headings, a listing card's name, links that carry the arrow):
+     no line at rest; on hover a line draws under the text from left to right, and draws back on leaving.
+   - Every other link (footer and menus: no line at all; breadcrumbs, side menus, tabs, page numbers, lists, links inside sentences):
+     muted at rest, a little brighter on hover. Links inside sentences keep a faint underline, so they read as links without a mouse.
+   - Keyboard: focus shows the same line, plus the focus ring from base.css.
+   - Touch screens (no hover): links that carry the arrow keep their line at all times; nothing depends on hover.
+   - Buttons (<button>) are not links and keep their own look (components.css). */
+
+/* "Brighter" means more contrast: towards navy on light backgrounds, towards white on dark ones */
+:root{--link-hi:var(--navy)}
+.apphead,.hero,.phero,.ba-modebar{--link-hi:var(--white)}
+
+/* the fade, for every link */
+:where(a){transition:color var(--link-fade) ease-out,text-decoration-color var(--link-fade) ease-out}
+a:not([class]):hover{color:var(--link-hi)}
+
+/* links inside sentences: a faint line that firms up on hover */
+:where(p,td,dd,small,.note,.lead,.box,.empty span,.err,.timeline li,.prose li) > a:not([class]){text-decoration-line:underline;text-decoration-thickness:var(--link-line);text-underline-offset:.22em;text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
+:where(p,td,dd,small,.note,.lead,.box,.empty span,.err,.timeline li,.prose li) > a:not([class]):hover{text-decoration-color:currentColor}
+
+/* brighter on hover: the places that didn't say so yet */
+.appbody .tabs a:hover,.crumbs a:hover,.appbody .tbl th a:hover,.appbody .list a:hover,.appbody .rows a:hover{color:var(--link-hi)}
+.phero .crumbs a:hover{color:var(--white)}
+
+/* ---------- title links: the drawn line ---------- */
+.appnav a,.appright>a,.areabar nav a,a.btn.ghost,a.btn.text,a.btn.go,.paths a,.car-name>span,:is(h1,h2,h3,h4) a:not(.btn),a.lk-title{
+  background-image:linear-gradient(currentColor,currentColor);background-repeat:no-repeat;background-position:0 100%;
+  background-size:0 var(--u,var(--link-line));box-decoration-break:clone;-webkit-box-decoration-break:clone;text-decoration:none;
+  transition:background-size var(--link-draw) var(--link-ease),color var(--link-fade) ease-out}
+a.btn.ghost,a.btn.text,a.btn.go{box-shadow:none}   /* the line is drawn, not printed (was a permanent hairline) */
+.appnav a,.appright>a{--u:2px}         /* same weight as the line under the page you're on */
+.areabar nav a{--u:3px}
+.car-name>span{display:inline}
+@media(hover:hover){
+  .appnav a:hover,.appright>a:hover,.areabar nav a:hover,a.btn.ghost:hover,a.btn.text:hover,a.btn.go:hover,.paths a:hover,
+  :is(h1,h2,h3,h4) a:not(.btn):hover,a.lk-title:hover,.car:hover .car-name>span{background-size:100% var(--u,var(--link-line))}
+}
+.appnav a:focus-visible,.appright>a:focus-visible,.areabar nav a:focus-visible,a.btn.ghost:focus-visible,a.btn.text:focus-visible,a.btn.go:focus-visible,
+.paths a:focus-visible,:is(h1,h2,h3,h4) a:not(.btn):focus-visible,a.lk-title:focus-visible,.car:focus-visible .car-name>span{background-size:100% var(--u,var(--link-line))}
+/* touch: a link with the arrow always shows its line (hover can't tell you it's a link) */
+@media(hover:none){a.btn.ghost,a.btn.text,a.btn.go,.paths a{background-size:100% var(--link-line)}}
+@media(prefers-reduced-motion:reduce){
+  .appnav a,.appright>a,.areabar nav a,a.btn.ghost,a.btn.text,a.btn.go,.paths a,.car-name>span,:is(h1,h2,h3,h4) a:not(.btn),a.lk-title{transition:color var(--link-fade) ease-out}
+}
 
 /* build.css: the private Build Assistant (only drawn for admins the database allows; see build-assistant.js). Tokens only. */
 .ba{font-size:var(--fs-sm);line-height:var(--lh-sm)}

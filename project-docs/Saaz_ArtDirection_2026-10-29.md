@@ -45,3 +45,14 @@ Score rings and bars, cards inside cards, a dark band after the dark hero, pills
 ## Fix, 30 Oct 2026
 
 A CSS rule in app.css was cut short in the 19 Oct Reports update. The browser joined it to the next rule (required fields), so every list link on the site turned red for a month. Restored, and `tools/check_layout.py` now stops the build when a selector list breaks onto a new line without a comma. `tests/browser_artdirection_test.py` checks the inbox (rows, no boxes, no red) and that a page with nothing wrong has no red text.
+
+## Links (7 Nov 2026, James)
+
+Links read as part of the type, not as little buttons. One file: `src/styles/links.css`; timings in `tokens.css` (`--link-draw` 340 ms, `--link-ease` cubic-bezier(.65,0,.35,1), `--link-fade` 200 ms).
+- Title links (main menu, area menu, clickable headings, links with the arrow, a listing card's name): no line at rest. On hover a line draws from the left under the text and draws back on leaving. Keyboard focus shows it too.
+- Other links (footer, menus, side menu, tabs, page numbers, lists): muted, brighter on hover (towards navy on light, white on dark). No line, no box.
+- Links inside sentences (notes, tables, breadcrumbs, timelines): a faint underline at rest that firms up on hover, so they read as links without a mouse.
+- Touch screens: links with the arrow keep their line at all times. Reduced motion: the line appears without drawing.
+- Buttons (`<button>`) keep the 29 Oct look: solid navy for the main action, a hairline for secondary ones. Solid link-buttons stay only for the one main step of a page (Sign in to make an offer, Continue the inspection, List a car, Edit).
+- Listing cards and report tiles stay cards: they group real information.
+- Changed from 29 Oct: arrow links lost their permanent hairline on screens with a mouse; the grey box behind account-menu items and the dark box behind hero shortcuts are gone; the card name's full-width hover line became a line under the name only.
